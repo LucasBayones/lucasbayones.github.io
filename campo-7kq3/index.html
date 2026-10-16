@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="description" content="Engram Campo — riesgo por lote, hoy y las próximas semanas. Versión preliminar para socios.">
+<meta name="theme-color" content="#0B1C26">
+<meta name="application-name" content="Engram Campo">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Engram Campo">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<title>Engram Campo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna de celular (máx 430px) centrada; barra inferior fija; pantallas conmutadas por hash.
+   Color: tinta oscura de la marca para barras, fondo pálido verde-gris de campo, ámbar como acento, azul para datos;
+   semáforo verde/ámbar/rojo separado del acento. Tipo: Source Serif 4 para números y títulos, IBM Plex Sans para todo lo demás. */
+:root{
+  --bg:#EEF2EC; --surface:#FFFFFF; --surface-2:#E6ECE4; --ink:#0B1C26; --fg:#152430; --muted:#5B6B74; --line:#D5DDD3;
+  --accent:#C98C14; --accent-ink:#0B1C26; --blue:#2F7FB8; --bar:#0B1C26; --bar-fg:#F2EDE4; --bar-muted:#8FA3AE;
+  --ok:#2F8A45; --ok-bg:#E3F2E6; --warn:#B5781A; --warn-bg:#FBEFD6; --bad:#C43A25; --bad-bg:#FBE3DF;
+  --shadow:0 10px 30px rgba(11,28,38,.10);
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif; --sans:"IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0B1C26; --surface:#13293A; --surface-2:#1B3447; --ink:#F2EDE4; --fg:#E9EEF0; --muted:#8FA3AE; --line:#24404F;
+  --accent:#E0A63A; --accent-ink:#0B1C26; --blue:#5FB0E5; --bar:#071219; --bar-fg:#F2EDE4; --bar-muted:#8FA3AE;
+  --ok:#5CC274; --ok-bg:#15392A; --warn:#E0A63A; --warn-bg:#3D2E12; --bad:#F07A66; --bad-bg:#46201B; --shadow:0 10px 30px rgba(0,0,0,.4); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0B1C26; --surface:#13293A; --surface-2:#1B3447; --ink:#F2EDE4; --fg:#E9EEF0; --muted:#8FA3AE; --line:#24404F;
+  --accent:#E0A63A; --accent-ink:#0B1C26; --blue:#5FB0E5; --bar:#071219; --bar-fg:#F2EDE4; --bar-muted:#8FA3AE;
+  --ok:#5CC274; --ok-bg:#15392A; --warn:#E0A63A; --warn-bg:#3D2E12; --bad:#F07A66; --bad-bg:#46201B; --shadow:0 10px 30px rgba(0,0,0,.4); color-scheme:dark }
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
+*{box-sizing:border-box}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.phone{max-width:430px;margin:0 auto;min-height:100%;position:relative;background:var(--bg)}
+@media (min-width:700px){ body{background:var(--surface-2)} .phone{margin:24px auto;min-height:calc(100% - 48px);border-radius:28px;box-shadow:var(--shadow);overflow:hidden} }
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bar);color:var(--bar-fg);padding-block:12px 10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand b{font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:.2px}
+.brand small{display:block;color:var(--bar-muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.pill-private{font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--bar-muted);color:var(--bar-fg);border-radius:999px;padding:4px 9px;white-space:nowrap}
+.lotsel{margin-top:10px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.lotsel::-webkit-scrollbar{display:none}
+.lot-chip{flex:0 0 auto;border:1px solid var(--bar-muted);background:transparent;color:var(--bar-fg);border-radius:12px;padding:8px 12px;text-align:left;line-height:1.2}
+.lot-chip small{display:block;color:var(--bar-muted);font-size:11px}
+.lot-chip[aria-pressed="true"]{background:var(--bar-fg);color:var(--ink);border-color:var(--bar-fg)}
+.lot-chip[aria-pressed="true"] small{color:#5B6B74}
+main{padding-block:16px 108px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+.screen[hidden]{display:none}
+.screen{display:grid;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:10px}
+.card h2{font-family:var(--serif);font-weight:600;font-size:20px;line-height:1.2}
+.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)} .small{font-size:13px} .tab{font-variant-numeric:tabular-nums}
+.big{font-family:var(--serif);font-size:40px;font-weight:600;line-height:1;letter-spacing:-.5px}
+.big small{font-family:var(--sans);font-size:14px;font-weight:500;color:var(--muted);letter-spacing:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.sem{display:grid;gap:8px}
+.sem-item{display:grid;grid-template-columns:14px 1fr auto;gap:12px;align-items:start;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.sem-item .dot{width:14px;height:14px;border-radius:50%;margin-top:4px}
+.sem-item b{display:block;font-weight:600}
+.sem-item span{font-size:14px;color:var(--muted)}
+.lvl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.lvl.bajo{background:var(--ok-bg);color:var(--ok)} .lvl.medio{background:var(--warn-bg);color:var(--warn)} .lvl.alto{background:var(--bad-bg);color:var(--bad)}
+.dot.bajo{background:var(--ok)} .dot.medio{background:var(--warn)} .dot.alto{background:var(--bad)}
+.action{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:12px;border-radius:12px;border:1px solid var(--line)}
+.action .n{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--accent);line-height:1}
+.action b{display:block} .action span{font-size:14px;color:var(--muted)}
+.conf{font-size:12px;color:var(--muted)}
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:380px}
+th,td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:12px}
+td:first-child,th:first-child{text-align:left;color:var(--muted);white-space:nowrap}
+td.hot{color:var(--bad);font-weight:600} td.warm{color:var(--warn);font-weight:600}
+.note{font-size:13px;color:var(--muted);line-height:1.4}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bigbtn{display:grid;gap:4px;text-align:left;padding:16px;border-radius:16px;border:1px solid var(--line);background:var(--surface);min-height:96px}
+.bigbtn b{font-size:18px} .bigbtn span{font-size:13px;color:var(--muted)}
+.bigbtn .ic{width:28px;height:28px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent);font-weight:700;font-family:var(--serif)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bar-fg);border-color:var(--ink)}
+.field{display:grid;gap:6px} .field label{font-size:13px;color:var(--muted);font-weight:500}
+.field input,.field select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%}
+.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:600;background:var(--ink);color:var(--bar-fg)}
+.btn.sec{background:var(--surface-2);color:var(--fg)} .btn.acc{background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.seg{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 0;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bar-fg);border-color:var(--ink)}
+.photo{display:grid;place-items:center;border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center;gap:6px;background:var(--surface-2);cursor:pointer}
+.photo img{max-width:100%;max-height:220px;border-radius:10px}
+.hiddeninput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.log{display:grid;gap:8px}
+.log-item{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px}
+.log-item .d{font-family:var(--serif);font-weight:600;color:var(--blue);white-space:nowrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bar-fg);padding:10px 16px;border-radius:999px;font-size:14px;box-shadow:var(--shadow);opacity:0;transition:opacity .25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bar);color:var(--bar-muted);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.bottom .inner{width:100%;max-width:430px;display:grid;grid-template-columns:repeat(5,1fr);padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
+nav.bottom button{background:none;border:0;color:var(--bar-muted);padding:10px 4px 12px;display:grid;justify-items:center;gap:3px;font-size:11px;letter-spacing:.02em}
+nav.bottom button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.bottom button[aria-current="page"]{color:var(--bar-fg)}
+nav.bottom button.reg{color:var(--accent)} nav.bottom button.reg[aria-current="page"]{color:var(--accent)}
+.map{width:100%;aspect-ratio:1.25;background:var(--surface-2);border-radius:14px;display:block;max-width:100%}
+.map .land{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.map .reg{fill:var(--blue);stroke:var(--surface);stroke-width:1.5}
+.map .pin{fill:var(--accent);stroke:var(--ink);stroke-width:1.5}
+.map .link{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 4}
+.poly{width:100%;aspect-ratio:1.6;border-radius:14px;background:#2d4a2a;display:block;max-width:100%}
+.timeline{display:grid;gap:8px}
+.season{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:14px}
+.season .y{font-family:var(--serif);font-weight:600;font-size:18px} .season .t{font-family:var(--serif);font-weight:600;color:var(--blue)}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden} .bar i{display:block;height:100%;background:var(--blue)}
+.list{display:grid;gap:2px}
+.list button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);padding:14px 16px;border-radius:12px}
+.list button span{color:var(--muted)}
+.alert{display:grid;grid-template-columns:4px 1fr;gap:12px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.alert i{display:block;background:var(--warn)} .alert.hot i{background:var(--bad)}
+.alert div{padding:12px 12px 12px 0}
+.alert b{display:block}
+.steps{display:grid;gap:10px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.step .n{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-family:var(--serif);font-weight:600;color:var(--accent)}
+.kv{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:6px 12px;font-size:14px;align-items:start} .kv b{font-variant-numeric:tabular-nums;text-align:right;min-width:0}
+hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.inline-link{color:var(--blue);background:none;border:0;padding:0;text-decoration:underline;font-weight:500}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+</style>
+</head>
+<body>
+
+<div class="phone">
+<header class="top">
+  <div class="brand">
+    <div><small>Engram Analítica</small><b>Engram Campo</b></div>
+    <span class="pill-private">Versión preliminar · socios</span>
+  </div>
+  <div class="lotsel" id="lotsel" role="tablist" aria-label="Lotes"></div>
+</header>
+
+<main>
+<!-- ============================ HOY ============================ -->
+<section class="screen" id="s-hoy" aria-labelledby="h-hoy">
+  <div class="card">
+    <div class="row between"><span class="eyebrow" id="hoy-fecha">Viernes 16 de octubre</span><span class="lvl bajo" id="hoy-nivel">Riesgo bajo</span></div>
+    <h2 id="h-hoy">Hoy en tu lote</h2>
+    <p id="hoy-etapa" class="muted"></p>
+    <div class="sem" id="hoy-sem"></div>
+    <p class="note" id="hoy-nota"></p>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Qué hacer esta semana</span>
+    <div class="sem" id="hoy-acciones"></div>
+    <p class="note">Las acciones nacen de los hechos del reporte y pasan por las compuertas: ningún número sin respaldo, ningún producto ni dosis. Lo que hacer con esto lo decide usted con su agrónomo.</p>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Memoria del campo</span>
+    <div class="row between"><span class="big" id="mem-n">1 <small>temporada</small></span><button class="btn sec" data-go="mas-memoria">Ver</button></div>
+    <p class="note" id="mem-txt"></p>
+  </div>
+</section>
+
+<!-- ============================ SEMANA ============================ -->
+<section class="screen" id="s-semana" hidden aria-labelledby="h-sem">
+  <div class="card">
+    <span class="eyebrow">Días 1–7 · probabilidad por día</span>
+    <h2 id="h-sem">La semana que viene</h2>
+    <div class="tablewrap" id="sem-tabla"></div>
+    <p class="note" id="sem-fuente"></p>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Días 8–14 · por semana, no por día</span>
+    <div class="kv" id="sem-b"></div>
+    <p class="note">A este plazo el ensamble dice tendencia, no fechas. Confianza media hasta que el scorecard la suba o la baje.</p>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Semanas 3–5</span>
+    <p class="muted">Sin skill verificado a este plazo todavía. Lo que se sabe es lo que suele pasar en la zona en estas fechas, y eso es lo que mostraremos aquí hasta que las semanas 3 a 5 le ganen a la climatología en el scorecard.</p>
+    <button class="inline-link" data-go="mas-como">¿Cómo lo sabemos?</button>
+  </div>
+</section>
+
+<!-- ============================ REGISTRAR ============================ -->
+<section class="screen" id="s-registrar" hidden aria-labelledby="h-reg">
+  <div class="card" id="reg-home">
+    <span class="eyebrow">El toque de la semana</span>
+    <h2 id="h-reg">¿Qué pasó en el lote?</h2>
+    <div class="grid2">
+      <button class="bigbtn" data-flow="aplique"><span class="ic">A</span><b>Apliqué algo</b><span>Foto de la etiqueta o elegir de los últimos</span></button>
+      <button class="bigbtn" data-flow="regue"><span class="ic">R</span><b>Regué</b><span>Horas o lámina, un toque</span></button>
+      <button class="bigbtn" data-flow="vi"><span class="ic">V</span><b>Vi algo</b><span>Enfermedad, plaga, helada, granizo, agua</span></button>
+      <button class="bigbtn" data-flow="nada"><span class="ic">·</span><b>Nada nuevo</b><span>Y eso también cuenta</span></button>
+    </div>
+    <label class="photo" for="voz-input" style="padding:12px"><b>Nota de voz</b><span class="small muted">"Regué el lote 3 ayer seis horas y vi manchas en la orilla norte" se vuelve registros para confirmar.</span><input class="hiddeninput" id="voz-input" type="file" accept="audio/*" capture></label>
+    <p class="note">Todo lo demás se infiere: ubicación, clima, pronóstico, etapa del cultivo y tendencia de la zona. Usted solo cuenta lo que hizo y lo que vio.</p>
+  </div>
+
+  <div class="card" id="flow-aplique" hidden>
+    <div class="row between"><span class="eyebrow">Apliqué algo</span><button class="inline-link" data-cancel>Cancelar</button></div>
+    <label class="photo" for="etq-input" id="etq-drop"><b>Foto de la etiqueta, el envase o la factura</b><span class="small muted">Toque para abrir la cámara. El sistema lee producto, dosis y fecha; usted confirma.</span><input class="hiddeninput" id="etq-input" type="file" accept="image/*" capture="environment"></label>
+    <div id="etq-preview" hidden></div>
+    <span class="eyebrow">O elegir de los últimos</span>
+    <div class="chips" id="ult-chips"></div>
+    <div class="field"><label for="ap-prod">Producto (como lo llama usted)</label><input id="ap-prod" placeholder="p. ej. fungicida preventivo"></div>
+    <div class="grid2">
+      <div class="field"><label for="ap-dosis">Dosis</label><input id="ap-dosis" inputmode="decimal" placeholder="2"></div>
+      <div class="field"><label for="ap-unidad">Unidad</label><select id="ap-unidad"><option>kg/ha</option><option>L/ha</option><option>g/ha</option><option>mL/ha</option><option>kg total</option><option>L total</option></select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="ap-tipo">Tipo</label><select id="ap-tipo"><option>fungicida</option><option>fertilizante</option><option>insecticida</option><option>herbicida</option><option>bioestimulante</option><option>otro</option></select></div>
+      <div class="field"><label for="ap-fecha">Fecha</label><input id="ap-fecha" type="date"></div>
+    </div>
+    <button class="btn acc" id="ap-save">Guardar en la bitácora</button>
+  </div>
+
+  <div class="card" id="flow-regue" hidden>
+    <div class="row between"><span class="eyebrow">Regué</span><button class="inline-link" data-cancel>Cancelar</button></div>
+    <div class="field"><label for="rg-horas">Horas de riego: <b id="rg-horas-v">6</b></label><input id="rg-horas" type="range" min="1" max="24" value="6"></div>
+    <span class="eyebrow">Método</span>
+    <div class="chips" id="rg-met"><button class="chip" aria-pressed="true">aspersión</button><button class="chip" aria-pressed="false">goteo</button><button class="chip" aria-pressed="false">gravedad</button><button class="chip" aria-pressed="false">pivote</button></div>
+    <div class="field"><label for="rg-fecha">Fecha</label><input id="rg-fecha" type="date"></div>
+    <button class="btn acc" id="rg-save">Guardar en la bitácora</button>
+  </div>
+
+  <div class="card" id="flow-vi" hidden>
+    <div class="row between"><span class="eyebrow">Vi algo</span><button class="inline-link" data-cancel>Cancelar</button></div>
+    <div class="chips" id="vi-tipo"><button class="chip" aria-pressed="true">enfermedad</button><button class="chip" aria-pressed="false">plaga</button><button class="chip" aria-pressed="false">helada</button><button class="chip" aria-pressed="false">granizo</button><button class="chip" aria-pressed="false">falta de agua</button><button class="chip" aria-pressed="false">encharcamiento</button><button class="chip" aria-pressed="false">fenología</button></div>
+    <span class="eyebrow">¿Dónde?</span>
+    <div class="chips" id="vi-donde"><button class="chip" aria-pressed="true">un manchón</button><button class="chip" aria-pressed="false">la orilla</button><button class="chip" aria-pressed="false">toda la parcela</button></div>
+    <span class="eyebrow">Severidad (0 nada · 5 pérdida total)</span>
+    <div class="seg" id="vi-sev"><button aria-pressed="false">0</button><button aria-pressed="false">1</button><button aria-pressed="true">2</button><button aria-pressed="false">3</button><button aria-pressed="false">4</button><button aria-pressed="false">5</button></div>
+    <label class="photo" for="vi-input" style="padding:12px"><b>Foto (opcional)</b><span class="small muted">Con fecha y lugar. Alimenta la detección de daño y la lectura del satélite.</span><input class="hiddeninput" id="vi-input" type="file" accept="image/*" capture="environment"></label>
+    <div id="vi-preview" hidden></div>
+    <p class="note" id="vi-nota">Queda como sospecha: un agrónomo la confirma. La app no diagnostica.</p>
+    <button class="btn acc" id="vi-save">Guardar en la bitácora</button>
+  </div>
+
+  <div class="card">
+    <div class="row between"><span class="eyebrow">Bitácora del lote</span><span class="small muted" id="log-count"></span></div>
+    <div class="log" id="log"></div>
+    <p class="note">Se guarda en este teléfono y se sincroniza con la nube cuando hay señal; de ahí pasa al motor cada noche.</p>
+  </div>
+</section>
+
+<!-- ============================ LOTE ============================ -->
+<section class="screen" id="s-lote" hidden aria-labelledby="h-lote">
+  <div class="card">
+    <span class="eyebrow">Ubicación</span>
+    <h2 id="h-lote">Marque un punto. Lo demás lo inferimos.</h2>
+    <p class="note">Toque el mapa donde está su lote (en el celular, el GPS lo hace solo). El sistema elige la zona de referencia, la celda de clima y la estación más cercana.</p>
+    <svg class="map" id="map" viewBox="0 0 400 320" role="img" aria-label="Mapa esquemático de México con las diez zonas paperas; toque para marcar el lote"></svg>
+    <div class="kv" id="lote-kv"></div>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Superficie</span>
+    <h2>El polígono lo propone el satélite</h2>
+    <svg class="poly" id="poly" viewBox="0 0 320 200" role="img" aria-label="Propuesta de polígono del lote sobre imagen satelital, para confirmar"></svg>
+    <div class="kv"><span>Superficie propuesta</span><b id="poly-ha">4.6 ha</b><span>Píxel de referencia</span><b>10 m (Sentinel‑2)</b><span>Imágenes limpias usadas</span><b>167 (2.5 años)</b></div>
+    <div class="row"><button class="btn" id="poly-ok">Confirmar polígono</button><button class="btn sec" id="poly-adj">Ajustar</button></div>
+    <p class="note" id="poly-nota">Prototipo: el polígono se dibuja de ejemplo. En la versión conectada se detecta desde el punto sobre la imagen satelital y usted solo confirma o arrastra un borde.</p>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Datos del lote</span>
+    <div class="grid2">
+      <div class="field"><label for="lt-cultivo">Cultivo</label><select id="lt-cultivo"><option>papa</option><option>tomate</option><option>trigo</option><option>aguacate</option></select></div>
+      <div class="field"><label for="lt-riego">Riego</label><select id="lt-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option></select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="lt-siembra">Fecha de siembra</label><input id="lt-siembra" type="date" value="2026-10-15"></div>
+      <div class="field"><label for="lt-ha">Hectáreas (si las sabe)</label><input id="lt-ha" inputmode="decimal" placeholder="opcional"></div>
+    </div>
+    <p class="note">Con la fecha de siembra la etapa se conoce a ±3 días; sin ella se estima con la fecha típica de la zona (±3 semanas) y queda marcada como estimada.</p>
+  </div>
+</section>
+
+<!-- ============================ MÁS ============================ -->
+<section class="screen" id="s-mas" hidden aria-labelledby="h-mas">
+  <div class="card" id="mas-home">
+    <h2 id="h-mas">Más</h2>
+    <div class="list">
+      <button data-go="mas-alertas">Alertas <span>cuando algo cruza el umbral en su etapa</span></button>
+      <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
+      <button data-go="mas-temporada">Cómo termina la temporada <span>tendencia, años parecidos</span></button>
+      <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
+      <button data-go="mas-acerca">Acerca de esta versión <span>privada, solo socios</span></button>
+    </div>
+  </div>
+
+  <div class="card" id="mas-alertas" hidden>
+    <div class="row between"><span class="eyebrow">Alertas</span><button class="inline-link" data-back>Volver</button></div>
+    <h2>Le avisamos cuando importa</h2>
+    <div class="alert"><i></i><div><b>Jueves 22: 12 % de condiciones de tizón</b><span class="small muted">Parcela 7 · primer día con señal en 14 días. La planta está emergiendo: susceptibilidad baja. Sin acción.</span></div></div>
+    <div class="alert hot"><i></i><div><b>Ejemplo de alerta alta</b><span class="small muted">"Mañana 6 de cada 10 escenarios hielan y su lote está en llenado." Así se vería una alerta que sí pide actuar.</span></div></div>
+    <p class="note">La mayoría de los días la app no dice nada. Ese silencio es parte del diseño: solo avisa cuando la probabilidad cruza el umbral en la etapa en que su cultivo es sensible.</p>
+  </div>
+
+  <div class="card" id="mas-memoria" hidden>
+    <div class="row between"><span class="eyebrow">Memoria del campo</span><button class="inline-link" data-back>Volver</button></div>
+    <h2 id="mem-h2">Temporadas registradas</h2>
+    <div class="timeline" id="mem-tl"></div>
+    <p class="note">Un campo solo tiene diez o veinte temporadas de memoria. Cien campos con el mismo registro, en la misma zona, son dos mil. Ahí es donde los patrones aparecen, y donde el pronóstico de cosecha deja de ser de la zona para ser suyo.</p>
+  </div>
+
+  <div class="card" id="mas-temporada" hidden>
+    <div class="row between"><span class="eyebrow">Cómo termina la temporada</span><button class="inline-link" data-back>Volver</button></div>
+    <h2 id="temp-h2"></h2>
+    <div id="temp-body"></div>
+  </div>
+
+  <div class="card" id="mas-como" hidden>
+    <div class="row between"><span class="eyebrow">Cómo lo sabemos</span><button class="inline-link" data-back>Volver</button></div>
+    <h2>Horizontes medidos, no prometidos</h2>
+    <div class="steps">
+      <div class="step"><span class="n">0</span><div><b>Hoy</b><p class="small muted">Clima observado (NASA, 25 años), estaciones, satélite y lo que usted registra. Percentil histórico y régimen de la semana.</p></div></div>
+      <div class="step"><span class="n">1</span><div><b>Días 1–7</b><p class="small muted">Ensambles numéricos (51 y 31 escenarios). Probabilidad por día, bajada a su lote con estaciones y relieve.</p></div></div>
+      <div class="step"><span class="n">2</span><div><b>Días 8–14</b><p class="small muted">Probabilidad por semana y tendencia, nunca fechas.</p></div></div>
+      <div class="step"><span class="n">3</span><div><b>Semanas 3–5</b><p class="small muted">Solo cuando el acierto medido le gana a la climatología. Hasta entonces, lo que suele pasar en la zona.</p></div></div>
+    </div>
+    <hr>
+    <div class="kv"><span>Períodos Hutton (tizón)</span><b>criterio Dancey 2017</b><span>Helada</span><b>mínima de la noche ≤ 0 °C</b><span>Cosecha</span><b>tendencia + eventos, error 8.2 %</b><span>Heladas que ve la malla</span><b>1 de cada 6</b><span>Con estaciones y relieve</span><b>4 de cada 5</b></div>
+    <p class="note">Cada número que aparece en un reporte existe en los hechos del motor; un texto con un número sin respaldo no se publica. Ningún reporte recomienda productos ni dosis.</p>
+  </div>
+
+  <div class="card" id="mas-acerca" hidden>
+    <div class="row between"><span class="eyebrow">Acerca de esta versión</span><button class="inline-link" data-back>Volver</button></div>
+    <h2>Preliminar, privada, de los socios</h2>
+    <p class="small">Prototipo del 16 de octubre de 2026. Los datos de pronóstico de la Parcela 7 (Valle del Fuerte) son los reales del ensamble de hoy; el lote de Toluca es de ejemplo. Las fotos y notas se quedan en este teléfono: la sincronización con la nube y el motor es la etapa 0 del plan.</p>
+    <p class="small">El motor corre en el RIG y nunca se expone: cada noche recoge lo registrado y publica los reportes. Esta app muestra resultados; los modelos no salen de ahí.</p>
+    <p class="small muted">Engram Analítica · consultas@engram-analitica.com · uso interno, no distribuir.</p>
+  </div>
+</section>
+</main>
+
+<nav class="bottom" aria-label="Secciones">
+  <div class="inner">
+    <button data-nav="hoy" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>Hoy</button>
+    <button data-nav="semana"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Semana</button>
+    <button data-nav="registrar" class="reg"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Registrar</button>
+    <button data-nav="lote"><svg viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Lote</button>
+    <button data-nav="mas"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Más</button>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+// ---------------------------------------------------------------- datos
+// Zonas paperas de referencia (config/regions.csv del motor)
+const REGIONES = [
+  {n:"Valle del Fuerte", e:"Sinaloa", lat:25.80, lon:-108.90, ciclo:"otoño-invierno"},
+  {n:"Costa de Hermosillo", e:"Sonora", lat:28.60, lon:-111.20, ciclo:"otoño-invierno"},
+  {n:"León - Bajío", e:"Guanajuato", lat:21.10, lon:-101.70, ciclo:"otoño-invierno"},
+  {n:"Galeana", e:"Nuevo León", lat:24.80, lon:-100.10, ciclo:"primavera-verano"},
+  {n:"Sierra de Arteaga", e:"Coahuila", lat:25.40, lon:-100.80, ciclo:"primavera-verano"},
+  {n:"Cuauhtémoc", e:"Chihuahua", lat:28.40, lon:-106.90, ciclo:"primavera-verano"},
+  {n:"Sierra Norte", e:"Puebla", lat:19.60, lon:-98.00, ciclo:"primavera-verano"},
+  {n:"Valle de Toluca", e:"Estado de México", lat:19.30, lon:-99.75, ciclo:"primavera-verano"},
+  {n:"Perote", e:"Veracruz", lat:19.55, lon:-97.25, ciclo:"primavera-verano"},
+  {n:"Meseta Purépecha", e:"Michoacán", lat:19.45, lon:-102.35, ciclo:"primavera-verano"}
+];
+// Dos lotes de demostración. "real:true" = pronóstico del ensamble emitido el 16-oct-2026 (IFS 51 miembros).
+const LOTES = [
+  { id:"L-007", nombre:"Parcela 7", cultivo:"papa", variedad:"Alpha", region:"Valle del Fuerte", lat:25.78, lon:-108.95, ha:4.6, riego:"pivote",
+    siembra:"2026-10-15", etapa:"emergencia", etapaTxt:"Siembra del 15 de octubre · día 2 · etapa: emergencia (estimada por tiempo térmico)", real:true,
+    dias:[ {d:"vie 16",tz:0,he:0,tm:26,ll:0,ca:100},{d:"sáb 17",tz:0,he:0,tm:25,ll:0,ca:100},{d:"dom 18",tz:0,he:0,tm:26,ll:0,ca:100},{d:"lun 19",tz:0,he:0,tm:27,ll:0,ca:100},{d:"mar 20",tz:0,he:0,tm:27,ll:0,ca:100},{d:"mié 21",tz:4,he:0,tm:26,ll:0,ca:98},{d:"jue 22",tz:12,he:0,tm:26,ll:2,ca:98} ],
+    sem2:{hutton:0.2,p1:18,helada:0,lluvia:[0,3,25],conf:"media"}, lluvia14:[2,7.8,28], miembros:51,
+    sem:[ {k:"Tizón tardío", v:"bajo", t:"Condiciones de infección en 0 de 7 días hasta el miércoles; 12 % el jueves 22. La planta recién emerge: susceptibilidad baja."},
+          {k:"Helada", v:"bajo", t:"0 % en los 14 días. En esta zona hiela entre enero y febrero; la vigilancia sube en diciembre."},
+          {k:"Calor", v:"medio", t:"Máximas sobre 30 °C los 7 días (35 °C de media). Emergencia poco sensible; sí sube la demanda de agua."},
+          {k:"Agua", v:"medio", t:"7.8 mm de lluvia en 14 días (rango 2–28). Con calor y riego por pivote, la demanda de riego es alta en la emergencia."} ],
+    acciones:[ {a:"Registrar la fecha exacta de siembra y la variedad por lote", p:"con eso la etapa pasa de ±3 semanas a ±3 días y el contador de tizón empieza a contar para su lote", c:"alta"},
+               {a:"Programar el riego de emergencia con la demanda de esta semana", p:"7 días con máximas de 35 °C y lluvia casi nula; el balance de agua del lote lo verá aquí cada mañana", c:"media"},
+               {a:"Mantener el programa preventivo de tizón en su nivel normal", p:"0 períodos Hutton esperados hasta el miércoles; 0.2 esperados en la semana 2", c:"alta"} ],
+    nivel:"bajo", memoria:[{y:"2026-27", t:null, txt:"Temporada en curso · empezó el 15 de octubre"}],
+    termina:{titulo:"Disponible desde la semana 6 de la temporada", cuerpo:"El pronóstico de cosecha necesita seis semanas observadas. Mientras tanto, la referencia es la tendencia de la zona: <b>34.7 t/ha</b> esperadas para esta temporada en Valle del Fuerte, con un error medido de 8.2 %. La temporada pasada cerró en 33.2 t/ha (rango 30.9–34.7), 4 % por debajo de la tendencia, y se pareció a 2018, 2016, 2017 y 2006."} },
+  { id:"L-001", nombre:"El Potrero norte", cultivo:"papa", variedad:"Fianna", region:"Valle de Toluca", lat:19.29, lon:-99.65, ha:4.5, riego:"aspersión",
+    siembra:"2026-04-20", etapa:"cosechada", etapaTxt:"Temporada cerrada · cosecha registrada el 18 de septiembre (lote de ejemplo)", real:false,
+    dias:null, agg:{tz7:2,tz14:3,hutton14:1,lluvia14:[20,47.7,90],p40:72}, miembros:51,
+    sem:[ {k:"Tizón tardío", v:"bajo", t:"Condiciones de infección 2 de 7 días (3 de 14; 1 período Hutton). Sin cultivo en pie: solo cuenta para el residuo y la siguiente siembra."},
+          {k:"Lluvia", v:"medio", t:"47.7 mm en 14 días; 72 % de superar 40 mm. Afecta el acceso al lote y las labores de poscosecha."},
+          {k:"Helada", v:"bajo", t:"0 % en 14 días. Las heladas de Toluca llegan en noviembre; vigilancia para la papa de temporal tardía."} ],
+    acciones:[ {a:"Registrar el rendimiento del lote y, si hubo pérdida, cuánto y por qué cree que fue", p:"es el dato más valioso de toda la temporada y el que ningún satélite puede dar", c:"alta"},
+               {a:"Planear las labores de poscosecha fuera de los días de lluvia", p:"47.7 mm esperados en 14 días con 72 % de probabilidad de superar 40 mm", c:"media"} ],
+    nivel:"bajo", memoria:[{y:2024, t:29.8, txt:"Temporada normal · sin pérdidas registradas"},{y:2025, t:27.1, txt:"Pérdida 12 % · tizón en agosto"},{y:2026, t:31.5, txt:"Pérdida 8 % · tizón en agosto, menor"}],
+    termina:{titulo:"Cerró en 31.5 t/ha (ejemplo)", cuerpo:"La tendencia de Toluca esperaba <b>30.4 t/ha</b>; el lote cerró 4 % arriba. Las tres temporadas registradas ya muestran un patrón propio: en las dos con tizón en agosto la pérdida fue de 8 y 12 %. Con cinco temporadas el pronóstico de cosecha empieza a ser del lote, no de la zona."} }
+];
+const LS_KEY = "engram-campo-bitacora-v1";
+let lotIdx = 0;
+let log = load();
+function load(){ try{ const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : seedLog(); }catch(e){ return seedLog(); } }
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(log)); }catch(e){} }
+function seedLog(){ return [ {lote:"L-001", f:"2026-09-18", t:"cosecha", txt:"Rendimiento 31.5 t/ha · pérdida 8 % · tizón en agosto (ejemplo)"}, {lote:"L-001", f:"2026-07-10", t:"vi", txt:"Enfermedad · manchas en hojas bajas, orilla norte · severidad 2 (ejemplo)"}, {lote:"L-001", f:"2026-06-02", t:"aplique", txt:"Fungicida preventivo · 2 kg/ha (ejemplo)"} ]; }
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const hoyISO = "2026-10-16";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---------------------------------------------------------------- render: selector y pantallas
+function renderLotSel(){
+  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}<small>${esc(l.cultivo)} · ${esc(l.region)}</small></button>`).join("");
+}
+function renderHoy(){
+  const l = LOTES[lotIdx];
+  $("#hoy-nivel").textContent = "Riesgo " + l.nivel; $("#hoy-nivel").className = "lvl " + l.nivel;
+  $("#hoy-etapa").textContent = l.etapaTxt;
+  $("#hoy-sem").innerHTML = l.sem.map(s=>`<div class="sem-item"><span class="dot ${s.v}"></span><div><b>${esc(s.k)}</b><span>${esc(s.t)}</span></div><span class="lvl ${s.v}">${s.v}</span></div>`).join("");
+  $("#hoy-nota").textContent = l.real ? `Pronóstico real del ensamble emitido el 16 de octubre (${l.miembros} escenarios), sin calibrar todavía: las probabilidades son la fracción de escenarios.` : "Lote de ejemplo para la demostración; el pronóstico de la zona (Toluca) sí es el real del 16 de octubre.";
+  $("#hoy-acciones").innerHTML = l.acciones.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${a.c}</div></div></div>`).join("");
+  const n = l.memoria.length; $("#mem-n").innerHTML = `${n} <small>${n===1?"temporada":"temporadas"}</small>`;
+  $("#mem-txt").textContent = n===1 ? "Este lote empieza hoy su memoria. Con tres temporadas registradas, el reporte deja de hablar de la zona y empieza a hablar de este lote." : "Tres temporadas con el mismo registro. Con cinco, el pronóstico de cosecha pasa a ser del lote.";
+  $("#hoy-fecha").textContent = "Viernes 16 de octubre de 2026";
+}
+function renderSemana(){
+  const l = LOTES[lotIdx];
+  if(l.dias){
+    const h = ["Condición de tizón","Helada (≤ 0 °C)","Mínima (mediana)","Lluvia ≥ 10 mm","Calor ≥ 30 °C"];
+    const rows = [ l.dias.map(d=>cell(d.tz+" %", d.tz>=50?"hot":d.tz>=20?"warm":"")), l.dias.map(d=>cell(d.he+" %", d.he>=30?"hot":d.he>=10?"warm":"")), l.dias.map(d=>cell(d.tm+" °C", d.tm<=2?"hot":"")), l.dias.map(d=>cell(d.ll+" %", d.ll>=50?"hot":d.ll>=20?"warm":"")), l.dias.map(d=>cell(d.ca+" %", d.ca>=50?"hot":"")) ];
+    $("#sem-tabla").innerHTML = `<table><thead><tr><th></th>${l.dias.map(d=>`<th>${esc(d.d)}</th>`).join("")}</tr></thead><tbody>${h.map((hh,i)=>`<tr><td>${hh}</td>${rows[i].join("")}</tr>`).join("")}</tbody></table>`;
+    $("#sem-fuente").textContent = `Fuente: ensamble IFS (${l.miembros} escenarios) emitido el 16 de octubre, Open-Meteo. Tizón = criterio Hutton aplicado a cada escenario; helada = mínima de la noche ≤ 0 °C. Lluvia 14 días: ${l.lluvia14[1]} mm (mediana; rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
+    $("#sem-b").innerHTML = kv([["Períodos Hutton esperados", l.sem2.hutton],["Probabilidad de al menos uno", l.sem2.p1+" %"],["Helada en la semana", l.sem2.helada+" %"],["Lluvia (mediana, rango)", `${l.sem2.lluvia[1]} mm (${l.sem2.lluvia[0]}–${l.sem2.lluvia[2]})`],["Confianza", l.sem2.conf]]);
+  } else {
+    const a = l.agg;
+    $("#sem-tabla").innerHTML = `<div class="kv"><span>Días con condiciones de tizón, 7 días</span><b>${a.tz7} de 7</b><span>En 14 días</span><b>${a.tz14} de 14 · ${a.hutton14} período Hutton</b><span>Lluvia en 14 días</span><b>${a.lluvia14[1]} mm (${a.lluvia14[0]}–${a.lluvia14[2]})</b><span>Probabilidad de superar 40 mm</span><b>${a.p40} %</b></div>`;
+    $("#sem-fuente").textContent = "Resumen del pronóstico real de la zona de Toluca emitido el 16 de octubre; el detalle por día aparece cuando el lote tiene cultivo en pie.";
+    $("#sem-b").innerHTML = kv([["Días 8–14", "lluvia por encima de lo normal para octubre"],["Confianza", "media"]]);
+  }
+}
+function cell(t, cls){ return `<td class="${cls}">${t}</td>`; }
+function kv(pairs){ return pairs.map(([k,v])=>`<span>${esc(k)}</span><b>${esc(v)}</b>`).join(""); }
+function renderLog(){
+  const l = LOTES[lotIdx]; const items = log.filter(x=>x.lote===l.id).sort((a,b)=>b.f.localeCompare(a.f));
+  $("#log-count").textContent = items.length ? `${items.length} registro${items.length===1?"":"s"}` : "sin registros todavía";
+  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
+}
+function fmtD(iso){ const [y,m,d] = iso.split("-"); const M=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return `${parseInt(d,10)} ${M[parseInt(m,10)-1]}`; }
+function renderMemoria(){
+  const l = LOTES[lotIdx]; $("#mem-h2").textContent = `${l.nombre}: ${l.memoria.length} ${l.memoria.length===1?"temporada":"temporadas"}`;
+  const max = 36;
+  $("#mem-tl").innerHTML = l.memoria.map(m=>`<div class="season"><span class="y">${esc(m.y)}</span><div><div class="small">${esc(m.txt)}</div>${m.t?`<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*m.t/max)}%"></i></div>`:""}</div><span class="t">${m.t?m.t+" t/ha":"—"}</span></div>`).join("");
+}
+function renderTemporada(){ const l = LOTES[lotIdx]; $("#temp-h2").textContent = l.termina.titulo; $("#temp-body").innerHTML = `<p class="small">${l.termina.cuerpo}</p>`; }
+
+// ---------------------------------------------------------------- lote: mapa esquemático + punto + zona más cercana
+const MAINLAND = [[-117.1,32.5],[-114.7,32.7],[-111.1,31.3],[-108.2,31.3],[-106.5,31.8],[-104.5,29.6],[-103.0,29.0],[-101.4,29.8],[-99.5,27.5],[-97.5,25.9],[-97.8,22.3],[-96.1,19.2],[-94.4,18.1],[-92.3,18.6],[-90.5,19.8],[-90.4,21.0],[-88.3,21.5],[-86.8,21.2],[-87.7,18.3],[-88.9,17.8],[-91.0,17.3],[-90.4,16.1],[-91.7,16.1],[-92.2,15.0],[-93.9,16.0],[-96.5,15.7],[-98.5,16.3],[-99.9,16.8],[-101.5,17.7],[-103.5,18.3],[-105.3,20.6],[-105.7,22.5],[-106.4,23.2],[-108.0,25.0],[-109.4,26.5],[-110.9,27.9],[-112.5,29.5],[-113.5,30.8],[-114.7,31.7],[-114.8,32.5]];
+const BAJA = [[-117.1,32.5],[-116.6,31.8],[-115.9,30.4],[-115.0,29.5],[-114.2,28.0],[-113.0,26.9],[-112.3,26.0],[-111.0,24.7],[-110.3,23.4],[-109.9,22.9],[-109.4,23.2],[-109.9,24.1],[-110.3,24.7],[-111.3,26.0],[-112.0,27.0],[-112.9,28.3],[-113.6,29.3],[-114.4,30.4],[-114.7,31.5],[-114.8,32.5]];
+const W=400, H=320, LON0=-118.5, LON1=-85.5, LAT0=33.5, LAT1=14.0;
+const px = lon => (lon-LON0)/(LON1-LON0)*W, py = lat => (LAT0-lat)/(LAT0-LAT1)*H;
+const lon_of = x => LON0 + x/W*(LON1-LON0), lat_of = y => LAT0 - y/H*(LAT0-LAT1);
+let pin = null;
+function renderMap(){
+  const l = LOTES[lotIdx]; if(!pin) pin = {lat:l.lat, lon:l.lon};
+  const path = pts => "M" + pts.map(([lo,la])=>`${px(lo).toFixed(1)},${py(la).toFixed(1)}`).join("L") + "Z";
+  const near = nearest(pin.lat, pin.lon);
+  let s = `<path class="land" d="${path(MAINLAND)}"/><path class="land" d="${path(BAJA)}"/>`;
+  s += `<line class="link" x1="${px(pin.lon)}" y1="${py(pin.lat)}" x2="${px(near.r.lon)}" y2="${py(near.r.lat)}"/>`;
+  s += REGIONES.map(r=>`<circle class="reg" cx="${px(r.lon)}" cy="${py(r.lat)}" r="${r===near.r?7:5}"><title>${esc(r.n)}</title></circle>`).join("");
+  s += `<circle class="pin" cx="${px(pin.lon)}" cy="${py(pin.lat)}" r="6"/>`;
+  $("#map").innerHTML = s;
+  $("#lote-kv").innerHTML = kv([["Punto marcado", `${pin.lat.toFixed(2)}°, ${pin.lon.toFixed(2)}°`],["Zona de referencia", `${near.r.n} (${near.r.e})`],["Distancia al centro de la zona", `${near.d.toFixed(0)} km`],["Ciclo típico", near.r.ciclo],["Clima de referencia", "celda NASA de 50 km + estación SMN más cercana"]]);
+}
+function nearest(lat, lon){ let best=null; for(const r of REGIONES){ const d = hav(lat,lon,r.lat,r.lon); if(!best||d<best.d) best={r,d}; } return best; }
+function hav(a1,o1,a2,o2){ const p=Math.PI/180, x=0.5-Math.cos((a2-a1)*p)/2+Math.cos(a1*p)*Math.cos(a2*p)*(1-Math.cos((o2-o1)*p))/2; return 12742*Math.asin(Math.sqrt(x)); }
+$("#map").addEventListener("click", ev => { const r = ev.currentTarget.getBoundingClientRect(); const x=(ev.clientX-r.left)/r.width*W, y=(ev.clientY-r.top)/r.height*H; pin={lat:lat_of(y), lon:lon_of(x)}; renderMap(); toast("Punto marcado: zona y clima de referencia actualizados"); });
+function renderPoly(adj){
+  const field = adj ? "40,38 268,30 282,150 70,172" : "48,40 262,34 276,152 76,168";
+  $("#poly").innerHTML = `<defs><pattern id="rows" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(18)"><rect width="12" height="12" fill="#2f5a2b"/><rect width="5" height="12" fill="#3a6d34"/></pattern></defs>
+    <rect width="320" height="200" fill="#4a5a3a"/><rect x="0" y="0" width="320" height="200" fill="url(#rows)" opacity=".9"/>
+    <path d="M0 120 L320 108" stroke="#8a7a55" stroke-width="6" opacity=".8"/>
+    <polygon points="${field}" fill="rgba(224,166,58,.18)" stroke="#E0A63A" stroke-width="2.5" stroke-dasharray="${adj?"0":"7 5"}"/>
+    ${field.split(" ").map(p=>{const [x,y]=p.split(",");return `<circle cx="${x}" cy="${y}" r="5" fill="#E0A63A" stroke="#0B1C26" stroke-width="1.5"/>`;}).join("")}
+    <text x="12" y="190" font-family="IBM Plex Sans, Arial, sans-serif" font-size="11" fill="#F2EDE4">simulación de imagen satelital · ${adj?"polígono ajustado":"polígono propuesto"}</text>`;
+  $("#poly-ha").textContent = adj ? "4.4 ha" : "4.6 ha";
+}
+$("#poly-ok").addEventListener("click", ()=>{ toast("Polígono confirmado: el lote queda delimitado para el satélite"); $("#poly-nota").textContent = "Confirmado. A partir de aquí el verdor del lote se sigue cada 5 días dentro de este polígono."; });
+$("#poly-adj").addEventListener("click", ()=>{ renderPoly(true); toast("Borde ajustado (demostración): 4.4 ha"); });
+
+// ---------------------------------------------------------------- navegación
+const SCREENS = ["hoy","semana","registrar","lote","mas"];
+function go(name){
+  if(!SCREENS.includes(name)) name = "hoy";
+  SCREENS.forEach(s=>{ $("#s-"+s).hidden = s!==name; });
+  $$("nav.bottom button").forEach(b=>{ if(b.dataset.nav===name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  try{ history.replaceState(null,"","#"+name); }catch(e){}
+  window.scrollTo({top:0});
+}
+$$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); }
+document.addEventListener("click", ev => {
+  const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
+  const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
+  const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); pin=null; renderAll(); return; }
+  const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow); return; }
+  const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeFlows(); return; }
+  const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
+  const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
+});
+function renderAll(){ renderLotSel(); renderHoy(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderMap(); }
+
+// ---------------------------------------------------------------- registrar: flujos
+const ULTIMOS = [{p:"Fungicida preventivo", d:"2", u:"kg/ha", t:"fungicida"},{p:"Fertilizante foliar", d:"3", u:"L/ha", t:"fertilizante"},{p:"Insecticida (paratrioza)", d:"0.5", u:"L/ha", t:"insecticida"}];
+function openFlow(name){
+  $("#reg-home").hidden = true; ["aplique","regue","vi"].forEach(f=>{ $("#flow-"+f).hidden = f!==name; });
+  if(name==="nada"){ addLog("nada", "Sin novedades esta semana"); closeFlows(); toast("Registrado: sin novedades. Eso también es memoria."); return; }
+  if(name==="aplique"){ $("#ult-chips").innerHTML = ULTIMOS.map((u,i)=>`<button class="chip" aria-pressed="false" data-ult="${i}">${esc(u.p)} · ${u.d} ${u.u}</button>`).join(""); $("#ap-fecha").value = hoyISO; }
+  if(name==="regue"){ $("#rg-fecha").value = hoyISO; }
+  window.scrollTo({top:0});
+}
+function closeFlows(){ $("#reg-home").hidden = false; ["aplique","regue","vi"].forEach(f=>{ $("#flow-"+f).hidden = true; }); $("#etq-preview").hidden = true; $("#etq-preview").innerHTML=""; $("#vi-preview").hidden = true; $("#vi-preview").innerHTML=""; }
+function onChip(chip){
+  if(chip.dataset.ult!==undefined){ const u = ULTIMOS[parseInt(chip.dataset.ult,10)]; $("#ap-prod").value = u.p; $("#ap-dosis").value = u.d; $("#ap-unidad").value = u.u; $("#ap-tipo").value = u.t; }
+  if(chip.parentElement.id==="vi-tipo"){ const t = chip.textContent; $("#vi-nota").textContent = t==="enfermedad"||t==="plaga" ? "Queda como sospecha: un agrónomo la confirma. La app no diagnostica." : t==="fenología" ? "Las fechas de emergencia, floración o senescencia calibran la etapa de su lote: valen oro." : "Con la fecha y el lugar, el evento se cruza con el pronóstico que se emitió: así se mide si avisamos a tiempo."; }
+}
+function addLog(t, txt, f){ log.push({lote: LOTES[lotIdx].id, f: f || hoyISO, t, txt}); save(); renderLog(); }
+$("#ap-save").addEventListener("click", ()=>{ const p=$("#ap-prod").value.trim(); if(!p){ toast("Escriba el producto o elija uno de los últimos"); $("#ap-prod").focus(); return; } const d=$("#ap-dosis").value.trim(); addLog("aplique", `${$("#ap-tipo").value}: ${p}${d?` · ${d} ${$("#ap-unidad").value}`:""}`, $("#ap-fecha").value||hoyISO); closeFlows(); toast("Aplicación guardada en la bitácora"); });
+$("#rg-horas").addEventListener("input", e=>{ $("#rg-horas-v").textContent = e.target.value; });
+$("#rg-save").addEventListener("click", ()=>{ const met = $$("#rg-met .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("regue", `Riego ${met} · ${$("#rg-horas").value} h`, $("#rg-fecha").value||hoyISO); closeFlows(); toast("Riego guardado en la bitácora"); });
+$("#vi-save").addEventListener("click", ()=>{ const t = $$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const d = $$("#vi-donde .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const s = $$("#vi-sev button").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("vi", `${t[0].toUpperCase()+t.slice(1)} · ${d} · severidad ${s}${$("#vi-preview").hidden?"":" · con foto"}`); closeFlows(); toast(t==="enfermedad"||t==="plaga" ? "Guardado como sospecha; su agrónomo lo verá" : "Observación guardada en la bitácora"); });
+function previewPhoto(input, target, afterTxt){
+  const f = input.files && input.files[0]; if(!f) return;
+  const url = URL.createObjectURL(f); target.hidden = false;
+  target.innerHTML = `<div class="photo" style="cursor:default"><img src="${url}" alt="Foto tomada"><span class="small muted">${afterTxt}</span></div>`;
+}
+$("#etq-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#etq-preview"), "Foto guardada. Lectura automática de producto, dosis y fecha: etapa 1. Por ahora confirme o corrija los campos."); if(!$("#ap-prod").value) $("#ap-prod").placeholder = "lo que diga la etiqueta"; toast("Foto de la etiqueta guardada"); });
+$("#vi-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#vi-preview"), "Foto con fecha y lugar guardada."); });
+$("#voz-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; addLog("voz", `Nota de voz guardada (${Math.round(f.size/1024)} KB) · transcripción en la etapa 1`); toast("Nota de voz guardada en la bitácora"); });
+
+// ---------------------------------------------------------------- toast y arranque
+let toastT = null;
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2600); }
+renderAll(); renderPoly(false);
+const h = (location.hash||"").replace("#",""); go(SCREENS.includes(h) ? h : "hoy");
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {})); }
+</script>
+</body>
+</html>
