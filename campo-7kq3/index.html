@@ -58,6 +58,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .lot-chip[aria-pressed="true"]{background:var(--bar-fg);color:var(--ink);border-color:var(--bar-fg)}
 .lot-chip[aria-pressed="true"] small{color:#5B6B74}
 main{padding-block:16px 108px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+[hidden]{display:none !important}
 .screen[hidden]{display:none}
 .screen{display:grid;gap:14px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:10px}
@@ -139,7 +140,54 @@ nav.bottom button.reg{color:var(--accent)} nav.bottom button.reg[aria-current="p
 .kv{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:6px 12px;font-size:14px;align-items:start} .kv b{font-variant-numeric:tabular-nums;text-align:right;min-width:0}
 hr{border:0;border-top:1px solid var(--line);margin:4px 0}
 .inline-link{color:var(--blue);background:none;border:0;padding:0;text-decoration:underline;font-weight:500}
-@media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+/* Subpantalla de registro: entra desde la derecha, con su propia barra, el cuerpo desplazable y el botón de guardar fijo abajo. */
+.sheet{position:fixed;inset:0;z-index:30;display:flex;justify-content:center;pointer-events:none}
+.sheet .panel{position:relative;width:100%;max-width:430px;height:100%;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);box-shadow:-14px 0 34px rgba(11,28,38,.22);pointer-events:auto}
+.sheet.open .panel{transform:none}
+.sheet-head{flex:none;background:var(--bar);color:var(--bar-fg);padding:calc(8px + env(safe-area-inset-top,0px)) 8px 10px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.sheet-head .back{justify-self:start;display:inline-flex;align-items:center;gap:1px;color:var(--bar-fg);background:none;border:0;font:inherit;font-size:16px;padding:8px 8px 8px 4px}
+.sheet-head .back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.sheet-head .ttl{font-family:var(--serif);font-weight:600;font-size:19px;text-align:center;white-space:nowrap}
+.sheet-head .lot{justify-self:end;font-size:12px;color:var(--bar-muted);max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 24px;display:grid;gap:14px;align-content:start}
+.flow{display:grid;gap:14px}
+.sheet-foot{flex:none;padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+.sheet-foot .btn{width:100%;font-size:17px;padding:15px 16px}
+body.noscroll{overflow:hidden}
+@media (min-width:700px){ .sheet{align-items:center} .sheet .panel{height:calc(100% - 48px);border-radius:28px;overflow:hidden} }
+.bigbtn{transition:transform .08s, background .2s, border-color .2s} .bigbtn:active{transform:scale(.985)}
+.bigbtn.done{background:var(--ok-bg);border-color:var(--ok)} .bigbtn.done .ic{background:var(--ok);color:#fff}
+.lastreg{font-size:13px;color:var(--muted);line-height:1.4} .lastreg b{color:var(--fg);font-weight:600}
+.log-item.new{animation:flash 1.8s ease-out}
+@keyframes flash{0%{background:var(--warn-bg);box-shadow:0 0 0 2px var(--accent)}100%{background:var(--surface-2);box-shadow:none}}
+/* Otras formas de contar: filas de opción (libreta, voz, video) */
+.optrow{display:grid;grid-template-columns:40px 1fr 18px;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:transform .08s} .optrow:active{transform:scale(.99)}
+.optrow .oi{width:40px;height:40px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent)} .optrow .oi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.optrow b{font-size:16px;display:block} .optrow .s{font-size:13px;color:var(--muted)} .optrow .chev{color:var(--muted);font-size:20px;line-height:1}
+/* Escáner de libreta: lectura simulada y revisión antes de guardar */
+.scanwrap{position:relative;border-radius:12px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center;max-height:260px} .scanwrap img{max-width:100%;max-height:260px;display:block}
+.scanline{position:absolute;left:0;right:0;top:4%;height:3px;background:var(--accent);box-shadow:0 0 14px var(--accent);animation:scan 1.3s ease-in-out infinite alternate}
+@keyframes scan{from{top:4%}to{top:94%}}
+.progress{height:6px;border-radius:3px;background:var(--line);overflow:hidden} .progress i{display:block;height:100%;width:0;background:var(--blue);transition:width .6s}
+.banner-ex{font-size:13px;line-height:1.4;padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:#6B4A0E;border:1px solid #EAD3A3}
+.prop .leido{font-size:13px;color:var(--muted);font-style:italic}
+.prop .doubt{border-color:var(--warn);background:var(--warn-bg)}
+.prop .dudanota{font-size:12px;color:var(--warn);font-weight:500}
+.chips.mini .chip{padding:5px 10px;font-size:13px}
+.prop > .row.between{display:grid;grid-template-columns:1fr auto;align-items:start;gap:10px}
+.card details summary{cursor:pointer;font-size:14px;color:var(--blue);font-weight:500;list-style:none} .card details summary::-webkit-details-marker{display:none}
+.card details img{width:100%;border-radius:10px;margin-top:10px}
+/* Grabadora de voz */
+.rec{display:grid;justify-items:center;gap:12px;padding:22px 16px 18px;text-align:center}
+.rec-time{font-family:var(--serif);font-size:42px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.meter{display:flex;gap:4px;align-items:center;height:36px} .meter i{display:block;width:6px;height:4px;border-radius:3px;background:var(--blue);transition:height .09s}
+.recbtn{width:76px;height:76px;border-radius:50%;border:4px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0}
+.recbtn span{display:block;width:50px;height:50px;border-radius:50%;background:var(--bad);transition:border-radius .15s, transform .15s}
+.recbtn.on{border-color:var(--bad)} .recbtn.on span{border-radius:8px;transform:scale(.55)}
+.recbtn:disabled{opacity:.4}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:middle;font-style:normal}
+#vid-preview video{width:100%;max-height:280px;border-radius:12px;background:#000;display:block}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} .sheet .panel{transition:none} .log-item.new{animation:none} .bigbtn{transition:none} .scanline{animation:none} }
 </style>
 </head>
 <body>
@@ -206,51 +254,15 @@ hr{border:0;border-top:1px solid var(--line);margin:4px 0}
       <button class="bigbtn" data-flow="vi"><span class="ic">V</span><b>Vi algo</b><span>Enfermedad, plaga, helada, granizo, agua</span></button>
       <button class="bigbtn" data-flow="nada"><span class="ic">·</span><b>Nada nuevo</b><span>Y eso también cuenta</span></button>
     </div>
-    <label class="photo" for="voz-input" style="padding:12px"><b>Nota de voz</b><span class="small muted">"Regué el lote 3 ayer seis horas y vi manchas en la orilla norte" se vuelve registros para confirmar.</span><input class="hiddeninput" id="voz-input" type="file" accept="audio/*" capture></label>
+    <span class="eyebrow" style="margin-top:6px">O cuéntelo como le quede más cómodo</span>
+    <button class="optrow" data-flow="libreta"><span class="oi"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg></span><span><b>Escanear la libreta</b><span class="s">Foto de la página → registros que usted revisa y confirma</span></span><span class="chev">›</span></button>
+    <button class="optrow" data-flow="voz"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota de voz</b><span class="s">Grabe aquí mismo lo que hizo y lo que vio</span></span><span class="chev">›</span></button>
+    <button class="optrow" data-flow="video"><span class="oi"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></span><span><b>Video</b><span class="s">Filme la planta o el daño, con fecha y lugar</span></span><span class="chev">›</span></button>
+    <div class="lastreg" id="lastreg"></div>
     <p class="note">Todo lo demás se infiere: ubicación, clima, pronóstico, etapa del cultivo y tendencia de la zona. Usted solo cuenta lo que hizo y lo que vio.</p>
   </div>
 
-  <div class="card" id="flow-aplique" hidden>
-    <div class="row between"><span class="eyebrow">Apliqué algo</span><button class="inline-link" data-cancel>Cancelar</button></div>
-    <label class="photo" for="etq-input" id="etq-drop"><b>Foto de la etiqueta, el envase o la factura</b><span class="small muted">Toque para abrir la cámara. El sistema lee producto, dosis y fecha; usted confirma.</span><input class="hiddeninput" id="etq-input" type="file" accept="image/*" capture="environment"></label>
-    <div id="etq-preview" hidden></div>
-    <span class="eyebrow">O elegir de los últimos</span>
-    <div class="chips" id="ult-chips"></div>
-    <div class="field"><label for="ap-prod">Producto (como lo llama usted)</label><input id="ap-prod" placeholder="p. ej. fungicida preventivo"></div>
-    <div class="grid2">
-      <div class="field"><label for="ap-dosis">Dosis</label><input id="ap-dosis" inputmode="decimal" placeholder="2"></div>
-      <div class="field"><label for="ap-unidad">Unidad</label><select id="ap-unidad"><option>kg/ha</option><option>L/ha</option><option>g/ha</option><option>mL/ha</option><option>kg total</option><option>L total</option></select></div>
-    </div>
-    <div class="grid2">
-      <div class="field"><label for="ap-tipo">Tipo</label><select id="ap-tipo"><option>fungicida</option><option>fertilizante</option><option>insecticida</option><option>herbicida</option><option>bioestimulante</option><option>otro</option></select></div>
-      <div class="field"><label for="ap-fecha">Fecha</label><input id="ap-fecha" type="date"></div>
-    </div>
-    <button class="btn acc" id="ap-save">Guardar en la bitácora</button>
-  </div>
-
-  <div class="card" id="flow-regue" hidden>
-    <div class="row between"><span class="eyebrow">Regué</span><button class="inline-link" data-cancel>Cancelar</button></div>
-    <div class="field"><label for="rg-horas">Horas de riego: <b id="rg-horas-v">6</b></label><input id="rg-horas" type="range" min="1" max="24" value="6"></div>
-    <span class="eyebrow">Método</span>
-    <div class="chips" id="rg-met"><button class="chip" aria-pressed="true">aspersión</button><button class="chip" aria-pressed="false">goteo</button><button class="chip" aria-pressed="false">gravedad</button><button class="chip" aria-pressed="false">pivote</button></div>
-    <div class="field"><label for="rg-fecha">Fecha</label><input id="rg-fecha" type="date"></div>
-    <button class="btn acc" id="rg-save">Guardar en la bitácora</button>
-  </div>
-
-  <div class="card" id="flow-vi" hidden>
-    <div class="row between"><span class="eyebrow">Vi algo</span><button class="inline-link" data-cancel>Cancelar</button></div>
-    <div class="chips" id="vi-tipo"><button class="chip" aria-pressed="true">enfermedad</button><button class="chip" aria-pressed="false">plaga</button><button class="chip" aria-pressed="false">helada</button><button class="chip" aria-pressed="false">granizo</button><button class="chip" aria-pressed="false">falta de agua</button><button class="chip" aria-pressed="false">encharcamiento</button><button class="chip" aria-pressed="false">fenología</button></div>
-    <span class="eyebrow">¿Dónde?</span>
-    <div class="chips" id="vi-donde"><button class="chip" aria-pressed="true">un manchón</button><button class="chip" aria-pressed="false">la orilla</button><button class="chip" aria-pressed="false">toda la parcela</button></div>
-    <span class="eyebrow">Severidad (0 nada · 5 pérdida total)</span>
-    <div class="seg" id="vi-sev"><button aria-pressed="false">0</button><button aria-pressed="false">1</button><button aria-pressed="true">2</button><button aria-pressed="false">3</button><button aria-pressed="false">4</button><button aria-pressed="false">5</button></div>
-    <label class="photo" for="vi-input" style="padding:12px"><b>Foto (opcional)</b><span class="small muted">Con fecha y lugar. Alimenta la detección de daño y la lectura del satélite.</span><input class="hiddeninput" id="vi-input" type="file" accept="image/*" capture="environment"></label>
-    <div id="vi-preview" hidden></div>
-    <p class="note" id="vi-nota">Queda como sospecha: un agrónomo la confirma. La app no diagnostica.</p>
-    <button class="btn acc" id="vi-save">Guardar en la bitácora</button>
-  </div>
-
-  <div class="card">
+  <div class="card" id="log-card">
     <div class="row between"><span class="eyebrow">Bitácora del lote</span><span class="small muted" id="log-count"></span></div>
     <div class="log" id="log"></div>
     <p class="note">Se guarda en este teléfono y se sincroniza con la nube cuando hay señal; de ahí pasa al motor cada noche.</p>
@@ -345,6 +357,126 @@ hr{border:0;border-top:1px solid var(--line);margin:4px 0}
   </div>
 </section>
 </main>
+
+<!-- Subpantalla de registro (una por acción): entra desde la derecha sobre la pantalla Registrar -->
+<div class="sheet" id="sheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-head">
+      <button class="back" data-cancel aria-label="Volver sin guardar"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Volver</button>
+      <span class="ttl" id="sheet-title">Apliqué algo</span>
+      <span class="lot" id="sheet-lot"></span>
+    </div>
+    <div class="sheet-body" id="sheet-body">
+
+      <div class="flow" id="flow-aplique" hidden>
+        <label class="photo" for="etq-input" id="etq-drop"><b>Foto de la etiqueta, el envase o la factura</b><span class="small muted">Toque para abrir la cámara. El sistema lee producto, dosis y fecha; usted confirma.</span><input class="hiddeninput" id="etq-input" type="file" accept="image/*" capture="environment"></label>
+        <div id="etq-preview" hidden></div>
+        <div class="card">
+          <span class="eyebrow">O elegir de los últimos</span>
+          <div class="chips" id="ult-chips"></div>
+        </div>
+        <div class="card">
+          <span class="eyebrow">Detalle</span>
+          <div class="field"><label for="ap-prod">Producto (como lo llama usted)</label><input id="ap-prod" placeholder="p. ej. fungicida preventivo"></div>
+          <div class="grid2">
+            <div class="field"><label for="ap-dosis">Dosis</label><input id="ap-dosis" inputmode="decimal" placeholder="2"></div>
+            <div class="field"><label for="ap-unidad">Unidad</label><select id="ap-unidad"><option>kg/ha</option><option>L/ha</option><option>g/ha</option><option>mL/ha</option><option>kg total</option><option>L total</option></select></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label for="ap-tipo">Tipo</label><select id="ap-tipo"><option>fungicida</option><option>fertilizante</option><option>insecticida</option><option>herbicida</option><option>bioestimulante</option><option>otro</option></select></div>
+            <div class="field"><label for="ap-fecha">Fecha</label><input id="ap-fecha" type="date"></div>
+          </div>
+        </div>
+        <p class="note">Se guarda lo que usted aplicó y cuándo, para la memoria del lote. La app no recomienda productos ni dosis.</p>
+      </div>
+
+      <div class="flow" id="flow-regue" hidden>
+        <div class="card">
+          <div class="field"><label for="rg-horas">Horas de riego: <b id="rg-horas-v">6</b></label><input id="rg-horas" type="range" min="1" max="24" value="6"></div>
+          <span class="eyebrow">Método</span>
+          <div class="chips" id="rg-met"><button class="chip" aria-pressed="true">aspersión</button><button class="chip" aria-pressed="false">goteo</button><button class="chip" aria-pressed="false">gravedad</button><button class="chip" aria-pressed="false">pivote</button></div>
+          <div class="field"><label for="rg-fecha">Fecha</label><input id="rg-fecha" type="date"></div>
+        </div>
+        <p class="note">Con las horas y el método, el motor ajusta el agua del suelo de su lote. No hace falta nada más.</p>
+      </div>
+
+      <div class="flow" id="flow-vi" hidden>
+        <div class="card">
+          <span class="eyebrow">¿Qué vio?</span>
+          <div class="chips" id="vi-tipo"><button class="chip" aria-pressed="true">enfermedad</button><button class="chip" aria-pressed="false">plaga</button><button class="chip" aria-pressed="false">helada</button><button class="chip" aria-pressed="false">granizo</button><button class="chip" aria-pressed="false">falta de agua</button><button class="chip" aria-pressed="false">encharcamiento</button><button class="chip" aria-pressed="false">fenología</button></div>
+          <span class="eyebrow">¿Dónde?</span>
+          <div class="chips" id="vi-donde"><button class="chip" aria-pressed="true">un manchón</button><button class="chip" aria-pressed="false">la orilla</button><button class="chip" aria-pressed="false">toda la parcela</button></div>
+          <span class="eyebrow">Severidad (0 nada · 5 pérdida total)</span>
+          <div class="seg" id="vi-sev"><button aria-pressed="false">0</button><button aria-pressed="false">1</button><button aria-pressed="true">2</button><button aria-pressed="false">3</button><button aria-pressed="false">4</button><button aria-pressed="false">5</button></div>
+        </div>
+        <label class="photo" for="vi-input" style="padding:12px"><b>Foto (opcional)</b><span class="small muted">Con fecha y lugar. Alimenta la detección de daño y la lectura del satélite.</span><input class="hiddeninput" id="vi-input" type="file" accept="image/*" capture="environment"></label>
+        <div id="vi-preview" hidden></div>
+        <p class="note" id="vi-nota">Queda como sospecha: un agrónomo la confirma. La app no diagnostica.</p>
+      </div>
+
+      <div class="flow" id="flow-libreta" hidden>
+        <div class="flow" id="lib-step1">
+          <label class="photo" for="lib-input"><b>Fotografíe la página</b><span class="small muted">Una página por foto, con luz y la hoja completa. Si son varias páginas, una tras otra.</span><input class="hiddeninput" id="lib-input" type="file" accept="image/*" capture="environment"></label>
+          <label class="inline-link" for="lib-gal" style="justify-self:center;cursor:pointer">o elegir una foto que ya tomó<input class="hiddeninput" id="lib-gal" type="file" accept="image/*"></label>
+          <div class="card">
+            <span class="eyebrow">Cómo funciona</span>
+            <p class="small">1. Foto de la página. 2. El sistema lee fechas, lotes, productos, cantidades, riegos y observaciones, y arma un registro por renglón. 3. Usted revisa cada uno, corrige lo que haga falta y confirma. <b>Nada se guarda sin su visto bueno</b>; la foto queda como respaldo.</p>
+          </div>
+        </div>
+        <div class="flow" id="lib-reading" hidden>
+          <div class="card">
+            <div class="scanwrap"><img id="lib-img" alt="Página de la libreta"><div class="scanline"></div></div>
+            <div class="progress"><i id="lib-bar"></i></div>
+            <p class="small muted" id="lib-status">Enderezando la página…</p>
+          </div>
+        </div>
+        <div class="flow" id="lib-review" hidden>
+          <div class="banner-ex">Lectura de ejemplo en este prototipo. En la versión conectada, los registros que ve aquí salen de su foto.</div>
+          <div class="card"><details><summary>Ver la foto de la página</summary><img id="lib-img2" alt=""></details></div>
+          <div class="row between"><span class="eyebrow" id="lib-found">3 registros encontrados</span><span class="small muted">revise y corrija</span></div>
+          <div id="lib-rows" class="flow"></div>
+          <button class="btn sec" id="lib-add">+ Agregar un registro que faltó</button>
+          <p class="note">Los campos en ámbar son los que el sistema leyó con duda: tóquelos para corregir. Lo que quite no se guarda.</p>
+        </div>
+      </div>
+
+      <div class="flow" id="flow-voz" hidden>
+        <div class="card rec">
+          <div class="rec-time" id="voz-time">0:00</div>
+          <div class="meter" id="voz-meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <button class="recbtn" id="voz-rec" aria-label="Grabar"><span></span></button>
+          <p class="small muted" id="voz-hint">Toque el botón y hable: qué hizo y qué vio, con fechas. "Ayer regué seis horas y vi manchas en la orilla norte."</p>
+          <audio id="voz-play" controls hidden style="width:100%"></audio>
+        </div>
+        <div class="card" id="voz-fallback" hidden>
+          <span class="eyebrow">Micrófono no disponible en esta vista</span>
+          <p class="small" id="voz-fallback-txt"></p>
+          <label class="btn sec" for="voz-file" style="text-align:center;cursor:pointer">Elegir una grabación del teléfono<input class="hiddeninput" id="voz-file" type="file" accept="audio/*"></label>
+        </div>
+        <p class="note">La nota se transcribe y se convierte en registros que usted revisa antes de guardar, igual que la libreta (etapa 1).</p>
+      </div>
+
+      <div class="flow" id="flow-video" hidden>
+        <label class="photo" for="vid-input" id="vid-drop"><b>Filmar</b><span class="small muted">Abre la cámara en modo video. Recorra la planta o el daño despacio, 10 a 20 segundos, y diga en voz alta lo que ve.</span><input class="hiddeninput" id="vid-input" type="file" accept="video/*" capture="environment"></label>
+        <div id="vid-preview" hidden></div>
+        <div class="card">
+          <span class="eyebrow">¿Qué muestra?</span>
+          <div class="chips" id="vid-tipo"><button class="chip" aria-pressed="true">daño en planta</button><button class="chip" aria-pressed="false">plaga</button><button class="chip" aria-pressed="false">el lote completo</button><button class="chip" aria-pressed="false">riego</button><button class="chip" aria-pressed="false">otro</button></div>
+        </div>
+        <p class="note">El video queda con fecha y lugar como evidencia; la detección automática de daño llega en la etapa 1.</p>
+      </div>
+
+    </div>
+    <div class="sheet-foot">
+      <button class="btn acc" id="ap-save" hidden>Guardar en la bitácora</button>
+      <button class="btn acc" id="rg-save" hidden>Guardar en la bitácora</button>
+      <button class="btn acc" id="vi-save" hidden>Guardar en la bitácora</button>
+      <button class="btn acc" id="lib-save" hidden>Guardar 3 registros en la bitácora</button>
+      <button class="btn acc" id="voz-save" hidden disabled>Guardar la nota de voz</button>
+      <button class="btn acc" id="vid-save" hidden disabled>Guardar el video</button>
+    </div>
+  </div>
+</div>
 
 <nav class="bottom" aria-label="Secciones">
   <div class="inner">
@@ -444,10 +576,13 @@ function renderSemana(){
 }
 function cell(t, cls){ return `<td class="${cls}">${t}</td>`; }
 function kv(pairs){ return pairs.map(([k,v])=>`<span>${esc(k)}</span><b>${esc(v)}</b>`).join(""); }
+let flashNew = [];   // los registros recién guardados, para resaltarlos una vez en la bitácora
 function renderLog(){
-  const l = LOTES[lotIdx]; const items = log.filter(x=>x.lote===l.id).sort((a,b)=>b.f.localeCompare(a.f));
+  const l = LOTES[lotIdx]; const items = log.filter(x=>x.lote===l.id).reverse().sort((a,b)=>b.f.localeCompare(a.f));   // más reciente primero; a igual fecha, el último guardado
   $("#log-count").textContent = items.length ? `${items.length} registro${items.length===1?"":"s"}` : "sin registros todavía";
-  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
+  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
+  const last = items[0];
+  $("#lastreg").innerHTML = last ? `Último registro: <b>${fmtD(last.f)}</b> · ${esc(last.txt)}` : "Todavía no hay registros de este lote.";
 }
 function fmtD(iso){ const [y,m,d] = iso.split("-"); const M=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return `${parseInt(d,10)} ${M[parseInt(m,10)-1]}`; }
 function renderMemoria(){
@@ -506,8 +641,9 @@ document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
   const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); pin=null; renderAll(); return; }
-  const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow); return; }
-  const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeFlows(); return; }
+  const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow, flow); return; }
+  const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeSheet(false); return; }
+  const rm = ev.target.closest("[data-rm]"); if(rm){ const c = rm.closest(".prop"); if(c){ libProps.splice(+c.dataset.i, 1); renderLibRows(); } return; }
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
@@ -515,23 +651,65 @@ function renderAll(){ renderLotSel(); renderHoy(); renderSemana(); renderLog(); 
 
 // ---------------------------------------------------------------- registrar: flujos
 const ULTIMOS = [{p:"Fungicida preventivo", d:"2", u:"kg/ha", t:"fungicida"},{p:"Fertilizante foliar", d:"3", u:"L/ha", t:"fertilizante"},{p:"Insecticida (paratrioza)", d:"0.5", u:"L/ha", t:"insecticida"}];
-function openFlow(name){
-  $("#reg-home").hidden = true; ["aplique","regue","vi"].forEach(f=>{ $("#flow-"+f).hidden = f!==name; });
-  if(name==="nada"){ addLog("nada", "Sin novedades esta semana"); closeFlows(); toast("Registrado: sin novedades. Eso también es memoria."); return; }
+const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:"Escanear la libreta", voz:"Nota de voz", video:"Video"};
+const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save"};
+const FLOWS = Object.keys(TITULOS);
+let sheetOpen = null, ignorePop = false, sheetTimer = null;
+function openFlow(name, btn){
+  if(name==="nada"){                      // acción inmediata: confirmación visible, sin duplicar el mismo día
+    const l = LOTES[lotIdx];
+    if(log.some(x=>x.lote===l.id && x.t==="nada" && x.f===hoyISO)){ toast("Hoy ya quedó registrado: sin novedades"); return; }
+    addLog("nada", "Sin novedades esta semana");
+    if(btn){ const b = btn.querySelector("b"), ic = btn.querySelector(".ic"); const t0 = b.textContent, i0 = ic.textContent; btn.classList.add("done"); b.textContent = "Registrado"; ic.textContent = "✓"; setTimeout(()=>{ btn.classList.remove("done"); b.textContent = t0; ic.textContent = i0; }, 1800); }
+    toast("Registrado: sin novedades. Eso también es memoria.");
+    showNewEntry(60);
+    return;
+  }
+  if(!FLOWS.includes(name)) return;
+  FLOWS.forEach(f=>{ $("#flow-"+f).hidden = f!==name; $("#"+SAVE_IDS[f]).hidden = f!==name; });
+  $("#sheet-title").textContent = TITULOS[name]; $("#sheet-lot").textContent = LOTES[lotIdx].nombre;
   if(name==="aplique"){ $("#ult-chips").innerHTML = ULTIMOS.map((u,i)=>`<button class="chip" aria-pressed="false" data-ult="${i}">${esc(u.p)} · ${u.d} ${u.u}</button>`).join(""); $("#ap-fecha").value = hoyISO; }
   if(name==="regue"){ $("#rg-fecha").value = hoyISO; }
-  window.scrollTo({top:0});
+  if(name==="libreta"){ $("#lib-save").hidden = true; }                 // hasta que haya algo que revisar
+  const sh = $("#sheet"); clearTimeout(sheetTimer); sh.hidden = false; $("#sheet-body").scrollTop = 0;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>sh.classList.add("open")));
+  document.body.classList.add("noscroll"); sheetOpen = name;
+  try{ history.pushState({sheet:name}, "", "#registrar/"+name); }catch(e){}
+  if(name==="video"){ $("#vid-input").click(); }                       // abre la cámara de una vez (dentro del mismo toque)
 }
-function closeFlows(){ $("#reg-home").hidden = false; ["aplique","regue","vi"].forEach(f=>{ $("#flow-"+f).hidden = true; }); $("#etq-preview").hidden = true; $("#etq-preview").innerHTML=""; $("#vi-preview").hidden = true; $("#vi-preview").innerHTML=""; }
+function closeSheet(fromPop){
+  const sh = $("#sheet"); if(sh.hidden) return;
+  sh.classList.remove("open"); document.body.classList.remove("noscroll"); sheetOpen = null;
+  clearTimeout(sheetTimer); sheetTimer = setTimeout(()=>{ sh.hidden = true; resetFlows(); }, 320);
+  if(!fromPop){ try{ if(history.state && history.state.sheet){ ignorePop = true; history.back(); } else { history.replaceState(null,"","#registrar"); } }catch(e){} }
+}
+window.addEventListener("popstate", ()=>{
+  if(sheetOpen){ closeSheet(true); return; }
+  if(ignorePop){ ignorePop = false; return; }
+  const h = (location.hash||"").replace("#","").split("/")[0]; if(SCREENS.includes(h)) go(h);
+});
+function resetFlows(){
+  $("#etq-preview").hidden = true; $("#etq-preview").innerHTML=""; $("#vi-preview").hidden = true; $("#vi-preview").innerHTML=""; $("#ap-prod").value=""; $("#ap-dosis").value="";
+  libReset(); vozReset(); vidReset();
+}
+function showNewEntry(delay){      // lleva la vista a la bitácora y resalta el registro nuevo (cuando la subpantalla ya salió)
+  setTimeout(()=>{
+    const card = $("#log-card"); const head = $(".top").getBoundingClientRect().height;
+    const y = card.getBoundingClientRect().top + window.scrollY - head - 12; window.scrollTo({top: Math.max(0,y), behavior:"smooth"});
+    $$("[data-new]", card).forEach(it=>it.classList.add("new")); flashNew = [];
+  }, delay);
+}
+function afterSave(msg){ closeSheet(false); toast(msg); showNewEntry(340); }
 function onChip(chip){
+  if(chip.dataset.ptipo){ const c = chip.closest(".prop"); if(c){ const p = libProps[+c.dataset.i]; p.tipo = chip.dataset.ptipo; p.dudas = []; delete p.nota; withDefaults(p); renderLibRows(); } return; }
   if(chip.dataset.ult!==undefined){ const u = ULTIMOS[parseInt(chip.dataset.ult,10)]; $("#ap-prod").value = u.p; $("#ap-dosis").value = u.d; $("#ap-unidad").value = u.u; $("#ap-tipo").value = u.t; }
   if(chip.parentElement.id==="vi-tipo"){ const t = chip.textContent; $("#vi-nota").textContent = t==="enfermedad"||t==="plaga" ? "Queda como sospecha: un agrónomo la confirma. La app no diagnostica." : t==="fenología" ? "Las fechas de emergencia, floración o senescencia calibran la etapa de su lote: valen oro." : "Con la fecha y el lugar, el evento se cruza con el pronóstico que se emitió: así se mide si avisamos a tiempo."; }
 }
-function addLog(t, txt, f){ log.push({lote: LOTES[lotIdx].id, f: f || hoyISO, t, txt}); save(); renderLog(); }
-$("#ap-save").addEventListener("click", ()=>{ const p=$("#ap-prod").value.trim(); if(!p){ toast("Escriba el producto o elija uno de los últimos"); $("#ap-prod").focus(); return; } const d=$("#ap-dosis").value.trim(); addLog("aplique", `${$("#ap-tipo").value}: ${p}${d?` · ${d} ${$("#ap-unidad").value}`:""}`, $("#ap-fecha").value||hoyISO); closeFlows(); toast("Aplicación guardada en la bitácora"); });
+function addLog(t, txt, f, src){ const item = {lote: LOTES[lotIdx].id, f: f || hoyISO, t, txt}; if(src) item.src = src; log.push(item); save(); flashNew.push(item); renderLog(); }
+$("#ap-save").addEventListener("click", ()=>{ const p=$("#ap-prod").value.trim(); if(!p){ toast("Escriba el producto o elija uno de los últimos"); $("#ap-prod").focus(); return; } const d=$("#ap-dosis").value.trim(); addLog("aplique", `${$("#ap-tipo").value}: ${p}${d?` · ${d} ${$("#ap-unidad").value}`:""}`, $("#ap-fecha").value||hoyISO); afterSave("Aplicación guardada en la bitácora"); });
 $("#rg-horas").addEventListener("input", e=>{ $("#rg-horas-v").textContent = e.target.value; });
-$("#rg-save").addEventListener("click", ()=>{ const met = $$("#rg-met .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("regue", `Riego ${met} · ${$("#rg-horas").value} h`, $("#rg-fecha").value||hoyISO); closeFlows(); toast("Riego guardado en la bitácora"); });
-$("#vi-save").addEventListener("click", ()=>{ const t = $$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const d = $$("#vi-donde .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const s = $$("#vi-sev button").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("vi", `${t[0].toUpperCase()+t.slice(1)} · ${d} · severidad ${s}${$("#vi-preview").hidden?"":" · con foto"}`); closeFlows(); toast(t==="enfermedad"||t==="plaga" ? "Guardado como sospecha; su agrónomo lo verá" : "Observación guardada en la bitácora"); });
+$("#rg-save").addEventListener("click", ()=>{ const met = $$("#rg-met .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("regue", `Riego ${met} · ${$("#rg-horas").value} h`, $("#rg-fecha").value||hoyISO); afterSave("Riego guardado en la bitácora"); });
+$("#vi-save").addEventListener("click", ()=>{ const t = $$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const d = $$("#vi-donde .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const s = $$("#vi-sev button").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("vi", `${t[0].toUpperCase()+t.slice(1)} · ${d} · severidad ${s}${$("#vi-preview").hidden?"":" · con foto"}`); afterSave(t==="enfermedad"||t==="plaga" ? "Guardado como sospecha; su agrónomo lo verá" : "Observación guardada en la bitácora"); });
 function previewPhoto(input, target, afterTxt){
   const f = input.files && input.files[0]; if(!f) return;
   const url = URL.createObjectURL(f); target.hidden = false;
@@ -539,13 +717,119 @@ function previewPhoto(input, target, afterTxt){
 }
 $("#etq-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#etq-preview"), "Foto guardada. Lectura automática de producto, dosis y fecha: etapa 1. Por ahora confirme o corrija los campos."); if(!$("#ap-prod").value) $("#ap-prod").placeholder = "lo que diga la etiqueta"; toast("Foto de la etiqueta guardada"); });
 $("#vi-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#vi-preview"), "Foto con fecha y lugar guardada."); });
-$("#voz-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; addLog("voz", `Nota de voz guardada (${Math.round(f.size/1024)} KB) · transcripción en la etapa 1`); toast("Nota de voz guardada en la bitácora"); });
+// ---------------------------------------------------------------- libreta: foto -> lectura -> revisión -> bitácora
+// En este prototipo la lectura es un ejemplo fijo (lo dice el banner). En la versión conectada, la foto va a un modelo de visión
+// que devuelve un registro por renglón con su campo "leído" y la duda por campo; la pantalla de revisión es la misma.
+const LIB_EJEMPLO = [
+  {tipo:"aplicacion", fecha:"2026-10-15", producto:"Fertilizante de fondo", dosis:"300", unidad:"kg/ha", clase:"fertilizante", leido:"15/10 fert. fondo 300 kg/ha P7", dudas:["dosis"], nota:"¿300 o 350? El trazo no se distingue."},
+  {tipo:"riego", fecha:"2026-10-16", horas:"5", metodo:"aspersión", leido:"16/10 riego asp. 5 hs", dudas:[]},
+  {tipo:"observacion", fecha:"2026-10-14", que:"encharcamiento", donde:"la orilla", sev:"1", leido:"14/10 charco orilla N", dudas:["fecha"], nota:"El año no está escrito; se asumió 2026."},
+];
+const TIPOS_PROP = [["aplicacion","Aplicación"],["riego","Riego"],["observacion","Observación"],["cosecha","Cosecha"]];
+const VI_TIPOS = ["enfermedad","plaga","helada","granizo","falta de agua","encharcamiento","fenología"], VI_DONDE = ["un manchón","la orilla","toda la parcela"];
+let libProps = [], libTimers = [], libURL = null;
+const PROP_DEFAULTS = {aplicacion:{unidad:"kg/ha", clase:"fungicida"}, riego:{metodo:"aspersión"}, observacion:{que:"enfermedad", donde:"un manchón", sev:"1"}, cosecha:{}};
+function withDefaults(p){ const d = PROP_DEFAULTS[p.tipo] || {}; Object.keys(d).forEach(k=>{ if(p[k]===undefined || p[k]==="") p[k] = d[k]; }); return p; }
+function libStart(file){
+  if(!file) return;
+  if(libURL) URL.revokeObjectURL(libURL); libURL = URL.createObjectURL(file);
+  $("#lib-img").src = libURL; $("#lib-img2").src = libURL;
+  $("#lib-step1").hidden = true; $("#lib-reading").hidden = true; $("#lib-review").hidden = true;
+  $("#lib-reading").hidden = false; $("#sheet-body").scrollTop = 0;
+  const pasos = [[150,"Enderezando la página…",18],[900,"Leyendo fechas y cantidades…",48],[1600,"Separando los renglones en registros…",78],[2300,"Listo",100]];
+  libTimers.forEach(clearTimeout); libTimers = pasos.map(([t,msg,pct])=>setTimeout(()=>{ $("#lib-status").textContent = msg; $("#lib-bar").style.width = pct+"%"; if(pct===100){ libProps = JSON.parse(JSON.stringify(LIB_EJEMPLO)); renderLibRows(); $("#lib-reading").hidden = true; $("#lib-review").hidden = false; $("#lib-save").hidden = false; $("#sheet-body").scrollTop = 0; } }, t));
+}
+function sel(k, opts, val){ return `<select data-k="${k}">${opts.map(o=>`<option${o===val?" selected":""}>${esc(o)}</option>`).join("")}</select>`; }
+function propCard(p, i){
+  const d = k => p.dudas && p.dudas.includes(k) ? " doubt" : "";
+  const f = (k, label, inner) => `<div class="field"><label>${label}</label>${inner}</div>`;
+  const inp = (k, type, extra="") => `<input class="${d(k).trim()}" type="${type}" value="${esc(p[k] ?? "")}" data-k="${k}" ${extra}>`;
+  let campos = "";
+  if(p.tipo==="aplicacion") campos = f("producto","Producto",inp("producto","text",'placeholder="como lo llama usted"')) + `<div class="grid2">${f("dosis","Dosis",inp("dosis","text",'inputmode="decimal"'))}${f("unidad","Unidad",sel("unidad",["kg/ha","L/ha","g/ha","mL/ha","kg total","L total"],p.unidad||"kg/ha"))}</div>` + f("clase","Tipo",sel("clase",["fungicida","fertilizante","insecticida","herbicida","bioestimulante","otro"],p.clase||"fungicida"));
+  if(p.tipo==="riego") campos = `<div class="grid2">${f("horas","Horas",inp("horas","text",'inputmode="decimal"'))}${f("metodo","Método",sel("metodo",["aspersión","goteo","gravedad","pivote"],p.metodo||"aspersión"))}</div>`;
+  if(p.tipo==="observacion") campos = f("que","Qué vio",sel("que",VI_TIPOS,p.que||"enfermedad")) + `<div class="grid2">${f("donde","Dónde",sel("donde",VI_DONDE,p.donde||"un manchón"))}${f("sev","Severidad 0–5",sel("sev",["0","1","2","3","4","5"],String(p.sev ?? "1")))}</div>`;
+  if(p.tipo==="cosecha") campos = `<div class="grid2">${f("rend","Rendimiento (t/ha)",inp("rend","text",'inputmode="decimal"'))}${f("perdida","Pérdida (%)",inp("perdida","text",'inputmode="decimal"'))}</div>`;
+  const tipoChips = TIPOS_PROP.map(([v,l])=>`<button class="chip" aria-pressed="${p.tipo===v}" data-ptipo="${v}">${l}</button>`).join("");
+  return `<div class="card prop" data-i="${i}">
+    <div class="row between"><div class="chips mini">${tipoChips}</div><button class="inline-link" data-rm>Quitar</button></div>
+    ${p.leido ? `<div class="leido">Leído: «${esc(p.leido)}»</div>` : ""}
+    ${f("fecha","Fecha",inp("fecha","date"))}
+    ${campos}
+    ${p.nota ? `<div class="dudanota">${esc(p.nota)}</div>` : ""}
+  </div>`;
+}
+function renderLibRows(){
+  $("#lib-rows").innerHTML = libProps.map(propCard).join("");
+  const n = libProps.length; $("#lib-found").textContent = `${n} registro${n===1?"":"s"} ${n===1?"encontrado":"encontrados"}`;
+  $("#lib-save").textContent = n ? `Guardar ${n} registro${n===1?"":"s"} en la bitácora` : "No queda nada por guardar"; $("#lib-save").disabled = !n;
+}
+$("#lib-rows").addEventListener("input", e=>{ const c = e.target.closest(".prop"); const k = e.target.dataset.k; if(!c || !k) return; const p = libProps[+c.dataset.i]; p[k] = e.target.value; p.dudas = (p.dudas||[]).filter(x=>x!==k); e.target.classList.remove("doubt"); const dn = c.querySelector(".dudanota"); if(dn && !p.dudas.length){ dn.remove(); } });
+$("#lib-rows").addEventListener("change", e=>{ const c = e.target.closest(".prop"); const k = e.target.dataset.k; if(!c || !k) return; libProps[+c.dataset.i][k] = e.target.value; });
+$("#lib-add").addEventListener("click", ()=>{ libProps.push(withDefaults({tipo:"aplicacion", fecha:hoyISO, dudas:[]})); renderLibRows(); const cards = $$("#lib-rows .prop"); cards[cards.length-1].scrollIntoView({behavior:"smooth", block:"center"}); });
+function libReset(){ libTimers.forEach(clearTimeout); libTimers = []; libProps = []; $("#lib-step1").hidden = false; $("#lib-reading").hidden = true; $("#lib-review").hidden = true; $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-rows").innerHTML = ""; }
+$("#lib-input").addEventListener("change", e=>libStart(e.target.files && e.target.files[0]));
+$("#lib-gal").addEventListener("change", e=>libStart(e.target.files && e.target.files[0]));
+$("#lib-save").addEventListener("click", ()=>{
+  const n = libProps.length; if(!n) return;
+  libProps.forEach(p=>{
+    if(p.tipo==="aplicacion") addLog("aplique", `${p.clase||"otro"}: ${p.producto||"(sin nombre)"}${p.dosis?` · ${p.dosis} ${p.unidad||""}`:""}`, p.fecha||hoyISO, "libreta");
+    else if(p.tipo==="riego") addLog("regue", `Riego ${p.metodo||"aspersión"} · ${p.horas||"?"} h`, p.fecha||hoyISO, "libreta");
+    else if(p.tipo==="observacion"){ const q = p.que||"observación"; addLog("vi", `${q[0].toUpperCase()+q.slice(1)} · ${p.donde||"un manchón"} · severidad ${p.sev ?? "1"}`, p.fecha||hoyISO, "libreta"); }
+    else addLog("cosecha", `Rendimiento ${p.rend||"?"} t/ha${p.perdida?` · pérdida ${p.perdida} %`:""}`, p.fecha||hoyISO, "libreta");
+  });
+  afterSave(`${n} registro${n===1?"":"s"} de la libreta guardado${n===1?"":"s"} en la bitácora`);
+});
+
+// ---------------------------------------------------------------- nota de voz: grabadora propia (micrófono) con respaldo de archivo
+const VOZ_HINT = 'Toque el botón y hable: qué hizo y qué vio, con fechas. "Ayer regué seis horas y vi manchas en la orilla norte."';
+let rec = null, recChunks = [], recStream = null, recStart = 0, recDur = 0, recTimer = null, recRAF = null, recBlob = null, recURL = null, actx = null;
+const fmtT = s => { s = Math.max(0, Math.round(s)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; };
+function vozFallback(msg){ $("#voz-fallback").hidden = false; $("#voz-fallback-txt").textContent = msg + " Puede elegir una grabación hecha con la app de grabadora del teléfono; en la app instalada desde el dominio propio se graba aquí mismo."; $("#voz-rec").disabled = true; $("#voz-hint").textContent = "Grabación directa no disponible en esta vista."; }
+function startMeter(stream){
+  try{
+    actx = new (window.AudioContext || window.webkitAudioContext)(); const src = actx.createMediaStreamSource(stream); const an = actx.createAnalyser(); an.fftSize = 64; src.connect(an);
+    const data = new Uint8Array(an.frequencyBinCount); const bars = $$("#voz-meter i");
+    const tick = ()=>{ an.getByteFrequencyData(data); bars.forEach((b,i)=>{ const v = data[Math.min(data.length-1, 2 + i*2)] / 255; b.style.height = (4 + v*32) + "px"; }); recRAF = requestAnimationFrame(tick); }; tick();
+  }catch(e){}
+}
+function stopMeter(){ cancelAnimationFrame(recRAF); recRAF = null; $$("#voz-meter i").forEach(b=>b.style.height = "4px"); if(actx){ try{ actx.close(); }catch(e){} actx = null; } }
+async function toggleRec(){
+  const btn = $("#voz-rec");
+  if(rec && rec.state==="recording"){ rec.stop(); return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){ vozFallback("Este navegador no permite grabar desde la página."); return; }
+  try{ recStream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e){ vozFallback(e && e.name==="NotAllowedError" ? "El micrófono no está permitido en esta vista." : "No se pudo abrir el micrófono."); return; }
+  const mime = ["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg;codecs=opus"].find(m=>MediaRecorder.isTypeSupported(m)) || "";
+  try{ rec = new MediaRecorder(recStream, mime ? {mimeType:mime} : undefined); }catch(e){ rec = new MediaRecorder(recStream); }
+  recChunks = [];
+  rec.ondataavailable = e=>{ if(e.data && e.data.size) recChunks.push(e.data); };
+  rec.onstop = ()=>{
+    recDur = (Date.now()-recStart)/1000; recBlob = new Blob(recChunks, {type: rec.mimeType || mime || "audio/webm"});
+    if(recURL) URL.revokeObjectURL(recURL); recURL = URL.createObjectURL(recBlob);
+    const a = $("#voz-play"); a.src = recURL; a.hidden = false; $("#voz-save").disabled = false; $("#voz-hint").textContent = "Escúchela y guárdela, o toque el botón para grabar otra.";
+    btn.classList.remove("on"); clearInterval(recTimer); stopMeter(); recStream.getTracks().forEach(t=>t.stop());
+  };
+  rec.start(250); recStart = Date.now(); btn.classList.add("on"); $("#voz-hint").textContent = "Grabando… toque para detener."; $("#voz-play").hidden = true; $("#voz-save").disabled = true; $("#voz-time").textContent = "0:00";
+  clearInterval(recTimer); recTimer = setInterval(()=>{ $("#voz-time").textContent = fmtT((Date.now()-recStart)/1000); }, 250);
+  startMeter(recStream);
+}
+$("#voz-rec").addEventListener("click", toggleRec);
+$("#voz-file").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; recBlob = f; recDur = 0; if(recURL) URL.revokeObjectURL(recURL); recURL = URL.createObjectURL(f); const a = $("#voz-play"); a.src = recURL; a.hidden = false; $("#voz-save").disabled = false; });
+$("#voz-play").addEventListener("loadedmetadata", e=>{ if(!recDur && isFinite(e.target.duration)) { recDur = e.target.duration; $("#voz-time").textContent = fmtT(recDur); } });
+function vozReset(){ if(rec && rec.state==="recording"){ rec.onstop = null; try{ rec.stop(); }catch(e){} } if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream = null; } rec = null; clearInterval(recTimer); stopMeter(); $("#voz-time").textContent = "0:00"; const a = $("#voz-play"); a.hidden = true; a.removeAttribute("src"); $("#voz-rec").classList.remove("on"); $("#voz-rec").disabled = false; $("#voz-hint").textContent = VOZ_HINT; $("#voz-save").disabled = true; $("#voz-fallback").hidden = true; $("#voz-file").value = ""; recBlob = null; }
+$("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"} · transcripción y registros para confirmar en la etapa 1`, hoyISO, "voz"); afterSave("Nota de voz guardada en la bitácora"); });
+
+// ---------------------------------------------------------------- video
+let vidFile = null, vidURL = null;
+$("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
+function vidReset(){ vidFile = null; if(vidURL){ URL.revokeObjectURL(vidURL); vidURL = null; } $("#vid-preview").hidden = true; $("#vid-preview").innerHTML = ""; $("#vid-input").value = ""; $("#vid-save").disabled = true; $("#vid-drop").querySelector("b").textContent = "Filmar"; }
+$("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("video", `Video · ${t} · ${(vidFile.size/1048576).toFixed(1)} MB · detección de daño en la etapa 1`, hoyISO, "video"); afterSave("Video guardado en la bitácora"); });
 
 // ---------------------------------------------------------------- toast y arranque
 let toastT = null;
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2600); }
 renderAll(); renderPoly(false);
-const h = (location.hash||"").replace("#",""); go(SCREENS.includes(h) ? h : "hoy");
+const h = (location.hash||"").replace("#","").split("/")[0]; go(SCREENS.includes(h) ? h : "hoy");
 })();
 </script>
 <script>
