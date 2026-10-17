@@ -58,6 +58,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .lot-chip small{display:block;color:var(--bar-muted);font-size:11px}
 .lot-chip[aria-pressed="true"]{background:var(--bar-fg);color:var(--ink);border-color:var(--bar-fg)}
 .lot-chip[aria-pressed="true"] small{color:#5B6B74}
+.lot-chip.add{border-style:dashed;color:var(--bar-muted)}
+/* Entrada por invitación (modo nube) */
+.login{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;place-items:center;padding:24px 16px;overflow:auto}
+.login .box{width:100%;max-width:380px;display:grid;gap:16px}
+.login h1{font-family:var(--serif);font-size:30px;margin:2px 0 0;line-height:1.1;color:var(--fg)}
+.login .logo img{width:72px;height:72px;border-radius:18px;display:block;box-shadow:var(--shadow)}
+.login .btn{width:100%}
+.login .inline-link{justify-self:start}
+.syncline{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center} .syncline i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block} .syncline i.pend{background:var(--warn)} .syncline i.off{background:var(--muted)}
 main{padding-block:16px 108px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
 [hidden]{display:none !important}
 .screen[hidden]{display:none}
@@ -76,7 +85,7 @@ main{padding-block:16px 108px;padding-left:max(16px,env(safe-area-inset-left,0px
 .sem-item b{display:block;font-weight:600}
 .sem-item span{font-size:14px;color:var(--muted)}
 .lvl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:3px 9px;white-space:nowrap}
-.lvl.bajo{background:var(--ok-bg);color:var(--ok)} .lvl.medio{background:var(--warn-bg);color:var(--warn)} .lvl.alto{background:var(--bad-bg);color:var(--bad)}
+.lvl.bajo{background:var(--ok-bg);color:var(--ok)} .lvl.medio{background:var(--warn-bg);color:var(--warn)} .lvl.alto{background:var(--bad-bg);color:var(--bad)} .lvl.sin{background:var(--surface-2);color:var(--muted)}
 .dot.bajo{background:var(--ok)} .dot.medio{background:var(--warn)} .dot.alto{background:var(--bad)}
 .action{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:12px;border-radius:12px;border:1px solid var(--line)}
 .action .n{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--accent);line-height:1}
@@ -292,7 +301,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   <div class="card" id="log-card">
     <div class="row between"><span class="eyebrow">Bitácora del lote</span><span class="small muted" id="log-count"></span></div>
     <div class="log" id="log"></div>
-    <p class="note">Se guarda en este teléfono y se sincroniza con la nube cuando hay señal; de ahí pasa al motor cada noche.</p>
+    <p class="note" id="sync-nota">Se guarda en este teléfono y se sincroniza con la nube cuando hay señal; de ahí pasa al motor cada noche.</p>
+    <div class="syncline" id="sync-estado" hidden></div>
   </div>
 </section>
 
@@ -339,11 +349,15 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   <div class="card">
     <span class="eyebrow">Datos del lote</span>
     <div class="grid2">
+      <div class="field"><label for="lt-nombre">Nombre</label><input id="lt-nombre" placeholder="p. ej. Parcela 7"></div>
+      <div class="field"><label for="lt-variedad">Variedad</label><input id="lt-variedad" placeholder="opcional"></div>
+    </div>
+    <div class="grid2">
       <div class="field"><label for="lt-cultivo">Cultivo</label><select id="lt-cultivo"><option>papa</option><option>tomate</option><option>trigo</option><option>aguacate</option></select></div>
       <div class="field"><label for="lt-riego">Riego</label><select id="lt-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option></select></div>
     </div>
     <div class="grid2">
-      <div class="field"><label for="lt-siembra">Fecha de siembra</label><input id="lt-siembra" type="date" value="2026-10-15"></div>
+      <div class="field"><label for="lt-siembra">Fecha de siembra</label><input id="lt-siembra" type="date"></div>
       <div class="field"><label for="lt-ha">Hectáreas (si las sabe)</label><input id="lt-ha" inputmode="decimal" placeholder="opcional"></div>
     </div>
     <p class="note">Con la fecha de siembra la etapa se conoce a ±3 días; sin ella se estima con la fecha típica de la zona (±3 semanas) y queda marcada como estimada.</p>
@@ -403,6 +417,14 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <h2>Preliminar, privada, de los socios</h2>
     <p class="small">Prototipo del 16 de octubre de 2026. Los datos de pronóstico de la Parcela 7 (Valle del Fuerte) son los reales del ensamble de hoy; el lote de Toluca es de ejemplo. Las fotos y notas se quedan en este teléfono: la sincronización con la nube y el motor es la etapa 0 del plan.</p>
     <p class="small">El motor corre en el RIG y nunca se expone: cada noche recoge lo registrado y publica los reportes. Esta app muestra resultados; los modelos no salen de ahí.</p>
+    <div class="kv" id="sesion-kv"></div>
+    <div class="row"><button class="btn sec" id="sesion-salir" hidden>Cerrar sesión</button><button class="btn sec" id="sesion-entrar" hidden>Entrar con mi correo</button></div>
+    <details><summary class="small" style="color:var(--blue);cursor:pointer">Nube (configuración)</summary>
+      <div class="field" style="margin-top:8px"><label for="nube-url">Dirección del proyecto</label><input id="nube-url" placeholder="https://xxxx.supabase.co" inputmode="url" autocapitalize="off" autocorrect="off"></div>
+      <div class="field"><label for="nube-anon">Clave pública (anon key)</label><input id="nube-anon" placeholder="eyJ…" autocapitalize="off" autocorrect="off"></div>
+      <div class="row"><button class="btn sec" id="nube-save">Guardar y reiniciar</button><span class="small muted" id="nube-estado"></span></div>
+      <p class="note">Con la dirección y la clave pública, la app pide entrada por correo y guarda lotes y registros en la nube; sin ellas trabaja en modo demostración.</p>
+    </details>
     <details><summary class="small" style="color:var(--blue);cursor:pointer">Lector de libretas (configuración)</summary>
       <div class="field" style="margin-top:8px"><label for="lector-url">Dirección del lector</label><input id="lector-url" placeholder="https://engram-lector.….workers.dev" inputmode="url" autocapitalize="off" autocorrect="off"></div>
       <div class="row"><button class="btn sec" id="lector-save">Guardar en este teléfono</button><span class="small muted" id="lector-estado"></span></div>
@@ -527,6 +549,22 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         <p class="note">La nota se transcribe y se convierte en registros que usted revisa antes de guardar, igual que la libreta (etapa 1).</p>
       </div>
 
+      <div class="flow" id="flow-nuevolote" hidden>
+        <div class="card">
+          <div class="field"><label for="nl-nombre">Nombre del lote</label><input id="nl-nombre" placeholder="p. ej. Parcela 7, El Potrero norte"></div>
+          <div class="grid2">
+            <div class="field"><label for="nl-cultivo">Cultivo</label><select id="nl-cultivo"><option>papa</option><option>tomate</option><option>trigo</option><option>aguacate</option></select></div>
+            <div class="field"><label for="nl-variedad">Variedad</label><input id="nl-variedad" placeholder="opcional"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label for="nl-riego">Riego</label><select id="nl-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option></select></div>
+            <div class="field"><label for="nl-ha">Hectáreas (si las sabe)</label><input id="nl-ha" inputmode="decimal" placeholder="opcional"></div>
+          </div>
+          <div class="field"><label for="nl-siembra">Fecha de siembra o trasplante</label><input id="nl-siembra" type="date"></div>
+        </div>
+        <p class="note">Después, en Lote, marque el punto y el borde: el motor toma de ahí la zona de referencia y el clima del punto. El reporte del lote aparece en Hoy a partir de la siguiente corrida nocturna.</p>
+      </div>
+
       <div class="flow" id="flow-video" hidden>
         <label class="photo" for="vid-input" id="vid-drop"><b>Filmar</b><span class="small muted">Abre la cámara en modo video. Recorra la planta o el daño despacio, 10 a 20 segundos, y diga en voz alta lo que ve.</span><input class="hiddeninput" id="vid-input" type="file" accept="video/*" capture="environment"></label>
         <div id="vid-preview" hidden></div>
@@ -546,6 +584,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button class="btn acc" id="lib-save" hidden>Guardar en la bitácora</button>
       <button class="btn acc" id="voz-save" hidden disabled>Guardar la nota de voz</button>
       <button class="btn acc" id="vid-save" hidden disabled>Guardar el video</button>
+      <button class="btn acc" id="nl-save" hidden>Crear el lote</button>
     </div>
   </div>
 </div>
@@ -560,6 +599,25 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   </div>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<div class="login" id="login" hidden>
+  <div class="box">
+    <div class="logo"><img src="icon-192.png" alt=""></div>
+    <div><span class="eyebrow">Engram Analítica</span><h1>Engram Campo</h1></div>
+    <div id="login-paso1" class="flow">
+      <div class="field"><label for="login-email">Correo con el que fue invitado</label><input id="login-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com" autocapitalize="off" autocorrect="off"></div>
+      <button class="btn acc" id="login-enviar">Enviar código</button>
+      <p class="note" id="login-msg">Le llega un código de 6 dígitos por correo. Esta versión es privada: solo entran las personas invitadas.</p>
+    </div>
+    <div id="login-paso2" class="flow" hidden>
+      <div class="field"><label for="login-code">Código de 6 dígitos</label><input id="login-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="123456" style="letter-spacing:5px;font-size:24px;text-align:center"></div>
+      <button class="btn acc" id="login-entrar">Entrar</button>
+      <button class="inline-link" id="login-otra">Usar otro correo o pedir otro código</button>
+      <p class="note" id="login-msg2"></p>
+    </div>
+    <button class="inline-link" id="login-demo">Ver la demostración con datos de ejemplo</button>
+  </div>
 </div>
 
 <script src="leaflet.js"></script>
@@ -581,7 +639,7 @@ const REGIONES = [
   {n:"Meseta Purépecha", e:"Michoacán", lat:19.45, lon:-102.35, ciclo:"primavera-verano"}
 ];
 // Dos lotes de demostración. "real:true" = pronóstico del ensamble emitido el 16-oct-2026 (IFS 51 miembros).
-const LOTES = [
+const DEMO_LOTES = [
   { id:"L-007", nombre:"Parcela 7", cultivo:"papa", variedad:"Alpha", region:"Valle del Fuerte", lat:25.78, lon:-108.95, ha:4.6, riego:"pivote",
     siembra:"2026-10-15", etapa:"emergencia", etapaTxt:"Siembra del 15 de octubre · día 2 · etapa: emergencia (estimada por tiempo térmico)", real:true,
     dias:[ {d:"vie 16",tz:0,he:0,tm:26,ll:0,ca:100},{d:"sáb 17",tz:0,he:0,tm:25,ll:0,ca:100},{d:"dom 18",tz:0,he:0,tm:26,ll:0,ca:100},{d:"lun 19",tz:0,he:0,tm:27,ll:0,ca:100},{d:"mar 20",tz:0,he:0,tm:27,ll:0,ca:100},{d:"mié 21",tz:4,he:0,tm:26,ll:0,ca:98},{d:"jue 22",tz:12,he:0,tm:26,ll:2,ca:98} ],
@@ -606,31 +664,33 @@ const LOTES = [
     nivel:"bajo", memoria:[{y:2024, t:29.8, txt:"Temporada normal · sin pérdidas registradas"},{y:2025, t:27.1, txt:"Pérdida 12 % · tizón en agosto"},{y:2026, t:31.5, txt:"Pérdida 8 % · tizón en agosto, menor"}],
     termina:{titulo:"Cerró en 31.5 t/ha (ejemplo)", cuerpo:"La tendencia de Toluca esperaba <b>30.4 t/ha</b>; el lote cerró 4 % arriba. Las tres temporadas registradas ya muestran un patrón propio: en las dos con tizón en agosto la pérdida fue de 8 y 12 %. Con cinco temporadas el pronóstico de cosecha empieza a ser del lote, no de la zona."} }
 ];
+let LOTES = DEMO_LOTES;                                  // en modo nube se reemplaza por los lotes de la persona
 const LS_KEY = "engram-campo-bitacora-v1";
 let lotIdx = 0;
 let log = load();
 function load(){ try{ const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : seedLog(); }catch(e){ return seedLog(); } }
-function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(log)); }catch(e){} }
+function save(){ try{ localStorage.setItem(MODO==="nube" ? LOGN_KEY : LS_KEY, JSON.stringify(log)); }catch(e){} }
 function seedLog(){ return [ {lote:"L-001", f:"2026-09-18", t:"cosecha", txt:"Rendimiento 31.5 t/ha · pérdida 8 % · tizón en agosto (ejemplo)"}, {lote:"L-001", f:"2026-07-10", t:"vi", txt:"Enfermedad · manchas en hojas bajas, orilla norte · severidad 2 (ejemplo)"}, {lote:"L-001", f:"2026-06-02", t:"aplique", txt:"Fungicida preventivo · 2 kg/ha (ejemplo)"} ]; }
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
-const hoyISO = "2026-10-16";
+let hoyISO = "2026-10-16";                              // en modo nube: la fecha real de hoy
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 // ---------------------------------------------------------------- render: selector y pantallas
 function renderLotSel(){
-  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}<small>${esc(l.cultivo)} · ${esc(l.region)}</small></button>`).join("");
+  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}<small>${esc(l.cultivo)} · ${esc(l.region || "zona por definir")}</small></button>`).join("")
+    + (MODO==="nube" ? `<button class="lot-chip add" data-flow="nuevolote">+ Nuevo lote<small>crear otro</small></button>` : "");
 }
 function renderHoy(){
   const l = LOTES[lotIdx];
-  $("#hoy-nivel").textContent = "Riesgo " + l.nivel; $("#hoy-nivel").className = "lvl " + l.nivel;
+  $("#hoy-nivel").textContent = l.nivel==="sin" ? "Sin reporte" : "Riesgo " + l.nivel; $("#hoy-nivel").className = "lvl " + l.nivel;
   $("#hoy-etapa").textContent = l.etapaTxt;
-  $("#hoy-sem").innerHTML = l.sem.map(s=>`<div class="sem-item"><span class="dot ${s.v}"></span><div><b>${esc(s.k)}</b><span>${esc(s.t)}</span></div><span class="lvl ${s.v}">${s.v}</span></div>`).join("");
-  $("#hoy-nota").textContent = l.real ? `Pronóstico real del ensamble emitido el 16 de octubre (${l.miembros} escenarios), sin calibrar todavía: las probabilidades son la fracción de escenarios.` : "Lote de ejemplo para la demostración; el pronóstico de la zona (Toluca) sí es el real del 16 de octubre.";
-  $("#hoy-acciones").innerHTML = l.acciones.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${a.c}</div></div></div>`).join("");
+  $("#hoy-sem").innerHTML = l.sem.length ? l.sem.map(s=>`<div class="sem-item"><span class="dot ${s.v}"></span><div><b>${esc(s.k)}</b><span>${esc(s.t)}</span></div><span class="lvl ${s.v}">${s.v}</span></div>`).join("") : `<p class="note">${esc(l.semVacio || "Sin semáforo todavía.")}</p>`;
+  $("#hoy-nota").textContent = l.nota !== undefined ? l.nota : (l.real ? `Pronóstico real del ensamble emitido el 16 de octubre (${l.miembros} escenarios), sin calibrar todavía: las probabilidades son la fracción de escenarios.` : "Lote de ejemplo para la demostración; el pronóstico de la zona (Toluca) sí es el real del 16 de octubre.");
+  $("#hoy-acciones").innerHTML = l.acciones.length ? l.acciones.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${a.c}</div></div></div>`).join("") : `<p class="note">Sin acciones todavía.</p>`;
   const n = l.memoria.length; $("#mem-n").innerHTML = `${n} <small>${n===1?"temporada":"temporadas"}</small>`;
-  $("#mem-txt").textContent = n===1 ? "Este lote empieza hoy su memoria. Con tres temporadas registradas, el reporte deja de hablar de la zona y empieza a hablar de este lote." : "Tres temporadas con el mismo registro. Con cinco, el pronóstico de cosecha pasa a ser del lote.";
-  $("#hoy-fecha").textContent = "Viernes 16 de octubre de 2026";
+  $("#mem-txt").textContent = l.memTxt || (n===1 ? "Este lote empieza hoy su memoria. Con tres temporadas registradas, el reporte deja de hablar de la zona y empieza a hablar de este lote." : "Tres temporadas con el mismo registro. Con cinco, el pronóstico de cosecha pasa a ser del lote.");
+  $("#hoy-fecha").textContent = l.fechaTxt || "Viernes 16 de octubre de 2026";
 }
 function renderSemana(){
   const l = LOTES[lotIdx];
@@ -638,8 +698,10 @@ function renderSemana(){
     const h = ["Condición de tizón","Helada (≤ 0 °C)","Mínima (mediana)","Lluvia ≥ 10 mm","Calor ≥ 30 °C"];
     const rows = [ l.dias.map(d=>cell(d.tz+" %", d.tz>=50?"hot":d.tz>=20?"warm":"")), l.dias.map(d=>cell(d.he+" %", d.he>=30?"hot":d.he>=10?"warm":"")), l.dias.map(d=>cell(d.tm+" °C", d.tm<=2?"hot":"")), l.dias.map(d=>cell(d.ll+" %", d.ll>=50?"hot":d.ll>=20?"warm":"")), l.dias.map(d=>cell(d.ca+" %", d.ca>=50?"hot":"")) ];
     $("#sem-tabla").innerHTML = `<table><thead><tr><th></th>${l.dias.map(d=>`<th>${esc(d.d)}</th>`).join("")}</tr></thead><tbody>${h.map((hh,i)=>`<tr><td>${hh}</td>${rows[i].join("")}</tr>`).join("")}</tbody></table>`;
-    $("#sem-fuente").textContent = `Fuente: ensamble IFS (${l.miembros} escenarios) emitido el 16 de octubre, Open-Meteo. Tizón = criterio Hutton aplicado a cada escenario; helada = mínima de la noche ≤ 0 °C. Lluvia 14 días: ${l.lluvia14[1]} mm (mediana; rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
+    $("#sem-fuente").textContent = l.fuenteTxt || `Fuente: ensamble IFS (${l.miembros} escenarios) emitido el 16 de octubre, Open-Meteo. Tizón = criterio Hutton aplicado a cada escenario; helada = mínima de la noche ≤ 0 °C. Lluvia 14 días: ${l.lluvia14[1]} mm (mediana; rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
     $("#sem-b").innerHTML = kv([["Períodos Hutton esperados", l.sem2.hutton],["Probabilidad de al menos uno", l.sem2.p1+" %"],["Helada en la semana", l.sem2.helada+" %"],["Lluvia (mediana, rango)", `${l.sem2.lluvia[1]} mm (${l.sem2.lluvia[0]}–${l.sem2.lluvia[2]})`],["Confianza", l.sem2.conf]]);
+  } else if(!l.agg){
+    $("#sem-tabla").innerHTML = `<p class="note">${esc(l.semanaVacia || "Sin pronóstico para este lote todavía.")}</p>`; $("#sem-fuente").textContent = ""; $("#sem-b").innerHTML = kv([["Estado", "sin reporte todavía"]]);
   } else {
     const a = l.agg;
     $("#sem-tabla").innerHTML = `<div class="kv"><span>Días con condiciones de tizón, 7 días</span><b>${a.tz7} de 7</b><span>En 14 días</span><b>${a.tz14} de 14 · ${a.hutton14} período Hutton</b><span>Lluvia en 14 días</span><b>${a.lluvia14[1]} mm (${a.lluvia14[0]}–${a.lluvia14[2]})</b><span>Probabilidad de superar 40 mm</span><b>${a.p40} %</b></div>`;
@@ -653,7 +715,7 @@ let flashNew = [];   // los registros recién guardados, para resaltarlos una ve
 function renderLog(){
   const l = LOTES[lotIdx]; const items = log.filter(x=>x.lote===l.id).reverse().sort((a,b)=>b.f.localeCompare(a.f));   // más reciente primero; a igual fecha, el último guardado
   $("#log-count").textContent = items.length ? `${items.length} registro${items.length===1?"":"s"}` : "sin registros todavía";
-  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
+  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
   const last = items[0];
   $("#lastreg").innerHTML = last ? `Último registro: <b>${fmtD(last.f)}</b> · ${esc(last.txt)}` : "Todavía no hay registros de este lote.";
 }
@@ -711,11 +773,11 @@ $$("#base-sel button").forEach(b=>b.addEventListener("click", ()=>setBase(b.data
 function setPin(lat, lon, opts={}){
   const g = G(); g.pin = {lat, lon}; geoSave();
   if(!map) { renderLoteKV(); return; }
-  if(!pinMarker){ pinMarker = L.marker([lat,lon], {icon:pinIcon(), draggable:true, zIndexOffset:500}).addTo(map); pinMarker.on("dragend", ()=>{ const p = pinMarker.getLatLng(); G().pin = {lat:p.lat, lon:p.lng}; geoSave(); renderLoteKV(); }); }
+  if(!pinMarker){ pinMarker = L.marker([lat,lon], {icon:pinIcon(), draggable:true, zIndexOffset:500}).addTo(map); pinMarker.on("dragend", ()=>{ const p = pinMarker.getLatLng(); G().pin = {lat:p.lat, lon:p.lng}; geoSave(); renderLoteKV(); patchLote(LOTES[lotIdx], {lat:p.lat, lon:p.lng}); }); }
   else pinMarker.setLatLng([lat,lon]);
   if(accCircle){ map.removeLayer(accCircle); accCircle = null; }
   if(opts.acc){ accCircle = L.circle([lat,lon], {radius:opts.acc, color:"#2F7FB8", weight:1, fillOpacity:.08, interactive:false}).addTo(map); }
-  if(opts.fromTap || opts.zoom){ if(map.getZoom() < 16) map.setView([lat,lon], 17); else map.panTo([lat,lon]); setBase("sat"); }
+  if(opts.fromTap || opts.zoom){ if(map.getZoom() < 16) map.setView([lat,lon], 17); else map.panTo([lat,lon]); setBase("sat"); patchLote(LOTES[lotIdx], {lat, lon}); }
   renderLoteKV();
   if(opts.fromTap) toast("Punto marcado: zona y clima de referencia actualizados");
   $("#map-hint").textContent = G().poly ? "Arrastre el punto azul si hace falta. El borde se cambia con \"Ajustar\"." : "Ahora toque \"Proponer polígono\": el borde se propone alrededor del punto y usted lo ajusta con los dedos.";
@@ -740,14 +802,15 @@ function drawLot(){
   renderPolyKV(); renderParcelas();
 }
 function proposePoly(){
-  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon}; if(!g.pin) setPin(p.lat, p.lon, {zoom:true});
+  if(LOTES[lotIdx].sin){ toast("Primero cree un lote"); return; }
+  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat ?? 23.6, lon:LOTES[lotIdx].lon ?? -102.5}; if(!g.pin) setPin(p.lat, p.lon, {zoom:true});
   const ha = parseFloat(String($("#lt-ha").value).replace(",",".")) || LOTES[lotIdx].ha || 4; const m2 = ha*10000, ratio = 1.45, w = Math.sqrt(m2*ratio), h = m2/w;
   const k = Math.PI/180, R = 6371008.8, dLat = m=>m/(R*k), dLon = m=>m/(R*k*Math.cos(p.lat*k)), ang = -12*k;
   const rot = (x,y)=>[x*Math.cos(ang)-y*Math.sin(ang), x*Math.sin(ang)+y*Math.cos(ang)];
   const jit = [[6,-4],[-5,7],[8,3],[-3,-6]];
   g.poly = [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].map(([x,y],i)=>{ const [rx,ry] = rot(x+jit[i][0], y+jit[i][1]); return [p.lat + dLat(ry), p.lon + dLon(rx)]; });
   g.confirmado = false; geoSave(); drawLot(); map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); setBase("sat");
-  toast(`Polígono propuesto (${ha} ha) alrededor del punto: ajústelo con los dedos`);
+  toast(`Polígono propuesto (${ha} ha) alrededor del punto: ajústelo con los dedos`); if(!LOTES[lotIdx].lat && !g.pin) toast("Marque primero el punto del lote en el mapa");
   startEdit({type:"lote"});
   $("#map-hint").textContent = "Propuesta de demostración (en la versión conectada el borde sale de la imagen). Arrastre los vértices; los puntos chicos agregan un vértice; toque un vértice y \"Quitar vértice\" para borrarlo.";
 }
@@ -760,7 +823,7 @@ function startEdit(t){
   renderHandles();
   $("#map-hint").textContent = (t.type==="lote" ? "Editando el borde del lote" : `Editando ${G().parcelas[t.i].nombre}`) + ": arrastre los vértices; toque un punto chico para agregar uno; toque un vértice y luego \"Quitar vértice\" para borrarlo. Al terminar, \"Listo\".";
 }
-function stopEdit(){ clearHandles(); editing = null; selVtx = null; $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; drawLot(); $("#map-hint").textContent = "Borde listo. \"Confirmar\" lo fija; puede volver a ajustarlo cuando quiera."; }
+function stopEdit(){ const eraParcela = editing && editing.type==="parcela"; clearHandles(); editing = null; selVtx = null; if(eraParcela) syncParcelas(); $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; drawLot(); $("#map-hint").textContent = "Borde listo. \"Confirmar\" lo fija; puede volver a ajustarlo cuando quiera."; }
 function clearHandles(){ vtxMarkers.forEach(m=>map.removeLayer(m)); midMarkers.forEach(m=>map.removeLayer(m)); vtxMarkers = []; midMarkers = []; }
 function renderHandles(){
   clearHandles(); const pts = targetPoly(); if(!pts) return;
@@ -784,7 +847,7 @@ $("#vtx-del").addEventListener("click", ()=>{ if(selVtx===null) return; const ar
 $("#poly-edit").addEventListener("click", ()=>{ if(!G().poly){ toast("Primero proponga o dibuje el polígono"); return; } startEdit({type:"lote"}); });
 $("#poly-done").addEventListener("click", stopEdit);
 $("#poly-propose").addEventListener("click", proposePoly);
-$("#poly-ok").addEventListener("click", ()=>{ const g = G(); if(!g.poly){ toast("No hay polígono que confirmar: propóngalo o dibújelo"); return; } g.confirmado = true; geoSave(); drawLot(); toast(`Polígono confirmado: ${areaHa(g.poly).toFixed(2)} ha`); $("#map-hint").textContent = "Confirmado. Dentro de este borde se seguirá el verdor del lote cada 5 días (etapa 1)."; });
+$("#poly-ok").addEventListener("click", ()=>{ const g = G(); if(!g.poly){ toast("No hay polígono que confirmar: propóngalo o dibújelo"); return; } g.confirmado = true; geoSave(); drawLot(); toast(`Polígono confirmado: ${areaHa(g.poly).toFixed(2)} ha`); const lc = LOTES[lotIdx]; lc.ha = Math.round(areaHa(g.poly)*100)/100; $("#lt-ha").value = lc.ha; patchLote(lc, {poligono:g.poly, superficie_ha:lc.ha, lat:(g.pin||{}).lat, lon:(g.pin||{}).lon}); $("#map-hint").textContent = "Confirmado. Dentro de este borde se seguirá el verdor del lote cada 5 días (etapa 1)."; });
 
 function renderPolyKV(){
   const g = G();
@@ -793,7 +856,9 @@ function renderPolyKV(){
   $("#poly-kv").innerHTML = kv([["Superficie del polígono", `${ha.toFixed(2)} ha · ${g.confirmado ? "confirmado" : "sin confirmar"}`],["Perímetro", `${Math.round(perimM(g.poly))} m`],["Vértices", String(g.poly.length)],["Píxeles Sentinel‑2 dentro", `≈ ${Math.round(ha*100)} de 10 m`]]);
 }
 function renderLoteKV(){
-  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon}; const near = nearest(p.lat, p.lon);
+  const g = G(); const l = LOTES[lotIdx]; const p = g.pin || ((l.lat!=null && l.lon!=null) ? {lat:l.lat, lon:l.lon} : null);
+  if(!p){ $("#lote-kv").innerHTML = kv([["Punto del lote", "sin marcar: toque el mapa o use su ubicación"]]); return; }
+  const near = nearest(p.lat, p.lon);
   $("#lote-kv").innerHTML = kv([["Punto del lote", `${p.lat.toFixed(5)}°, ${p.lon.toFixed(5)}°`],["Zona de referencia", `${near.r.n} (${near.r.e})`],["Distancia al centro de la zona", `${near.d.toFixed(0)} km`],["Ciclo típico", near.r.ciclo],["Clima de referencia", "celda NASA de 50 km + estación SMN más cercana"]]);
 }
 function renderRes(){
@@ -811,7 +876,8 @@ $("#parc-add").addEventListener("click", ()=>{
   g.parcelas.push({nombre:`Parcela ${g.parcelas.length+1}`, poly:[[c.lat+dLat(h/2), c.lng-dLon(w/2)],[c.lat+dLat(h/2), c.lng+dLon(w/2)],[c.lat-dLat(h/2), c.lng+dLon(w/2)],[c.lat-dLat(h/2), c.lng-dLon(w/2)]]});
   geoSave(); drawLot(); startEdit({type:"parcela", i:g.parcelas.length-1}); toast("Parcela creada en el centro de la vista: lleve sus vértices a su lugar");
 });
-$("#parc-list").addEventListener("input", e=>{ const i = e.target.dataset.pname; if(i===undefined) return; G().parcelas[+i].nombre = e.target.value; geoSave(); });
+let parcNameT = null;
+$("#parc-list").addEventListener("input", e=>{ const i = e.target.dataset.pname; if(i===undefined) return; G().parcelas[+i].nombre = e.target.value; geoSave(); clearTimeout(parcNameT); parcNameT = setTimeout(syncParcelas, 900); });
 
 // --- coordenadas escritas
 function parseCoord(s){
@@ -838,17 +904,270 @@ $("#coord-copiar").addEventListener("click", ()=>{ const g = G(); if(!g.poly){ t
 
 // --- al entrar a la pantalla o cambiar de lote
 function renderLote(){
+  const lx = LOTES[lotIdx]; cargarDatosLote();
+  if(lx.sin){ $("#lote-kv").innerHTML = kv([["Lote", "todavía no hay: cree uno con \"+ Nuevo lote\""]]); $("#poly-kv").innerHTML = ""; $("#parc-list").innerHTML = ""; if(map && !$("#s-lote").hidden){ map.setView([23.6, -102.5], 5); if(lotPoly){ map.removeLayer(lotPoly); lotPoly = null; } if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } renderRes(); } return; }
   renderLoteKV(); renderPolyKV(); renderParcelas();
   if(!map || $("#s-lote").hidden) return;
   if(editing){ clearHandles(); editing = null; selVtx = null; $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; }
   if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } if(accCircle){ map.removeLayer(accCircle); accCircle = null; }
-  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon};
+  const g = G(); const sinPunto = !g.pin && (LOTES[lotIdx].lat==null || LOTES[lotIdx].lon==null);
+  if(sinPunto){ drawLot(); if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } map.setView([23.6, -102.5], 5); $("#lote-kv").innerHTML = kv([["Punto del lote", "sin marcar: toque el mapa o use su ubicación"]]); renderRes(); $("#map-hint").textContent = "Acerque el mapa hasta su lote y tóquelo (o use \"Mi ubicación\"). Después \"Proponer polígono\"."; return; }
+  const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon};
   drawLot(); setPin(p.lat, p.lon);
   if(g.poly && lotPoly) map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); else map.setView([p.lat, p.lon], g.pin ? 16 : 15);
   $("#map-hint").textContent = g.poly ? (g.confirmado ? "Borde confirmado. \"Ajustar\" para moverlo; toque una parcela para editarla." : "Borde propuesto, sin confirmar. \"Ajustar\" para moverlo con los dedos, \"Confirmar\" para fijarlo.") : "Toque el mapa donde está el lote (o use su ubicación). Después \"Proponer polígono\" y ajuste el borde arrastrando los vértices.";
   renderRes();
 }
 function openLote(){ initMap(); if(!map) return; setTimeout(()=>{ map.invalidateSize(); renderLote(); }, 40); }
+
+// ---------------------------------------------------------------- nube (etapa 0): sesión por invitación, lotes, registros, archivos y reportes
+// Supabase por REST puro, sin librerías: Auth (código por correo), PostgREST (tablas con reglas por fila) y Storage (archivos).
+// La app solo lleva la dirección del proyecto y la clave pública (anon); la llave de servicio vive en el RIG. Sin configuración: modo demostración.
+const NUBE = { url: "", anon: "" };
+try{ const u = localStorage.getItem("engram-campo-nube-url"), a = localStorage.getItem("engram-campo-nube-anon"); if(u) NUBE.url = u; if(a) NUBE.anon = a; }catch(e){}
+let MODO = "demo", sesion = null, perfil = null, vaciando = false, pendLotes = {};
+const SES_KEY = "engram-campo-sesion-v1", COLA_KEY = "engram-campo-cola-v1", LOGN_KEY = "engram-campo-bitacora-nube-v1", CACHE_KEY = "engram-campo-lotes-cache-v1", PEND_KEY = "engram-campo-pend-lotes-v1";
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x" ? r : (r&0x3|0x8)).toString(16); }));
+const localISO = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const DIAS_L = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"], MESES_L = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function fechaLarga(iso){ const [y,m,d] = iso.split("-").map(Number); const dt = new Date(y, m-1, d); const s = `${DIAS_L[dt.getDay()]} ${d} de ${MESES_L[m-1]} de ${y}`; return s[0].toUpperCase()+s.slice(1); }
+function extDe(f){ const n = (f && f.name || "").toLowerCase(); const m = n.match(/\.([a-z0-9]{2,5})$/); if(m) return m[1]; const t = (f && f.type) || ""; return ({"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/heic":"heic","video/mp4":"mp4","video/webm":"webm","video/quicktime":"mov","audio/webm":"webm","audio/mp4":"m4a","audio/ogg":"ogg","audio/mpeg":"mp3","audio/wav":"wav"})[t.split(";")[0]] || "bin"; }
+
+// --- sesión (Auth de Supabase)
+function sesCargar(){ try{ sesion = JSON.parse(localStorage.getItem(SES_KEY)); }catch(e){ sesion = null; } }
+function sesGuardar(s){ sesion = s; try{ if(s) localStorage.setItem(SES_KEY, JSON.stringify(s)); else localStorage.removeItem(SES_KEY); }catch(e){} }
+async function authPost(path, body, bearer){
+  const h = {"apikey": NUBE.anon, "Content-Type": "application/json"}; if(bearer) h.Authorization = "Bearer " + bearer;
+  const r = await fetch(`${NUBE.url}/auth/v1/${path}`, {method:"POST", headers:h, body: JSON.stringify(body)});
+  let j = null; try{ j = await r.json(); }catch(e){}
+  if(!r.ok) throw new Error((j && (j.msg || j.message || j.error_description || j.error)) || `auth ${r.status}`);
+  return j;
+}
+async function pedirCodigo(email){ await authPost("otp", {email, create_user:false}); }
+async function verificarCodigo(email, token){ const j = await authPost("verify", {type:"email", email, token}); if(!j || !j.access_token) throw new Error("respuesta sin sesión"); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user:{id:j.user.id, email:j.user.email}}); }
+async function refrescar(){ if(!sesion) return false; try{ const j = await authPost("token?grant_type=refresh_token", {refresh_token: sesion.refresh_token}); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user: j.user ? {id:j.user.id, email:j.user.email} : sesion.user}); return true; }catch(e){ return false; } }
+async function token(){ if(!sesion) throw new Error("sin sesión"); if(Date.now() > sesion.expires_at - 60000){ if(!(await refrescar())){ if(navigator.onLine){ cerrarSesion(true); throw new Error("sesión vencida"); } } } return sesion.access_token; }
+function cerrarSesion(silencio){ sesGuardar(null); perfil = null; MODO = "demo"; LOTES = DEMO_LOTES; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
+
+// --- tablas (PostgREST) y archivos (Storage)
+async function db(method, tabla, params, body, prefer){
+  const t = await token(); const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+  const h = {"apikey": NUBE.anon, "Authorization": "Bearer " + t, "Content-Type": "application/json", "Accept": "application/json"}; if(prefer) h.Prefer = prefer;
+  const r = await fetch(`${NUBE.url}/rest/v1/${tabla}${qs}`, {method, headers:h, body: body!==undefined && body!==null ? JSON.stringify(body) : undefined});
+  if(r.status === 401){ cerrarSesion(true); throw new Error("sesión vencida"); }
+  if(!r.ok){ let t2 = ""; try{ t2 = await r.text(); }catch(e){} const err = new Error(`${method} ${tabla} ${r.status}: ${t2.slice(0,200)}`); err.status = r.status; throw err; }
+  const txt = await r.text(); return txt ? JSON.parse(txt) : null;
+}
+async function subirArchivo(bucket, ruta, blob){
+  const t = await token();
+  const r = await fetch(`${NUBE.url}/storage/v1/object/${bucket}/${ruta}`, {method:"POST", headers:{"apikey": NUBE.anon, "Authorization": "Bearer " + t, "Content-Type": blob.type || "application/octet-stream", "x-upsert": "true"}, body: blob});
+  if(!r.ok) throw new Error(`storage ${r.status}`); return `${bucket}/${ruta}`;
+}
+
+// --- lotes y reportes -> el modelo que ya usan las pantallas
+function temporadaLabel(fs){ if(!fs) return String(new Date().getFullYear()); const y = +fs.slice(0,4), m = +fs.slice(5,7); return m >= 9 ? `${y}-${String(y+1).slice(2)}` : String(y); }
+function loteVacio(){ return {id:"__sin__", sin:true, nube:true, nombre:"Sin lotes todavía", cultivo:"—", region:"", nivel:"sin", etapaTxt:"Cree su primer lote con \"+ Nuevo lote\", arriba.", sem:[], semVacio:"Cuando exista un lote, aquí va su semáforo.", nota:"", acciones:[{a:"Crear el primer lote", p:"Toque \"+ Nuevo lote\" en la barra de arriba. Después, en Lote, marque el punto y el borde.", c:"alta"}], memoria:[], memTxt:"La memoria empieza con el primer lote.", termina:{titulo:"Sin lotes", cuerpo:"Cuando haya un lote y seis semanas observadas, aquí aparece la tendencia de cosecha."}, dias:null, agg:null, fechaTxt: fechaLarga(hoyISO)}; }
+function lotDesdeNube(f, rep){
+  const c = rep && rep.contenido, hoy = c && c.hoy, sem = c && c.semana;
+  const l = { id:f.id, uuid:f.id, codigo:f.codigo, nombre:f.nombre, cultivo:f.cultivo, variedad:f.variedad||"", region:f.region||"", lat:f.lat, lon:f.lon, ha:f.superficie_ha ? Number(f.superficie_ha) : null, riego:f.riego||"", siembra:f.fecha_siembra||"", nube:true, real:true, fila:f, fechaTxt: fechaLarga(hoyISO), memoria:[], dias:null, agg:null, sem:[], acciones:[], miembros: sem ? sem.n_miembros : null };
+  if(c && hoy){
+    l.nivel = hoy.nivel || "bajo";
+    l.etapaTxt = (f.fecha_siembra ? `Siembra del ${fmtD(f.fecha_siembra)}${hoy.dia!=null ? ` · día ${hoy.dia}` : ""} · ` : "") + (hoy.etapa || "");
+    l.sem = (hoy.semaforo||[]).map(s=>({k:s.k, v:s.nivel, t:s.t})); l.acciones = (hoy.acciones||[]).map(a=>({a:a.a, p:a.p, c:a.c}));
+    l.nota = `${hoy.nota || ""} Reporte emitido el ${fmtD(rep.emitido)}.`.trim();
+    if(sem && sem.dias && sem.dias.length){
+      l.dias = sem.dias; l.sem2 = sem.sem2 || {hutton:"—", p1:"—", helada:"—", lluvia:["—","—","—"], conf:"—"}; l.lluvia14 = sem.lluvia14 || ["—","—","—"];
+      l.fuenteTxt = `Fuente: ensamble ${sem.fuente || ""} (${sem.n_miembros || "?"} escenarios) emitido el ${fmtD((c.fuentes && c.fuentes.emitido_ensamble) || rep.emitido)}. ${sem.calibrado ? "Probabilidades calibradas." : "Sin calibrar todavía: fracción de escenarios."} Lluvia 14 días: ${l.lluvia14[1]} mm (rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
+    } else { l.semanaVacia = "El reporte de este lote no trae todavía el detalle por día (la zona sin pronóstico cargado); vuelve a intentarse cada noche."; }
+    const m = c.memoria || {}; const nreg = m.registros || 0;
+    l.memoria = [{y: temporadaLabel(f.fecha_siembra), t:null, txt:`Temporada en curso · ${nreg} registro${nreg===1?"":"s"}${f.fecha_siembra ? ` · siembra ${fmtD(f.fecha_siembra)}` : ""}`}];
+    l.memTxt = `${m.temporadas||1} temporada${(m.temporadas||1)===1?"":"s"} con registro. Con tres, el reporte deja de hablar de la zona y empieza a hablar de este lote; con cinco, el pronóstico de cosecha pasa a ser del lote.`;
+    l.termina = {titulo:"Disponible desde la semana 6 de la temporada", cuerpo:"El pronóstico de cosecha necesita seis semanas observadas del lote. Mientras tanto, la referencia es la tendencia de la zona que ya calcula el reporte regional."};
+  } else {
+    l.nivel = "sin";
+    l.etapaTxt = f.fecha_siembra ? `Siembra del ${fmtD(f.fecha_siembra)} · el reporte del lote llega con la próxima corrida nocturna.` : "Sin fecha de siembra: regístrela en Lote para que la etapa se calcule.";
+    l.semVacio = "Todavía no hay reporte para este lote. El motor lo genera cada noche a partir de que el lote existe; mañana por la mañana aparece aquí."; l.nota = "";
+    l.acciones = [{a:"Marcar el punto y el borde del lote", p:"En Lote: toque el mapa o use su ubicación, proponga el polígono y confírmelo. Con eso el motor toma la zona y el clima del punto.", c:"alta"}, {a:"Registrar lo que haga desde hoy", p:"Riegos, aplicaciones y lo que vea: la memoria del lote empieza con el primer registro.", c:"alta"}];
+    l.memoria = [{y: temporadaLabel(f.fecha_siembra), t:null, txt:"Temporada en curso · sin reporte todavía"}]; l.memTxt = "Este lote empieza hoy su memoria.";
+    l.termina = {titulo:"Sin reporte todavía", cuerpo:"Cuando haya reporte y seis semanas observadas, aquí aparece la tendencia de cosecha."};
+    l.semanaVacia = "Sin pronóstico para este lote todavía: aparece con la primera corrida nocturna después de crear el lote.";
+  }
+  return l;
+}
+function armarLotes(filas, reps, parcs){
+  const porLote = {}; (reps||[]).forEach(r=>{ porLote[r.lote_id] = r; });
+  LOTES = filas.length ? filas.map(f=>lotDesdeNube(f, porLote[f.id])) : [loteVacio()];
+  filas.forEach(f=>{ const g = geo[f.id] || (geo[f.id] = {pin:null, poly:null, confirmado:false, parcelas:[]}); if(!g.parcelas) g.parcelas = []; if(f.lat!=null && f.lon!=null) g.pin = {lat:f.lat, lon:f.lon}; if(f.poligono && f.poligono.length>=3){ g.poly = f.poligono; g.confirmado = true; } });
+  (parcs||[]).forEach(pc=>{ const g = geo[pc.lote_id]; if(!g) return; const ex = g.parcelas.find(x=>x.uuid===pc.id); if(ex){ ex.nombre = pc.nombre; ex.poly = pc.poligono || ex.poly; } else g.parcelas.push({uuid:pc.id, nombre:pc.nombre, poly:pc.poligono}); });
+  geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
+}
+async function cargarLotes(){
+  const [filas, reps, perf, parcs] = await Promise.all([
+    db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
+    db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
+    db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
+    db("GET","parcelas",{select:"*"}),
+  ]);
+  perfil = (perf && perf[0]) || null;
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({filas, reps, parcs, perfil})); }catch(e){}
+  armarLotes(filas||[], reps||[], parcs||[]);
+}
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+async function cargarRegistros(){
+  const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
+  const nube = (filas||[]).map(r=>({lote:r.lote_id, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id}));
+  const cids = new Set(nube.map(x=>x.cid).filter(Boolean));
+  const pend = colaCargar().filter(q=>!cids.has(q.cliente_id)).map(q=>({lote:q.lote_id, f:q.fecha, t:q.tipo, txt:q.texto, src: q.fuente && q.fuente!=="app" ? q.fuente : undefined, cid:q.cliente_id, pendiente:true}));
+  log = nube.concat(pend); save();
+}
+async function crearLote(d){
+  const fila = {propietario: sesion.user.id, nombre:d.nombre, cultivo:d.cultivo, variedad:d.variedad||null, riego:d.riego||null, superficie_ha:d.ha||null, fecha_siembra:d.siembra||null};
+  const r = await db("POST","lotes",null,fila,"return=representation"); return r[0];
+}
+function pendCargar(){ try{ pendLotes = JSON.parse(localStorage.getItem(PEND_KEY)) || {}; }catch(e){ pendLotes = {}; } }
+function pendGuardar(){ try{ localStorage.setItem(PEND_KEY, JSON.stringify(pendLotes)); }catch(e){} }
+let patchTimers = {};
+function patchLote(l, campos){                     // cambios del lote (datos, punto, polígono): se suben con retardo corto; sin señal quedan pendientes
+  if(MODO!=="nube" || !l || !l.nube || l.sin) return;
+  if(l.fila) Object.assign(l.fila, campos);
+  pendLotes[l.uuid] = {...(pendLotes[l.uuid]||{}), ...campos}; pendGuardar();
+  clearTimeout(patchTimers[l.uuid]); patchTimers[l.uuid] = setTimeout(vaciarPendLotes, 700);
+}
+async function vaciarPendLotes(){
+  if(MODO!=="nube" || !sesion || !navigator.onLine) return;
+  for(const [id, campos] of Object.entries(pendLotes)){
+    try{ await db("PATCH","lotes",{id:"eq."+id}, campos, "return=minimal"); delete pendLotes[id]; pendGuardar(); }catch(e){ if(e.status && e.status!==0 && e.status<500 && e.status!==401){ delete pendLotes[id]; pendGuardar(); toast("La nube rechazó un cambio del lote: " + e.message.slice(0,80)); } }
+  }
+  renderSync();
+}
+async function syncParcelas(){
+  if(MODO!=="nube") return; const l = LOTES[lotIdx]; if(!l || !l.nube || l.sin) return; const g = G();
+  try{
+    for(const pc of g.parcelas){ const fila = {lote_id:l.uuid, nombre:pc.nombre, poligono:pc.poly, superficie_ha: Math.round(areaHa(pc.poly)*100)/100}; if(pc.uuid){ await db("PATCH","parcelas",{id:"eq."+pc.uuid}, fila, "return=minimal"); } else { const r = await db("POST","parcelas",null,fila,"return=representation"); pc.uuid = r[0].id; } }
+    for(const id of (g.parcelasBorradas||[])){ await db("DELETE","parcelas",{id:"eq."+id}); } g.parcelasBorradas = []; geoSave();
+  }catch(e){ toast("Parcelas guardadas en el teléfono; suben al volver la señal"); }
+}
+
+// --- cola de registros sin señal (texto en localStorage, archivos en IndexedDB)
+function colaCargar(){ try{ return JSON.parse(localStorage.getItem(COLA_KEY)) || []; }catch(e){ return []; } }
+function colaGuardar(c){ try{ localStorage.setItem(COLA_KEY, JSON.stringify(c)); }catch(e){} }
+const idb = {
+  _db:null,
+  open(){ if(this._db) return Promise.resolve(this._db); return new Promise((res, rej)=>{ const q = indexedDB.open("engram-campo", 1); q.onupgradeneeded = ()=>{ q.result.createObjectStore("archivos", {keyPath:"cid"}); }; q.onsuccess = ()=>{ this._db = q.result; res(q.result); }; q.onerror = ()=>rej(q.error); }); },
+  async put(o){ const d = await this.open(); return new Promise((res, rej)=>{ const t = d.transaction("archivos","readwrite"); t.objectStore("archivos").put(o); t.oncomplete = res; t.onerror = ()=>rej(t.error); }); },
+  async get(cid){ const d = await this.open(); return new Promise((res, rej)=>{ const q = d.transaction("archivos").objectStore("archivos").get(cid); q.onsuccess = ()=>res(q.result); q.onerror = ()=>rej(q.error); }); },
+  async del(cid){ const d = await this.open(); return new Promise((res, rej)=>{ const t = d.transaction("archivos","readwrite"); t.objectStore("archivos").delete(cid); t.oncomplete = res; t.onerror = ()=>rej(t.error); }); },
+};
+async function encolarRegistro(item, archivo){
+  const cola = colaCargar(); cola.push(item); colaGuardar(cola);
+  if(archivo && archivo.blob){ try{ await idb.put({cid:item.cliente_id, bucket:archivo.bucket, ext:archivo.ext, blob:archivo.blob}); item.archivo_pendiente = true; colaGuardar(cola); }catch(e){ toast("El archivo no se pudo guardar para subir después"); } }
+  renderSync(); vaciarCola();
+}
+async function vaciarCola(){
+  if(MODO!=="nube" || !sesion || vaciando || !navigator.onLine){ renderSync(); return; }
+  vaciando = true;
+  try{
+    const fallidos = new Set();
+    for(let pasada = 0; pasada < 20; pasada++){                  // mientras sigan llegando registros nuevos a la cola, sigue subiendo
+      const pendientes = colaCargar().filter(q=>!fallidos.has(q.cliente_id)); if(!pendientes.length) break;
+      for(const item of pendientes){
+        try{
+          if(item.archivo_pendiente){ const a = await idb.get(item.cliente_id); if(a){ item.archivo = await subirArchivo(a.bucket, `${item.lote_id}/${item.cliente_id}.${a.ext}`, a.blob); await idb.del(item.cliente_id); } delete item.archivo_pendiente; colaGuardar(colaCargar().map(q=>q.cliente_id===item.cliente_id ? item : q)); }
+          const fila = {...item}; delete fila.archivo_pendiente;
+          try{ await db("POST","registros",null,fila,"return=minimal"); }
+          catch(e){ if(e.status !== 409) throw e; }               // 409 = ya estaba (reintento): se da por subido
+          colaGuardar(colaCargar().filter(q=>q.cliente_id!==item.cliente_id));
+          const le = log.find(x=>x.cid===item.cliente_id); if(le) delete le.pendiente;
+        }catch(e){ fallidos.add(item.cliente_id); if(String(e.message).includes("sesión") || !navigator.onLine) { pasada = 99; break; } }
+      }
+    }
+    await vaciarPendLotes();
+  } finally { vaciando = false; save(); renderLog(); renderSync(); }
+}
+function renderSync(){
+  const el = $("#sync-estado"), nota = $("#sync-nota"); if(!el) return;
+  if(MODO!=="nube"){ el.hidden = true; if(nota) nota.hidden = false; return; }
+  el.hidden = false; if(nota) nota.hidden = true;
+  const n = colaCargar().length + Object.keys(pendLotes).length;
+  el.innerHTML = !navigator.onLine ? `<i class="off"></i>Sin señal: ${n} cambio${n===1?"":"s"} guardado${n===1?"":"s"} en el teléfono; suben solos al volver la señal.` : n ? `<i class="pend"></i>${n} cambio${n===1?"":"s"} por subir…` : `<i></i>Sincronizado con la nube${perfil && perfil.nombre ? ` · ${perfil.nombre}` : ""}.`;
+}
+window.addEventListener("online", ()=>{ vaciarCola(); }); window.addEventListener("offline", renderSync);
+
+// --- lectura de libreta: respaldo en la nube (foto, lo leído, lo corregido, lo confirmado)
+async function guardarLectura(fotoFile, lineasOrig, lineasCorr, propuestos, confirmados, modelo){
+  if(MODO!=="nube") return; const l = LOTES[lotIdx]; if(!l.nube || l.sin) return;
+  try{
+    let foto = null; if(fotoFile){ try{ foto = await subirArchivo("fotos", `${l.uuid}/libreta-${uuid()}.${extDe(fotoFile)}`, fotoFile); }catch(e){} }
+    await db("POST","lecturas_libreta",null,{lote_id:l.uuid, usuario:sesion.user.id, foto, lineas:lineasOrig, lineas_corregidas:lineasCorr, registros_propuestos:propuestos, registros_confirmados:confirmados, modelo},"return=minimal");
+  }catch(e){ /* la lectura queda en los registros; el respaldo es lo de menos sin señal */ }
+}
+
+// --- pantalla de entrada y sesión
+function mostrarLogin(on){ $("#login").hidden = !on; document.body.classList.toggle("noscroll", on); }
+function renderSesion(){
+  const kv_ = $("#sesion-kv"); if(!kv_) return;
+  const conf = NUBE.url && NUBE.anon;
+  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]]);
+  $("#sesion-salir").hidden = !(MODO==="nube"); $("#sesion-entrar").hidden = !(conf && MODO!=="nube");
+  $("#nube-url").value = NUBE.url; $("#nube-anon").value = NUBE.anon;
+}
+$("#sesion-salir").addEventListener("click", ()=>cerrarSesion(false));
+$("#sesion-entrar").addEventListener("click", ()=>mostrarLogin(true));
+$("#nube-save").addEventListener("click", ()=>{ const u = $("#nube-url").value.trim().replace(/\/+$/,""), a = $("#nube-anon").value.trim(); try{ if(u) localStorage.setItem("engram-campo-nube-url", u); else localStorage.removeItem("engram-campo-nube-url"); if(a) localStorage.setItem("engram-campo-nube-anon", a); else localStorage.removeItem("engram-campo-nube-anon"); }catch(e){} $("#nube-estado").textContent = "Guardado. Reiniciando…"; setTimeout(()=>location.reload(), 500); });
+$("#login-enviar").addEventListener("click", async ()=>{
+  const email = $("#login-email").value.trim().toLowerCase(); if(!/.+@.+\..+/.test(email)){ $("#login-msg").textContent = "Escriba un correo válido."; return; }
+  $("#login-enviar").disabled = true; $("#login-msg").textContent = "Enviando…";
+  try{ await pedirCodigo(email); $("#login-paso1").hidden = true; $("#login-paso2").hidden = false; $("#login-msg2").textContent = `Código enviado a ${email}. Si no llega en un minuto, revise la carpeta de no deseados.`; $("#login-code").value = ""; $("#login-code").focus(); }
+  catch(e){ $("#login-msg").textContent = /signup|not allowed|not found|invalid/i.test(e.message) ? "Ese correo no está invitado. Pida la invitación a Engram Analítica." : /rate|limit|seconds/i.test(e.message) ? "Demasiados intentos seguidos: espere un minuto y vuelva a pedirlo." : "No se pudo enviar el código: " + e.message; }
+  finally{ $("#login-enviar").disabled = false; }
+});
+$("#login-entrar").addEventListener("click", async ()=>{
+  const email = $("#login-email").value.trim().toLowerCase(), code = $("#login-code").value.trim(); if(code.length < 6){ $("#login-msg2").textContent = "El código tiene 6 dígitos."; return; }
+  $("#login-entrar").disabled = true; $("#login-msg2").textContent = "Entrando…";
+  try{ await verificarCodigo(email, code); await entrarModoNube(); toast(`Bienvenido${perfil && perfil.nombre ? ", " + perfil.nombre : ""}`); }
+  catch(e){ $("#login-msg2").textContent = /expired|invalid|token|otp/i.test(e.message) ? "Código incorrecto o vencido. Pida otro." : "No se pudo entrar: " + e.message; }
+  finally{ $("#login-entrar").disabled = false; }
+});
+$("#login-code").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#login-entrar").click(); });
+$("#login-otra").addEventListener("click", ()=>{ $("#login-paso2").hidden = true; $("#login-paso1").hidden = false; $("#login-code").value = ""; $("#login-msg").textContent = "Le llega un código de 6 dígitos por correo. Esta versión es privada: solo entran las personas invitadas."; });
+$("#login-demo").addEventListener("click", ()=>{ mostrarLogin(false); toast("Modo demostración: datos de ejemplo"); });
+
+async function entrarModoNube(){
+  MODO = "nube"; hoyISO = localISO(); pendCargar();
+  try{ log = JSON.parse(localStorage.getItem(LOGN_KEY)) || []; }catch(e){ log = []; }
+  let ok = true;
+  try{ await cargarLotes(); await cargarRegistros(); }
+  catch(e){ ok = false; if(!sesion) return; if(!cargarLotesCache()){ LOTES = [loteVacio()]; } }
+  lotIdx = Math.min(lotIdx, LOTES.length-1); mostrarLogin(false); renderSesion(); renderAll(); renderSync();
+  if(!ok) toast(navigator.onLine ? "No se pudo leer la nube: se muestra lo guardado en el teléfono" : "Sin señal: se muestra lo guardado en el teléfono");
+  vaciarCola();
+}
+async function nubeInit(){
+  const conf = NUBE.url && NUBE.anon;
+  if(!conf){ MODO = "demo"; renderSesion(); return; }
+  sesCargar();
+  if(!sesion){ MODO = "demo"; mostrarLogin(true); renderSesion(); return; }
+  await entrarModoNube();
+}
+// --- nuevo lote (subpantalla)
+$("#nl-save").addEventListener("click", async ()=>{
+  const nombre = $("#nl-nombre").value.trim(); if(!nombre){ toast("Póngale nombre al lote"); $("#nl-nombre").focus(); return; }
+  if(MODO!=="nube"){ toast("En la demostración no se crean lotes: entre con su correo"); return; }
+  $("#nl-save").disabled = true; $("#nl-save").textContent = "Creando…";
+  try{
+    const ha = parseFloat(String($("#nl-ha").value).replace(",",".")) || null;
+    const fila = await crearLote({nombre, cultivo:$("#nl-cultivo").value, variedad:$("#nl-variedad").value.trim(), riego:$("#nl-riego").value, ha, siembra:$("#nl-siembra").value || null});
+    await cargarLotes(); lotIdx = Math.max(0, LOTES.findIndex(l=>l.uuid===fila.id)); renderAll();
+    closeSheet(false); toast(`Lote "${nombre}" creado: ahora marque el punto y el borde`); setTimeout(()=>go("lote"), 350);
+    $("#nl-nombre").value = ""; $("#nl-variedad").value = ""; $("#nl-ha").value = ""; $("#nl-siembra").value = "";
+  }catch(e){ toast("No se pudo crear el lote: " + (navigator.onLine ? e.message.slice(0,80) : "sin señal")); }
+  finally{ $("#nl-save").disabled = false; $("#nl-save").textContent = "Crear el lote"; }
+});
+// --- datos del lote (pantalla Lote) -> nube
+function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombre").value = l.nombre||""; $("#lt-variedad").value = l.variedad||""; $("#lt-cultivo").value = l.cultivo||"papa"; $("#lt-riego").value = l.riego||"aspersión"; $("#lt-siembra").value = l.siembra||""; $("#lt-ha").value = l.ha!=null ? l.ha : ""; }
+[["lt-nombre","nombre","nombre"],["lt-variedad","variedad","variedad"],["lt-cultivo","cultivo","cultivo"],["lt-riego","riego","riego"],["lt-siembra","siembra","fecha_siembra"],["lt-ha","ha","superficie_ha"]].forEach(([id, campo, col])=>{
+  $("#"+id).addEventListener("change", e=>{ const l = LOTES[lotIdx]; if(!l || l.sin) return; let v = e.target.value; if(campo==="ha"){ v = parseFloat(String(v).replace(",",".")); if(isNaN(v)) v = null; } if(campo==="siembra" && !v) v = null; l[campo] = v===null ? (campo==="ha" ? null : "") : v; if(campo==="nombre" || campo==="cultivo") renderLotSel(); patchLote(l, {[col]: v}); if(MODO==="nube" && l.nube) toast("Dato del lote guardado"); });
+});
 
 // ---------------------------------------------------------------- navegación
 const SCREENS = ["hoy","semana","registrar","lote","mas"];
@@ -870,7 +1189,7 @@ document.addEventListener("click", ev => {
   const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeSheet(false); return; }
   const rm = ev.target.closest("[data-rm]"); if(rm){ const c = rm.closest(".prop"); if(c){ libProps.splice(+c.dataset.i, 1); renderLibRows(); } return; }
   const pedit = ev.target.closest("[data-pedit]"); if(pedit){ startEdit({type:"parcela", i:+pedit.dataset.pedit}); return; }
-  const pdel = ev.target.closest("[data-pdel]"); if(pdel){ G().parcelas.splice(+pdel.dataset.pdel,1); geoSave(); if(editing && editing.type==="parcela") stopEdit(); else drawLot(); return; }
+  const pdel = ev.target.closest("[data-pdel]"); if(pdel){ const g = G(); const [q] = g.parcelas.splice(+pdel.dataset.pdel,1); if(q && q.uuid){ g.parcelasBorradas = (g.parcelasBorradas||[]).concat(q.uuid); } geoSave(); if(editing && editing.type==="parcela") stopEdit(); else { drawLot(); syncParcelas(); } return; }
   const rml = ev.target.closest("[data-rml]"); if(rml){ libLines.splice(+rml.dataset.rml, 1); libEdited = true; renderLibLines(); return; }
   const useobs = ev.target.closest("[data-useobs]"); if(useobs){ const u = libUnparsed.splice(+useobs.dataset.useobs, 1)[0]; if(u) libProps.push(withDefaults({tipo:"observacion", fecha:hoyISO, linea:u.linea, leido:u.texto, dudas:["fecha","que","donde","sev"], nota:"tomada de una línea sin fecha ni evento claro: complete los campos"})); renderLibRows(); return; }
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
@@ -880,15 +1199,15 @@ function renderAll(){ renderLotSel(); renderHoy(); renderSemana(); renderLog(); 
 
 // ---------------------------------------------------------------- registrar: flujos
 const ULTIMOS = [{p:"Fungicida preventivo", d:"2", u:"kg/ha", t:"fungicida"},{p:"Fertilizante foliar", d:"3", u:"L/ha", t:"fertilizante"},{p:"Insecticida (paratrioza)", d:"0.5", u:"L/ha", t:"insecticida"}];
-const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:"Escanear la libreta", voz:"Nota de voz", video:"Video"};
-const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save"};
+const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:"Escanear la libreta", voz:"Nota de voz", video:"Video", nuevolote:"Nuevo lote"};
+const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save", nuevolote:"nl-save"};
 const FLOWS = Object.keys(TITULOS);
 let sheetOpen = null, ignorePop = false, sheetTimer = null;
 function openFlow(name, btn){
   if(name==="nada"){                      // acción inmediata: confirmación visible, sin duplicar el mismo día
     const l = LOTES[lotIdx];
     if(log.some(x=>x.lote===l.id && x.t==="nada" && x.f===hoyISO)){ toast("Hoy ya quedó registrado: sin novedades"); return; }
-    addLog("nada", "Sin novedades esta semana");
+    addLog("nada", "Sin novedades esta semana", hoyISO, undefined, {});
     if(btn){ const b = btn.querySelector("b"), ic = btn.querySelector(".ic"); const t0 = b.textContent, i0 = ic.textContent; btn.classList.add("done"); b.textContent = "Registrado"; ic.textContent = "✓"; setTimeout(()=>{ btn.classList.remove("done"); b.textContent = t0; ic.textContent = i0; }, 1800); }
     toast("Registrado: sin novedades. Eso también es memoria.");
     showNewEntry(60);
@@ -934,11 +1253,17 @@ function onChip(chip){
   if(chip.dataset.ult!==undefined){ const u = ULTIMOS[parseInt(chip.dataset.ult,10)]; $("#ap-prod").value = u.p; $("#ap-dosis").value = u.d; $("#ap-unidad").value = u.u; $("#ap-tipo").value = u.t; }
   if(chip.parentElement.id==="vi-tipo"){ const t = chip.textContent; $("#vi-nota").textContent = t==="enfermedad"||t==="plaga" ? "Queda como sospecha: un agrónomo la confirma. La app no diagnostica." : t==="fenología" ? "Las fechas de emergencia, floración o senescencia calibran la etapa de su lote: valen oro." : "Con la fecha y el lugar, el evento se cruza con el pronóstico que se emitió: así se mide si avisamos a tiempo."; }
 }
-function addLog(t, txt, f, src){ const item = {lote: LOTES[lotIdx].id, f: f || hoyISO, t, txt}; if(src) item.src = src; log.push(item); save(); flashNew.push(item); renderLog(); }
-$("#ap-save").addEventListener("click", ()=>{ const p=$("#ap-prod").value.trim(); if(!p){ toast("Escriba el producto o elija uno de los últimos"); $("#ap-prod").focus(); return; } const d=$("#ap-dosis").value.trim(); addLog("aplique", `${$("#ap-tipo").value}: ${p}${d?` · ${d} ${$("#ap-unidad").value}`:""}`, $("#ap-fecha").value||hoyISO); afterSave("Aplicación guardada en la bitácora"); });
+function addLog(t, txt, f, src, datos, archivo){
+  const l = LOTES[lotIdx]; if(l.sin){ toast("Primero cree un lote (botón + arriba)"); return; }
+  const cid = uuid(); const item = {lote: l.id, f: f || hoyISO, t, txt, cid}; if(src) item.src = src;
+  if(MODO==="nube" && l.nube){ item.pendiente = true; encolarRegistro({cliente_id:cid, lote_id:l.uuid, usuario:sesion.user.id, fecha:item.f, tipo:t, texto:txt, datos:datos||{}, fuente:src||"app", archivo:null}, archivo||null); }
+  log.push(item); save(); flashNew.push(item); renderLog();
+}
+function archivoDe(input, bucket){ const f = input && input.files && input.files[0]; return f ? {bucket, ext:extDe(f), blob:f} : null; }
+$("#ap-save").addEventListener("click", ()=>{ const p=$("#ap-prod").value.trim(); if(!p){ toast("Escriba el producto o elija uno de los últimos"); $("#ap-prod").focus(); return; } const d=$("#ap-dosis").value.trim(); addLog("aplique", `${$("#ap-tipo").value}: ${p}${d?` · ${d} ${$("#ap-unidad").value}`:""}`, $("#ap-fecha").value||hoyISO, undefined, {producto:p, dosis:d, unidad:$("#ap-unidad").value, clase:$("#ap-tipo").value}, archivoDe($("#etq-input"), "fotos")); afterSave("Aplicación guardada en la bitácora"); });
 $("#rg-horas").addEventListener("input", e=>{ $("#rg-horas-v").textContent = e.target.value; });
-$("#rg-save").addEventListener("click", ()=>{ const met = $$("#rg-met .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("regue", `Riego ${met} · ${$("#rg-horas").value} h`, $("#rg-fecha").value||hoyISO); afterSave("Riego guardado en la bitácora"); });
-$("#vi-save").addEventListener("click", ()=>{ const t = $$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const d = $$("#vi-donde .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const s = $$("#vi-sev button").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("vi", `${t[0].toUpperCase()+t.slice(1)} · ${d} · severidad ${s}${$("#vi-preview").hidden?"":" · con foto"}`); afterSave(t==="enfermedad"||t==="plaga" ? "Guardado como sospecha; su agrónomo lo verá" : "Observación guardada en la bitácora"); });
+$("#rg-save").addEventListener("click", ()=>{ const met = $$("#rg-met .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("regue", `Riego ${met} · ${$("#rg-horas").value} h`, $("#rg-fecha").value||hoyISO, undefined, {horas:$("#rg-horas").value, metodo:met}); afterSave("Riego guardado en la bitácora"); });
+$("#vi-save").addEventListener("click", ()=>{ const t = $$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const d = $$("#vi-donde .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; const s = $$("#vi-sev button").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("vi", `${t[0].toUpperCase()+t.slice(1)} · ${d} · severidad ${s}${$("#vi-preview").hidden?"":" · con foto"}`, hoyISO, undefined, {que:t, donde:d, sev:s}, archivoDe($("#vi-input"), "fotos")); afterSave(t==="enfermedad"||t==="plaga" ? "Guardado como sospecha; su agrónomo lo verá" : "Observación guardada en la bitácora"); });
 function previewPhoto(input, target, afterTxt){
   const f = input.files && input.files[0]; if(!f) return;
   const url = URL.createObjectURL(f); target.hidden = false;
@@ -969,7 +1294,7 @@ const TIPOS_PROP = [["aplicacion","Aplicación"],["riego","Riego"],["observacion
 const VI_TIPOS = ["enfermedad","plaga","helada","granizo","falta de agua","encharcamiento","fenología"], VI_DONDE = ["un manchón","la orilla","toda la parcela"];
 const PROP_DEFAULTS = {aplicacion:{unidad:"kg/ha", clase:"fungicida"}, riego:{metodo:"aspersión"}, observacion:{que:"enfermedad", donde:"un manchón", sev:"1"}, cosecha:{}};
 function withDefaults(p){ const d = PROP_DEFAULTS[p.tipo] || {}; Object.keys(d).forEach(k=>{ if(p[k]===undefined || p[k]==="") p[k] = d[k]; }); if(!Array.isArray(p.dudas)) p.dudas = []; return p; }
-let libLines = [], libProps = [], libUnparsed = [], libSim = true, libEdited = false, libTimers = [], libURL = null;
+let libLines = [], libProps = [], libUnparsed = [], libSim = true, libEdited = false, libTimers = [], libURL = null, libFile = null, libLinesOrig = [], libPropsOrig = [], libModelo = null;
 
 function libShow(stage){ ["step1","reading","trans","review"].forEach(s=>{ $("#lib-"+s).hidden = s!==stage; }); $("#lib-interp").hidden = stage!=="trans"; $("#lib-save").hidden = stage!=="review"; $("#sheet-body").scrollTop = 0; }
 function libProgress(pasos){ libTimers.forEach(clearTimeout); libTimers = pasos.map(([t,msg,pct,fn])=>setTimeout(()=>{ $("#lib-status").textContent = msg; $("#lib-bar").style.width = pct+"%"; if(fn) fn(); }, t)); }
@@ -993,14 +1318,14 @@ function normUnp(us){ return (us||[]).map(u=>({linea:u.linea, texto:String(u.tex
 
 // --- etapa 1: la foto llega
 async function libStart(file){
-  if(!file) return;
+  if(!file) return; libFile = file;
   if(libURL) URL.revokeObjectURL(libURL); libURL = URL.createObjectURL(file); $("#lib-img").src = libURL; $("#lib-img2").src = libURL;
   libProps = []; libUnparsed = []; libEdited = false; $("#lib-bar").style.width = "0"; libShow("reading");
   if(LECTOR.url){
     libProgress([[200,"Enviando la página al lector…",15],[1500,"Transcribiendo renglón por renglón…",45],[4500,"Interpretando los registros…",75]]);
     try{
       const res = await lectorLeer(file); libTimers.forEach(clearTimeout); $("#lib-bar").style.width = "100%";
-      libSim = false; libLines = normLines(res.lineas); libProps = normRecs(res.registros); libUnparsed = normUnp(res.sin_interpretar);
+      libSim = false; libLines = normLines(res.lineas); libProps = normRecs(res.registros); libUnparsed = normUnp(res.sin_interpretar); libModelo = res.modelo || null; libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = JSON.parse(JSON.stringify(libProps));
       if(!libLines.length){ $("#lib-banner").textContent = (res.pagina && res.pagina.comentario) || "No encontré anotaciones legibles en esta foto. Pruebe con más luz y la hoja completa, o escriba las líneas a mano."; libLines = [{texto:"", confianza:1, dudas:[]}]; }
       else $("#lib-banner").textContent = `Transcripción del lector: ${libLines.length} línea${libLines.length===1?"":"s"}. Compare con la página y corrija lo que no coincida.`;
     }catch(e){
@@ -1010,7 +1335,7 @@ async function libStart(file){
     renderLibLines(); libShow("trans"); return;
   }
   libProgress([[150,"Enderezando la página…",18],[900,"Transcribiendo renglón por renglón…",55],[1800,"Listo",100, ()=>{
-    libSim = true; libLines = JSON.parse(JSON.stringify(LIB_EJEMPLO_LINEAS));
+    libSim = true; libLines = JSON.parse(JSON.stringify(LIB_EJEMPLO_LINEAS)); libLinesOrig = JSON.parse(JSON.stringify(libLines)); libModelo = null;
     $("#lib-banner").textContent = "Transcripción de EJEMPLO: este prototipo todavía no lee su foto. Edite estas líneas o escriba las suyas para probar la interpretación; en la versión conectada aquí aparece lo que dice su página.";
     renderLibLines(); libShow("trans");
   }]]);
@@ -1107,7 +1432,7 @@ $("#lib-interp").addEventListener("click", async ()=>{
   if(LECTOR.url && !libEdited && libProps.length) r = {registros: libProps, sin: libUnparsed};
   else if(LECTOR.url){ try{ const res = await lectorInterpretar(lines); r = {registros: normRecs(res.registros), sin: normUnp(res.sin_interpretar)}; }catch(e){ r = null; } }
   if(!r) r = interpretLines(libLines);
-  libProps = r.registros; libUnparsed = r.sin; libEdited = false; renderLibRows(); libShow("review");
+  libProps = r.registros; libUnparsed = r.sin; libEdited = false; libPropsOrig = JSON.parse(JSON.stringify(libProps)); renderLibRows(); libShow("review");
 });
 $("#lib-backlines").addEventListener("click", ()=>{ renderLibLines(); libShow("trans"); });
 function sel(k, opts, val){ return `<select data-k="${k}">${opts.map(o=>`<option${o===val?" selected":""}>${esc(o)}</option>`).join("")}</select>`; }
@@ -1137,11 +1462,12 @@ $("#lib-add").addEventListener("click", ()=>{ libProps.push(withDefaults({tipo:"
 $("#lib-save").addEventListener("click", ()=>{
   const n = libProps.length; if(!n) return;
   libProps.forEach(p=>{
-    if(p.tipo==="aplicacion") addLog("aplique", `${p.clase||"otro"}: ${p.producto||"(sin nombre)"}${p.dosis?` · ${p.dosis} ${p.unidad||""}`:""}`, p.fecha||hoyISO, "libreta");
-    else if(p.tipo==="riego") addLog("regue", `Riego ${p.metodo||"aspersión"} · ${p.horas||"?"} h`, p.fecha||hoyISO, "libreta");
-    else if(p.tipo==="observacion"){ const q = p.que||"observación"; addLog("vi", `${q[0].toUpperCase()+q.slice(1)} · ${p.donde||"un manchón"} · severidad ${p.sev ?? "1"}`, p.fecha||hoyISO, "libreta"); }
-    else addLog("cosecha", `Rendimiento ${p.rend||"?"} t/ha${p.perdida?` · pérdida ${p.perdida} %`:""}`, p.fecha||hoyISO, "libreta");
+    if(p.tipo==="aplicacion") addLog("aplique", `${p.clase||"otro"}: ${p.producto||"(sin nombre)"}${p.dosis?` · ${p.dosis} ${p.unidad||""}`:""}`, p.fecha||hoyISO, "libreta", {producto:p.producto||"", dosis:p.dosis||"", unidad:p.unidad||"", clase:p.clase||"otro", leido:p.leido||""});
+    else if(p.tipo==="riego") addLog("regue", `Riego ${p.metodo||"aspersión"} · ${p.horas||"?"} h`, p.fecha||hoyISO, "libreta", {horas:p.horas||"", metodo:p.metodo||"aspersión", leido:p.leido||""});
+    else if(p.tipo==="observacion"){ const q = p.que||"observación"; addLog("vi", `${q[0].toUpperCase()+q.slice(1)} · ${p.donde||"un manchón"} · severidad ${p.sev ?? "1"}`, p.fecha||hoyISO, "libreta", {que:q, donde:p.donde||"un manchón", sev:String(p.sev ?? "1"), leido:p.leido||""}); }
+    else addLog("cosecha", `Rendimiento ${p.rend||"?"} t/ha${p.perdida?` · pérdida ${p.perdida} %`:""}`, p.fecha||hoyISO, "libreta", {rend:p.rend||"", perdida:p.perdida||"", leido:p.leido||""});
   });
+  guardarLectura(libFile, libLinesOrig, libLines, libPropsOrig, libProps, libSim ? "ejemplo+local" : (libModelo || "lector"));
   afterSave(`${n} registro${n===1?"":"s"} de la libreta guardado${n===1?"":"s"} en la bitácora`);
 });
 
@@ -1182,19 +1508,18 @@ $("#voz-rec").addEventListener("click", toggleRec);
 $("#voz-file").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; recBlob = f; recDur = 0; if(recURL) URL.revokeObjectURL(recURL); recURL = URL.createObjectURL(f); const a = $("#voz-play"); a.src = recURL; a.hidden = false; $("#voz-save").disabled = false; });
 $("#voz-play").addEventListener("loadedmetadata", e=>{ if(!recDur && isFinite(e.target.duration)) { recDur = e.target.duration; $("#voz-time").textContent = fmtT(recDur); } });
 function vozReset(){ if(rec && rec.state==="recording"){ rec.onstop = null; try{ rec.stop(); }catch(e){} } if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream = null; } rec = null; clearInterval(recTimer); stopMeter(); $("#voz-time").textContent = "0:00"; const a = $("#voz-play"); a.hidden = true; a.removeAttribute("src"); $("#voz-rec").classList.remove("on"); $("#voz-rec").disabled = false; $("#voz-hint").textContent = VOZ_HINT; $("#voz-save").disabled = true; $("#voz-fallback").hidden = true; $("#voz-file").value = ""; recBlob = null; }
-$("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"} · transcripción y registros para confirmar en la etapa 1`, hoyISO, "voz"); afterSave("Nota de voz guardada en la bitácora"); });
+$("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"} · transcripción y registros para confirmar en la etapa 1`, hoyISO, "voz", {duracion_s: Math.round(recDur||0), kb: Math.round(recBlob.size/1024)}, {bucket:"audios", ext: extDe(recBlob) === "bin" ? "webm" : extDe(recBlob), blob: recBlob}); afterSave("Nota de voz guardada en la bitácora"); });
 
 // ---------------------------------------------------------------- video
 let vidFile = null, vidURL = null;
 $("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
 function vidReset(){ vidFile = null; if(vidURL){ URL.revokeObjectURL(vidURL); vidURL = null; } $("#vid-preview").hidden = true; $("#vid-preview").innerHTML = ""; $("#vid-input").value = ""; $("#vid-save").disabled = true; $("#vid-drop").querySelector("b").textContent = "Filmar"; }
-$("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("video", `Video · ${t} · ${(vidFile.size/1048576).toFixed(1)} MB · detección de daño en la etapa 1`, hoyISO, "video"); afterSave("Video guardado en la bitácora"); });
+$("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("video", `Video · ${t} · ${(vidFile.size/1048576).toFixed(1)} MB · detección de daño en la etapa 1`, hoyISO, "video", {muestra:t, mb:+(vidFile.size/1048576).toFixed(1)}, {bucket:"videos", ext: extDe(vidFile), blob: vidFile}); afterSave("Video guardado en la bitácora"); });
 
 // ---------------------------------------------------------------- toast y arranque
 let toastT = null;
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2600); }
-renderAll();
-const h = (location.hash||"").replace("#","").split("/")[0]; go(SCREENS.includes(h) ? h : "hoy");
+nubeInit().catch(()=>{ MODO = "demo"; }).then(()=>{ renderAll(); const h = (location.hash||"").replace("#","").split("/")[0]; go(SCREENS.includes(h) ? h : "hoy"); renderSync(); });
 })();
 </script>
 <script>
