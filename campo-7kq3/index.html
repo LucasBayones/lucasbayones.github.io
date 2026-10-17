@@ -1118,7 +1118,7 @@ $("#login-enviar").addEventListener("click", async ()=>{
   const email = $("#login-email").value.trim().toLowerCase(); if(!/.+@.+\..+/.test(email)){ $("#login-msg").textContent = "Escriba un correo válido."; return; }
   $("#login-enviar").disabled = true; $("#login-msg").textContent = "Enviando…";
   try{ await pedirCodigo(email); $("#login-paso1").hidden = true; $("#login-paso2").hidden = false; $("#login-msg2").textContent = `Código enviado a ${email}. Si no llega en un minuto, revise la carpeta de no deseados.`; $("#login-code").value = ""; $("#login-code").focus(); }
-  catch(e){ $("#login-msg").textContent = /signup|not allowed|not found|invalid/i.test(e.message) ? "Ese correo no está invitado. Pida la invitación a Engram Analítica." : /rate|limit|seconds/i.test(e.message) ? "Demasiados intentos seguidos: espere un minuto y vuelva a pedirlo." : "No se pudo enviar el código: " + e.message; }
+  catch(e){ const det = ` (respuesta: ${String(e.message).slice(0,90)})`; $("#login-msg").textContent = (/signup|not allowed|not found|invalid/i.test(e.message) ? "Ese correo no está dado de alta. Pida la invitación a Engram Analítica." : /rate|limit|seconds/i.test(e.message) ? "Demasiados intentos seguidos: espere un minuto y vuelva a pedirlo." : /smtp|sending|mail/i.test(e.message) ? "El correo no se pudo enviar (remitente): avise a Engram Analítica." : "No se pudo enviar el código.") + det; }
   finally{ $("#login-enviar").disabled = false; }
 });
 $("#login-entrar").addEventListener("click", async ()=>{
