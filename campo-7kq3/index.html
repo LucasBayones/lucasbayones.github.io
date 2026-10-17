@@ -17,6 +17,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <title>Engram Campo</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="leaflet.css">
 <style>
 /* Layout: una columna de celular (máx 430px) centrada; barra inferior fija; pantallas conmutadas por hash.
    Color: tinta oscura de la marca para barras, fondo pálido verde-gris de campo, ámbar como acento, azul para datos;
@@ -171,6 +172,16 @@ body.noscroll{overflow:hidden}
 .progress{height:6px;border-radius:3px;background:var(--line);overflow:hidden} .progress i{display:block;height:100%;width:0;background:var(--blue);transition:width .6s}
 .banner-ex{font-size:13px;line-height:1.4;padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:#6B4A0E;border:1px solid #EAD3A3}
 .prop .leido{font-size:13px;color:var(--muted);font-style:italic}
+.tips{padding-left:18px;display:grid;gap:5px;margin:10px 0 0;line-height:1.4}
+.lines{gap:8px}
+.tline{display:grid;grid-template-columns:10px 22px 1fr 28px;gap:8px;align-items:center}
+.tline .tdot{width:10px;height:10px;border-radius:50%;background:var(--ok)} .tline .tdot.warn{background:var(--warn)}
+.tline .ln{font-family:var(--serif);font-weight:600;color:var(--muted);font-size:14px;text-align:right}
+.tline input{font:inherit;font-size:15px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%;min-width:0}
+.tline input.warn{border-color:var(--warn);background:var(--warn-bg)}
+.tline .x{border:0;background:none;color:var(--muted);font-size:22px;line-height:1;padding:2px 4px}
+.tline .duda{grid-column:3/5;font-size:12px;color:var(--warn);margin-top:-4px;line-height:1.35}
+.unp{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;font-size:14px} .unp .ln{font-family:var(--serif);font-weight:600;color:var(--muted);text-align:right} .unp .m{color:var(--muted);font-size:13px}
 .prop .doubt{border-color:var(--warn);background:var(--warn-bg)}
 .prop .dudanota{font-size:12px;color:var(--warn);font-weight:500}
 .chips.mini .chip{padding:5px 10px;font-size:13px}
@@ -187,6 +198,22 @@ body.noscroll{overflow:hidden}
 .recbtn:disabled{opacity:.4}
 .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:middle;font-style:normal}
 #vid-preview video{width:100%;max-height:280px;border-radius:12px;background:#000;display:block}
+/* Lote: mapa satelital real (Leaflet), polígono editable, parcelas, coordenadas */
+.lmap{width:100%;height:340px;border-radius:14px;overflow:hidden;background:#20302a;position:relative;z-index:0;touch-action:none}
+.lmap .leaflet-control-attribution{font-size:9px;background:rgba(255,255,255,.72);color:#333} .lmap .leaflet-control-attribution a{color:#2F7FB8}
+.lmap .leaflet-bar a{color:#0B1C26}
+.maptools{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.seg2{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden} .seg2 button{border:0;background:var(--surface);padding:9px 14px;font-size:14px;font-weight:500} .seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--bar-fg)}
+.btn.sm{padding:9px 12px;font-size:14px}
+.row.wrap{flex-wrap:wrap}
+.vtx{width:22px;height:22px;border-radius:50%;background:#E0A63A;border:2px solid #0B1C26;box-shadow:0 1px 5px rgba(0,0,0,.45);cursor:grab}
+.vtx.sel{background:#fff;border-color:#C43A25;box-shadow:0 0 0 3px rgba(196,58,37,.35)}
+.vtx.mid{width:14px;height:14px;background:rgba(242,237,228,.9);border:1.5px solid #0B1C26;cursor:pointer}
+.pinicon{width:16px;height:16px;border-radius:50%;background:#2F7FB8;border:3px solid #fff;box-shadow:0 0 0 2px #2F7FB8, 0 2px 6px rgba(0,0,0,.4)}
+.parc{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.parc input{font:inherit;border:0;border-bottom:1px dashed var(--line);background:none;padding:2px 0;width:100%;min-width:0;color:var(--fg)} .parc .ha{font-family:var(--serif);font-weight:600;color:var(--blue);white-space:nowrap}
+textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%;resize:vertical}
+.maphint{line-height:1.4}
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} .sheet .panel{transition:none} .log-item.new{animation:none} .bigbtn{transition:none} .scanline{animation:none} }
 </style>
 </head>
@@ -272,19 +299,42 @@ body.noscroll{overflow:hidden}
 <!-- ============================ LOTE ============================ -->
 <section class="screen" id="s-lote" hidden aria-labelledby="h-lote">
   <div class="card">
-    <span class="eyebrow">Ubicación</span>
-    <h2 id="h-lote">Marque un punto. Lo demás lo inferimos.</h2>
-    <p class="note">Toque el mapa donde está su lote (en el celular, el GPS lo hace solo). El sistema elige la zona de referencia, la celda de clima y la estación más cercana.</p>
-    <svg class="map" id="map" viewBox="0 0 400 320" role="img" aria-label="Mapa esquemático de México con las diez zonas paperas; toque para marcar el lote"></svg>
+    <span class="eyebrow">Ubicación y borde del lote</span>
+    <h2 id="h-lote">Marque el lote. El borde se ajusta con los dedos.</h2>
+    <div class="maptools">
+      <button class="btn sec sm" id="geo-btn">◎ Mi ubicación</button>
+      <div class="seg2" id="base-sel" role="group" aria-label="Capa del mapa"><button aria-pressed="true" data-base="sat">Satélite</button><button aria-pressed="false" data-base="topo">Mapa</button></div>
+    </div>
+    <div id="lmap" class="lmap" role="application" aria-label="Mapa satelital del lote: toque para marcar, pellizque para acercar"></div>
+    <p class="small muted maphint" id="map-hint">Toque el mapa donde está el lote (o use su ubicación). Después "Proponer polígono" y ajuste el borde arrastrando los vértices.</p>
+    <div class="row wrap" id="poly-tools">
+      <button class="btn" id="poly-propose">Proponer polígono</button>
+      <button class="btn sec" id="poly-edit">Ajustar</button>
+      <button class="btn sec" id="poly-done" hidden>Listo</button>
+      <button class="btn sec" id="vtx-del" hidden>Quitar vértice</button>
+      <button class="btn acc" id="poly-ok">Confirmar</button>
+    </div>
+    <div class="kv" id="poly-kv"></div>
     <div class="kv" id="lote-kv"></div>
+    <details>
+      <summary class="small" style="color:var(--blue);cursor:pointer">Definir por coordenadas</summary>
+      <div class="flow" style="margin-top:10px">
+        <div class="field"><label for="coord-centro">Centro del lote (lat, lon)</label><div class="row" style="flex-wrap:nowrap"><input id="coord-centro" placeholder="25.7812, -108.9534" autocapitalize="off" autocorrect="off"><button class="btn sec" id="coord-ir">Ir</button></div></div>
+        <div class="field"><label for="coord-vertices">Vértices del polígono, uno por renglón (lat, lon)</label><textarea id="coord-vertices" rows="4" placeholder="25.7830, -108.9560&#10;25.7830, -108.9500&#10;25.7790, -108.9500&#10;25.7790, -108.9560" autocapitalize="off" autocorrect="off"></textarea></div>
+        <div class="row"><button class="btn sec" id="coord-dibujar">Dibujar polígono</button><button class="inline-link" id="coord-copiar">copiar los vértices actuales</button></div>
+        <p class="note">Acepta grados decimales (25.7812, -108.9534) o grados‑minutos‑segundos (25°46'52"N 108°57'12"W). Útil si ya tiene los puntos del levantamiento, del RAN o del GPS de mano. Si está ajustando una parcela, el polígono se aplica a esa parcela.</p>
+      </div>
+    </details>
   </div>
   <div class="card">
-    <span class="eyebrow">Superficie</span>
-    <h2>El polígono lo propone el satélite</h2>
-    <svg class="poly" id="poly" viewBox="0 0 320 200" role="img" aria-label="Propuesta de polígono del lote sobre imagen satelital, para confirmar"></svg>
-    <div class="kv"><span>Superficie propuesta</span><b id="poly-ha">4.6 ha</b><span>Píxel de referencia</span><b>10 m (Sentinel‑2)</b><span>Imágenes limpias usadas</span><b>167 (2.5 años)</b></div>
-    <div class="row"><button class="btn" id="poly-ok">Confirmar polígono</button><button class="btn sec" id="poly-adj">Ajustar</button></div>
-    <p class="note" id="poly-nota">Prototipo: el polígono se dibuja de ejemplo. En la versión conectada se detecta desde el punto sobre la imagen satelital y usted solo confirma o arrastra un borde.</p>
+    <div class="row between"><span class="eyebrow">Parcelas dentro del lote</span><button class="inline-link" id="parc-add">+ Agregar parcela</button></div>
+    <div id="parc-list" class="flow"></div>
+    <p class="note">Opcional. El lote es la unidad grande: clima, satélite y memoria se calculan por lote. Las parcelas sirven para registrar riegos, aplicaciones y observaciones por sección.</p>
+  </div>
+  <div class="card">
+    <span class="eyebrow">Resolución</span>
+    <div class="kv" id="res-kv"></div>
+    <p class="note">La imagen de fondo sirve para dibujar el borde. El seguimiento del cultivo se hace con Sentinel‑2 dentro del polígono (10 m por píxel, cada 5 días): en 4 ha son unos 400 píxeles por imagen, suficientes para la tendencia del lote y para ver manchones de más de media hectárea.</p>
   </div>
   <div class="card">
     <span class="eyebrow">Datos del lote</span>
@@ -353,6 +403,11 @@ body.noscroll{overflow:hidden}
     <h2>Preliminar, privada, de los socios</h2>
     <p class="small">Prototipo del 16 de octubre de 2026. Los datos de pronóstico de la Parcela 7 (Valle del Fuerte) son los reales del ensamble de hoy; el lote de Toluca es de ejemplo. Las fotos y notas se quedan en este teléfono: la sincronización con la nube y el motor es la etapa 0 del plan.</p>
     <p class="small">El motor corre en el RIG y nunca se expone: cada noche recoge lo registrado y publica los reportes. Esta app muestra resultados; los modelos no salen de ahí.</p>
+    <details><summary class="small" style="color:var(--blue);cursor:pointer">Lector de libretas (configuración)</summary>
+      <div class="field" style="margin-top:8px"><label for="lector-url">Dirección del lector</label><input id="lector-url" placeholder="https://engram-lector.….workers.dev" inputmode="url" autocapitalize="off" autocorrect="off"></div>
+      <div class="row"><button class="btn sec" id="lector-save">Guardar en este teléfono</button><span class="small muted" id="lector-estado"></span></div>
+      <p class="note">Sin dirección, el escáner muestra una transcripción de ejemplo y la interpretación se hace en el teléfono. Con la dirección, la foto se lee de verdad.</p>
+    </details>
     <p class="small muted">Engram Analítica · consultas@engram-analitica.com · uso interno, no distribuir.</p>
   </div>
 </section>
@@ -420,8 +475,17 @@ body.noscroll{overflow:hidden}
           <label class="inline-link" for="lib-gal" style="justify-self:center;cursor:pointer">o elegir una foto que ya tomó<input class="hiddeninput" id="lib-gal" type="file" accept="image/*"></label>
           <div class="card">
             <span class="eyebrow">Cómo funciona</span>
-            <p class="small">1. Foto de la página. 2. El sistema lee fechas, lotes, productos, cantidades, riegos y observaciones, y arma un registro por renglón. 3. Usted revisa cada uno, corrige lo que haga falta y confirma. <b>Nada se guarda sin su visto bueno</b>; la foto queda como respaldo.</p>
+            <p class="small">1. Foto de la página. 2. El sistema <b>transcribe</b> renglón por renglón y usted corrige lo que haya leído mal. 3. Después <b>interpreta</b>: un registro por evento, anclado a su renglón. 4. Usted confirma y se guarda; la foto queda de respaldo. <b>Nada se guarda sin su visto bueno.</b></p>
           </div>
+          <div class="card"><details><summary>Cómo anotar para que se lea bien</summary>
+            <ul class="small tips">
+              <li>Una línea por cosa que pasó.</li>
+              <li>Empiece con la fecha: <b>16/10</b>.</li>
+              <li>Luego qué hizo o vio, con cantidad y unidad: <b>riego 5 h</b> · <b>fert 300 kg/ha</b> · <b>manchas orilla N</b>.</li>
+              <li>Si tiene varios lotes, el lote al final: <b>P7</b>.</li>
+              <li>Abreviaturas que entendemos: asp. goteo grav. · fert. fung. insect. herb. · kg/ha L/ha · hs · N S E O.</li>
+            </ul>
+          </details></div>
         </div>
         <div class="flow" id="lib-reading" hidden>
           <div class="card">
@@ -430,13 +494,20 @@ body.noscroll{overflow:hidden}
             <p class="small muted" id="lib-status">Enderezando la página…</p>
           </div>
         </div>
+        <div class="flow" id="lib-trans" hidden>
+          <div class="banner-ex" id="lib-banner"></div>
+          <div class="card"><details><summary>Ver la página</summary><img id="lib-img2" alt=""></details></div>
+          <div class="row between"><span class="eyebrow">Lo que leí</span><span class="small muted" id="lib-nlines"></span></div>
+          <p class="small muted" style="margin-top:-6px">Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada.</p>
+          <div id="lib-lines" class="flow lines"></div>
+          <button class="btn sec" id="lib-addline">+ Agregar una línea</button>
+        </div>
         <div class="flow" id="lib-review" hidden>
-          <div class="banner-ex">Lectura de ejemplo en este prototipo. En la versión conectada, los registros que ve aquí salen de su foto.</div>
-          <div class="card"><details><summary>Ver la foto de la página</summary><img id="lib-img2" alt=""></details></div>
-          <div class="row between"><span class="eyebrow" id="lib-found">3 registros encontrados</span><span class="small muted">revise y corrija</span></div>
+          <div class="row between"><span class="eyebrow" id="lib-found"></span><button class="inline-link" id="lib-backlines">‹ Corregir la lectura</button></div>
           <div id="lib-rows" class="flow"></div>
+          <div class="card" id="lib-unparsed" hidden><span class="eyebrow">No lo tomé como registro</span><div id="lib-unparsed-list" class="flow"></div></div>
           <button class="btn sec" id="lib-add">+ Agregar un registro que faltó</button>
-          <p class="note">Los campos en ámbar son los que el sistema leyó con duda: tóquelos para corregir. Lo que quite no se guarda.</p>
+          <p class="note">Los campos en ámbar se leyeron con duda o se supusieron: tóquelos para corregir. Lo que quite no se guarda.</p>
         </div>
       </div>
 
@@ -471,7 +542,8 @@ body.noscroll{overflow:hidden}
       <button class="btn acc" id="ap-save" hidden>Guardar en la bitácora</button>
       <button class="btn acc" id="rg-save" hidden>Guardar en la bitácora</button>
       <button class="btn acc" id="vi-save" hidden>Guardar en la bitácora</button>
-      <button class="btn acc" id="lib-save" hidden>Guardar 3 registros en la bitácora</button>
+      <button class="btn acc" id="lib-interp" hidden>Interpretar las líneas</button>
+      <button class="btn acc" id="lib-save" hidden>Guardar en la bitácora</button>
       <button class="btn acc" id="voz-save" hidden disabled>Guardar la nota de voz</button>
       <button class="btn acc" id="vid-save" hidden disabled>Guardar el video</button>
     </div>
@@ -490,6 +562,7 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 
+<script src="leaflet.js"></script>
 <script>
 (function(){
 "use strict";
@@ -593,38 +666,189 @@ function renderMemoria(){
 function renderTemporada(){ const l = LOTES[lotIdx]; $("#temp-h2").textContent = l.termina.titulo; $("#temp-body").innerHTML = `<p class="small">${l.termina.cuerpo}</p>`; }
 
 // ---------------------------------------------------------------- lote: mapa esquemático + punto + zona más cercana
-const MAINLAND = [[-117.1,32.5],[-114.7,32.7],[-111.1,31.3],[-108.2,31.3],[-106.5,31.8],[-104.5,29.6],[-103.0,29.0],[-101.4,29.8],[-99.5,27.5],[-97.5,25.9],[-97.8,22.3],[-96.1,19.2],[-94.4,18.1],[-92.3,18.6],[-90.5,19.8],[-90.4,21.0],[-88.3,21.5],[-86.8,21.2],[-87.7,18.3],[-88.9,17.8],[-91.0,17.3],[-90.4,16.1],[-91.7,16.1],[-92.2,15.0],[-93.9,16.0],[-96.5,15.7],[-98.5,16.3],[-99.9,16.8],[-101.5,17.7],[-103.5,18.3],[-105.3,20.6],[-105.7,22.5],[-106.4,23.2],[-108.0,25.0],[-109.4,26.5],[-110.9,27.9],[-112.5,29.5],[-113.5,30.8],[-114.7,31.7],[-114.8,32.5]];
-const BAJA = [[-117.1,32.5],[-116.6,31.8],[-115.9,30.4],[-115.0,29.5],[-114.2,28.0],[-113.0,26.9],[-112.3,26.0],[-111.0,24.7],[-110.3,23.4],[-109.9,22.9],[-109.4,23.2],[-109.9,24.1],[-110.3,24.7],[-111.3,26.0],[-112.0,27.0],[-112.9,28.3],[-113.6,29.3],[-114.4,30.4],[-114.7,31.5],[-114.8,32.5]];
-const W=400, H=320, LON0=-118.5, LON1=-85.5, LAT0=33.5, LAT1=14.0;
-const px = lon => (lon-LON0)/(LON1-LON0)*W, py = lat => (LAT0-lat)/(LAT0-LAT1)*H;
-const lon_of = x => LON0 + x/W*(LON1-LON0), lat_of = y => LAT0 - y/H*(LAT0-LAT1);
-let pin = null;
-function renderMap(){
-  const l = LOTES[lotIdx]; if(!pin) pin = {lat:l.lat, lon:l.lon};
-  const path = pts => "M" + pts.map(([lo,la])=>`${px(lo).toFixed(1)},${py(la).toFixed(1)}`).join("L") + "Z";
-  const near = nearest(pin.lat, pin.lon);
-  let s = `<path class="land" d="${path(MAINLAND)}"/><path class="land" d="${path(BAJA)}"/>`;
-  s += `<line class="link" x1="${px(pin.lon)}" y1="${py(pin.lat)}" x2="${px(near.r.lon)}" y2="${py(near.r.lat)}"/>`;
-  s += REGIONES.map(r=>`<circle class="reg" cx="${px(r.lon)}" cy="${py(r.lat)}" r="${r===near.r?7:5}"><title>${esc(r.n)}</title></circle>`).join("");
-  s += `<circle class="pin" cx="${px(pin.lon)}" cy="${py(pin.lat)}" r="6"/>`;
-  $("#map").innerHTML = s;
-  $("#lote-kv").innerHTML = kv([["Punto marcado", `${pin.lat.toFixed(2)}°, ${pin.lon.toFixed(2)}°`],["Zona de referencia", `${near.r.n} (${near.r.e})`],["Distancia al centro de la zona", `${near.d.toFixed(0)} km`],["Ciclo típico", near.r.ciclo],["Clima de referencia", "celda NASA de 50 km + estación SMN más cercana"]]);
-}
+// ---------------------------------------------------------------- lote: mapa satelital real, polígono editable con los dedos, parcelas y coordenadas
+// Fondo: Esri World Imagery (y World Topo como mapa). El polígono y las parcelas se guardan por lote en este teléfono.
+// La propuesta de polígono es una demostración alrededor del punto (la versión conectada toma el borde de la imagen: etapa 1).
+const GEO_KEY = "engram-campo-geo-v1";
+let geo = (()=>{ try{ return JSON.parse(localStorage.getItem(GEO_KEY)) || {}; }catch(e){ return {}; } })();
+function geoSave(){ try{ localStorage.setItem(GEO_KEY, JSON.stringify(geo)); }catch(e){} }
+function G(){ const id = LOTES[lotIdx].id; if(!geo[id]) geo[id] = {pin:null, poly:null, confirmado:false, parcelas:[]}; if(!geo[id].parcelas) geo[id].parcelas = []; return geo[id]; }
 function nearest(lat, lon){ let best=null; for(const r of REGIONES){ const d = hav(lat,lon,r.lat,r.lon); if(!best||d<best.d) best={r,d}; } return best; }
 function hav(a1,o1,a2,o2){ const p=Math.PI/180, x=0.5-Math.cos((a2-a1)*p)/2+Math.cos(a1*p)*Math.cos(a2*p)*(1-Math.cos((o2-o1)*p))/2; return 12742*Math.asin(Math.sqrt(x)); }
-$("#map").addEventListener("click", ev => { const r = ev.currentTarget.getBoundingClientRect(); const x=(ev.clientX-r.left)/r.width*W, y=(ev.clientY-r.top)/r.height*H; pin={lat:lat_of(y), lon:lon_of(x)}; renderMap(); toast("Punto marcado: zona y clima de referencia actualizados"); });
-function renderPoly(adj){
-  const field = adj ? "40,38 268,30 282,150 70,172" : "48,40 262,34 276,152 76,168";
-  $("#poly").innerHTML = `<defs><pattern id="rows" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(18)"><rect width="12" height="12" fill="#2f5a2b"/><rect width="5" height="12" fill="#3a6d34"/></pattern></defs>
-    <rect width="320" height="200" fill="#4a5a3a"/><rect x="0" y="0" width="320" height="200" fill="url(#rows)" opacity=".9"/>
-    <path d="M0 120 L320 108" stroke="#8a7a55" stroke-width="6" opacity=".8"/>
-    <polygon points="${field}" fill="rgba(224,166,58,.18)" stroke="#E0A63A" stroke-width="2.5" stroke-dasharray="${adj?"0":"7 5"}"/>
-    ${field.split(" ").map(p=>{const [x,y]=p.split(",");return `<circle cx="${x}" cy="${y}" r="5" fill="#E0A63A" stroke="#0B1C26" stroke-width="1.5"/>`;}).join("")}
-    <text x="12" y="190" font-family="IBM Plex Sans, Arial, sans-serif" font-size="11" fill="#F2EDE4">simulación de imagen satelital · ${adj?"polígono ajustado":"polígono propuesto"}</text>`;
-  $("#poly-ha").textContent = adj ? "4.4 ha" : "4.6 ha";
+function areaHa(pts){ if(!pts || pts.length<3) return 0; const k = Math.PI/180, R = 6371008.8, lat0 = pts.reduce((s,p)=>s+p[0],0)/pts.length; const xy = pts.map(p=>[R*p[1]*k*Math.cos(lat0*k), R*p[0]*k]); let a = 0; for(let i=0;i<xy.length;i++){ const [x1,y1] = xy[i], [x2,y2] = xy[(i+1)%xy.length]; a += x1*y2 - x2*y1; } return Math.abs(a)/2/10000; }
+function perimM(pts){ let s = 0; for(let i=0;i<pts.length;i++){ const a = pts[i], b = pts[(i+1)%pts.length]; s += hav(a[0],a[1],b[0],b[1])*1000; } return s; }
+function centroid(pts){ return [pts.reduce((s,p)=>s+p[0],0)/pts.length, pts.reduce((s,p)=>s+p[1],0)/pts.length]; }
+
+const TILE = {
+  sat: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  topo: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+  labels: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+};
+let map = null, baseSat = null, baseTopo = null, labelsLayer = null, pinMarker = null, accCircle = null, lotPoly = null, parcLayers = [], vtxMarkers = [], midMarkers = [], editing = null, selVtx = null;
+const lotStyle = {color:"#E0A63A", weight:2.5, fillColor:"#E0A63A", fillOpacity:.16, bubblingMouseEvents:false};
+const parcStyle = {color:"#8FD0F2", weight:2, fillColor:"#2F7FB8", fillOpacity:.16, dashArray:"6 4", bubblingMouseEvents:false};
+const pinIcon = ()=>L.divIcon({className:"pinicon", iconSize:[16,16]});
+
+function initMap(){
+  if(map || typeof L === "undefined") return;
+  map = L.map("lmap", {zoomControl:true, attributionControl:true, zoomSnap:0.5});
+  baseSat = L.tileLayer(TILE.sat, {maxZoom:20, maxNativeZoom:19, attribution:"Imagen: Esri, Maxar, Earthstar Geographics y la comunidad GIS"});
+  baseTopo = L.tileLayer(TILE.topo, {maxZoom:20, maxNativeZoom:19, attribution:"Mapa: Esri, HERE, Garmin, FAO, NOAA, USGS"});
+  labelsLayer = L.tileLayer(TILE.labels, {maxZoom:20, maxNativeZoom:19, opacity:.9});
+  baseSat.addTo(map); labelsLayer.addTo(map);
+  L.control.scale({imperial:false, position:"bottomleft"}).addTo(map);
+  map.on("click", e=>{ if(editing) return; setPin(e.latlng.lat, e.latlng.lng, {fromTap:true}); });
+  map.on("zoomend moveend", renderRes);
 }
-$("#poly-ok").addEventListener("click", ()=>{ toast("Polígono confirmado: el lote queda delimitado para el satélite"); $("#poly-nota").textContent = "Confirmado. A partir de aquí el verdor del lote se sigue cada 5 días dentro de este polígono."; });
-$("#poly-adj").addEventListener("click", ()=>{ renderPoly(true); toast("Borde ajustado (demostración): 4.4 ha"); });
+function setBase(which){
+  if(!map) return;
+  if(which==="sat"){ if(map.hasLayer(baseTopo)) map.removeLayer(baseTopo); if(!map.hasLayer(baseSat)) baseSat.addTo(map); if(!map.hasLayer(labelsLayer)) labelsLayer.addTo(map); baseSat.bringToBack(); }
+  else { if(map.hasLayer(baseSat)) map.removeLayer(baseSat); if(map.hasLayer(labelsLayer)) map.removeLayer(labelsLayer); if(!map.hasLayer(baseTopo)) baseTopo.addTo(map); baseTopo.bringToBack(); }
+  $$("#base-sel button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.base===which))); renderRes();
+}
+$$("#base-sel button").forEach(b=>b.addEventListener("click", ()=>setBase(b.dataset.base)));
+
+function setPin(lat, lon, opts={}){
+  const g = G(); g.pin = {lat, lon}; geoSave();
+  if(!map) { renderLoteKV(); return; }
+  if(!pinMarker){ pinMarker = L.marker([lat,lon], {icon:pinIcon(), draggable:true, zIndexOffset:500}).addTo(map); pinMarker.on("dragend", ()=>{ const p = pinMarker.getLatLng(); G().pin = {lat:p.lat, lon:p.lng}; geoSave(); renderLoteKV(); }); }
+  else pinMarker.setLatLng([lat,lon]);
+  if(accCircle){ map.removeLayer(accCircle); accCircle = null; }
+  if(opts.acc){ accCircle = L.circle([lat,lon], {radius:opts.acc, color:"#2F7FB8", weight:1, fillOpacity:.08, interactive:false}).addTo(map); }
+  if(opts.fromTap || opts.zoom){ if(map.getZoom() < 16) map.setView([lat,lon], 17); else map.panTo([lat,lon]); setBase("sat"); }
+  renderLoteKV();
+  if(opts.fromTap) toast("Punto marcado: zona y clima de referencia actualizados");
+  $("#map-hint").textContent = G().poly ? "Arrastre el punto azul si hace falta. El borde se cambia con \"Ajustar\"." : "Ahora toque \"Proponer polígono\": el borde se propone alrededor del punto y usted lo ajusta con los dedos.";
+}
+$("#geo-btn").addEventListener("click", ()=>{
+  const btn = $("#geo-btn"); const reset = ()=>{ btn.disabled = false; btn.textContent = "◎ Mi ubicación"; };
+  if(!navigator.geolocation){ toast("Este navegador no ofrece ubicación"); return; }
+  btn.disabled = true; btn.textContent = "Buscando…";
+  navigator.geolocation.getCurrentPosition(
+    p=>{ reset(); setPin(p.coords.latitude, p.coords.longitude, {acc:p.coords.accuracy, zoom:true}); toast(`Ubicación encontrada (±${Math.round(p.coords.accuracy)} m)`); },
+    err=>{ reset(); toast(err.code===1 ? "Sin permiso de ubicación en esta vista: toque el mapa o escriba coordenadas" : err.code===3 ? "El GPS tardó demasiado: intente al aire libre" : "No se pudo obtener la ubicación: toque el mapa"); },
+    {enableHighAccuracy:true, timeout:12000, maximumAge:30000});
+});
+
+// --- polígono del lote y parcelas
+function drawLot(){
+  if(!map) return; const g = G();
+  if(lotPoly){ map.removeLayer(lotPoly); lotPoly = null; }
+  if(g.poly && g.poly.length>=3){ lotPoly = L.polygon(g.poly, {...lotStyle, dashArray: g.confirmado ? null : "7 5"}).addTo(map); lotPoly.on("click", ()=>{ if(!editing) startEdit({type:"lote"}); }); }
+  parcLayers.forEach(l=>map.removeLayer(l));
+  parcLayers = g.parcelas.map((pc,i)=>{ const l = L.polygon(pc.poly, parcStyle).addTo(map); l.on("click", ()=>{ if(!editing) startEdit({type:"parcela", i}); }); return l; });
+  renderPolyKV(); renderParcelas();
+}
+function proposePoly(){
+  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon}; if(!g.pin) setPin(p.lat, p.lon, {zoom:true});
+  const ha = parseFloat(String($("#lt-ha").value).replace(",",".")) || LOTES[lotIdx].ha || 4; const m2 = ha*10000, ratio = 1.45, w = Math.sqrt(m2*ratio), h = m2/w;
+  const k = Math.PI/180, R = 6371008.8, dLat = m=>m/(R*k), dLon = m=>m/(R*k*Math.cos(p.lat*k)), ang = -12*k;
+  const rot = (x,y)=>[x*Math.cos(ang)-y*Math.sin(ang), x*Math.sin(ang)+y*Math.cos(ang)];
+  const jit = [[6,-4],[-5,7],[8,3],[-3,-6]];
+  g.poly = [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].map(([x,y],i)=>{ const [rx,ry] = rot(x+jit[i][0], y+jit[i][1]); return [p.lat + dLat(ry), p.lon + dLon(rx)]; });
+  g.confirmado = false; geoSave(); drawLot(); map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); setBase("sat");
+  toast(`Polígono propuesto (${ha} ha) alrededor del punto: ajústelo con los dedos`);
+  startEdit({type:"lote"});
+  $("#map-hint").textContent = "Propuesta de demostración (en la versión conectada el borde sale de la imagen). Arrastre los vértices; los puntos chicos agregan un vértice; toque un vértice y \"Quitar vértice\" para borrarlo.";
+}
+function targetPoly(){ const g = G(); return editing.type==="lote" ? g.poly : (g.parcelas[editing.i] || {}).poly; }
+function setTargetPoly(arr){ const g = G(); if(editing.type==="lote"){ g.poly = arr; g.confirmado = false; } else g.parcelas[editing.i].poly = arr; geoSave(); }
+function startEdit(t){
+  if(!map) return; editing = t; selVtx = null;
+  if(t.type==="lote"){ G().confirmado = false; geoSave(); if(lotPoly) lotPoly.setStyle({dashArray:"7 5"}); }
+  $("#poly-edit").hidden = true; $("#poly-done").hidden = false; $("#poly-propose").hidden = true; $("#poly-ok").hidden = true; $("#vtx-del").hidden = true;
+  renderHandles();
+  $("#map-hint").textContent = (t.type==="lote" ? "Editando el borde del lote" : `Editando ${G().parcelas[t.i].nombre}`) + ": arrastre los vértices; toque un punto chico para agregar uno; toque un vértice y luego \"Quitar vértice\" para borrarlo. Al terminar, \"Listo\".";
+}
+function stopEdit(){ clearHandles(); editing = null; selVtx = null; $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; drawLot(); $("#map-hint").textContent = "Borde listo. \"Confirmar\" lo fija; puede volver a ajustarlo cuando quiera."; }
+function clearHandles(){ vtxMarkers.forEach(m=>map.removeLayer(m)); midMarkers.forEach(m=>map.removeLayer(m)); vtxMarkers = []; midMarkers = []; }
+function renderHandles(){
+  clearHandles(); const pts = targetPoly(); if(!pts) return;
+  pts.forEach((pt,i)=>{
+    const m = L.marker(pt, {icon:L.divIcon({className:"vtx"+(selVtx===i?" sel":""), iconSize:[22,22]}), draggable:true, zIndexOffset:1000}).addTo(map);
+    m.on("drag", ()=>{ const ll = m.getLatLng(); const arr = targetPoly(); arr[i] = [ll.lat, ll.lng]; setTargetPoly(arr); livePoly(); });
+    m.on("dragend", ()=>{ renderHandles(); renderParcelas(); });
+    m.on("click", ()=>{ selVtx = (selVtx===i ? null : i); renderHandles(); $("#vtx-del").hidden = !(selVtx!==null && targetPoly().length>3); });
+    vtxMarkers.push(m);
+  });
+  pts.forEach((pt,i)=>{
+    const q = pts[(i+1)%pts.length], mid = [(pt[0]+q[0])/2, (pt[1]+q[1])/2];
+    const m = L.marker(mid, {icon:L.divIcon({className:"vtx mid", iconSize:[14,14]}), zIndexOffset:900}).addTo(map);
+    m.on("click", ()=>{ const arr = targetPoly(); arr.splice(i+1, 0, mid); setTargetPoly(arr); selVtx = null; $("#vtx-del").hidden = true; livePoly(); renderHandles(); renderParcelas(); });
+    midMarkers.push(m);
+  });
+  livePoly();
+}
+function livePoly(){ const g = G(); if(editing.type==="lote"){ if(lotPoly) lotPoly.setLatLngs(g.poly); else drawLot(); renderPolyKV(); } else { const l = parcLayers[editing.i]; if(l) l.setLatLngs(g.parcelas[editing.i].poly); } }
+$("#vtx-del").addEventListener("click", ()=>{ if(selVtx===null) return; const arr = targetPoly(); if(arr.length<=3){ toast("Un polígono necesita al menos 3 vértices"); return; } arr.splice(selVtx,1); setTargetPoly(arr); selVtx = null; $("#vtx-del").hidden = true; livePoly(); renderHandles(); renderParcelas(); });
+$("#poly-edit").addEventListener("click", ()=>{ if(!G().poly){ toast("Primero proponga o dibuje el polígono"); return; } startEdit({type:"lote"}); });
+$("#poly-done").addEventListener("click", stopEdit);
+$("#poly-propose").addEventListener("click", proposePoly);
+$("#poly-ok").addEventListener("click", ()=>{ const g = G(); if(!g.poly){ toast("No hay polígono que confirmar: propóngalo o dibújelo"); return; } g.confirmado = true; geoSave(); drawLot(); toast(`Polígono confirmado: ${areaHa(g.poly).toFixed(2)} ha`); $("#map-hint").textContent = "Confirmado. Dentro de este borde se seguirá el verdor del lote cada 5 días (etapa 1)."; });
+
+function renderPolyKV(){
+  const g = G();
+  if(!g.poly){ $("#poly-kv").innerHTML = kv([["Polígono", "todavía no hay"],["Superficie declarada", (LOTES[lotIdx].ha ? LOTES[lotIdx].ha+" ha" : "—")]]); return; }
+  const ha = areaHa(g.poly);
+  $("#poly-kv").innerHTML = kv([["Superficie del polígono", `${ha.toFixed(2)} ha · ${g.confirmado ? "confirmado" : "sin confirmar"}`],["Perímetro", `${Math.round(perimM(g.poly))} m`],["Vértices", String(g.poly.length)],["Píxeles Sentinel‑2 dentro", `≈ ${Math.round(ha*100)} de 10 m`]]);
+}
+function renderLoteKV(){
+  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon}; const near = nearest(p.lat, p.lon);
+  $("#lote-kv").innerHTML = kv([["Punto del lote", `${p.lat.toFixed(5)}°, ${p.lon.toFixed(5)}°`],["Zona de referencia", `${near.r.n} (${near.r.e})`],["Distancia al centro de la zona", `${near.d.toFixed(0)} km`],["Ciclo típico", near.r.ciclo],["Clima de referencia", "celda NASA de 50 km + estación SMN más cercana"]]);
+}
+function renderRes(){
+  if(!map) return; const z = map.getZoom(), lat = map.getCenter().lat, mpp = 156543.03392*Math.cos(lat*Math.PI/180)/Math.pow(2,z);
+  const sat = ($("#base-sel button[aria-pressed=true]")||{}).dataset?.base !== "topo";
+  $("#res-kv").innerHTML = kv([["Vista actual", `zoom ${z.toFixed(1)} · ${mpp<1 ? mpp.toFixed(2) : mpp.toFixed(1)} m por píxel de pantalla`],["Imagen de fondo", sat ? "Esri World Imagery (Maxar y otros): 0.3–1 m por píxel según la zona; la fecha de la toma varía" : "Esri World Topo (mapa)"],["Seguimiento del cultivo", "Sentinel‑2: 10 m por píxel, cada 5 días, 13 bandas (etapa 1)"],["Posición GPS del teléfono", "±3–10 m al aire libre"]]);
+}
+function renderParcelas(){
+  const g = G();
+  $("#parc-list").innerHTML = g.parcelas.length ? g.parcelas.map((pc,i)=>`<div class="parc"><input value="${esc(pc.nombre)}" data-pname="${i}" aria-label="Nombre de la parcela"><span class="ha">${areaHa(pc.poly).toFixed(2)} ha</span><span class="row" style="gap:8px;flex-wrap:nowrap"><button class="inline-link" data-pedit="${i}">ajustar</button><button class="inline-link" data-pdel="${i}">quitar</button></span></div>`).join("") : `<p class="small muted">Sin parcelas: el lote completo es la unidad.</p>`;
+}
+$("#parc-add").addEventListener("click", ()=>{
+  const g = G(); if(!map) return; if(!g.poly){ toast("Primero defina el borde del lote"); return; }
+  const c = map.getCenter(), ha = Math.max(0.25, areaHa(g.poly)/4), m2 = ha*10000, w = Math.sqrt(m2*1.3), h = m2/w, k = Math.PI/180, R = 6371008.8, dLat = m=>m/(R*k), dLon = m=>m/(R*k*Math.cos(c.lat*k));
+  g.parcelas.push({nombre:`Parcela ${g.parcelas.length+1}`, poly:[[c.lat+dLat(h/2), c.lng-dLon(w/2)],[c.lat+dLat(h/2), c.lng+dLon(w/2)],[c.lat-dLat(h/2), c.lng+dLon(w/2)],[c.lat-dLat(h/2), c.lng-dLon(w/2)]]});
+  geoSave(); drawLot(); startEdit({type:"parcela", i:g.parcelas.length-1}); toast("Parcela creada en el centro de la vista: lleve sus vértices a su lugar");
+});
+$("#parc-list").addEventListener("input", e=>{ const i = e.target.dataset.pname; if(i===undefined) return; G().parcelas[+i].nombre = e.target.value; geoSave(); });
+
+// --- coordenadas escritas
+function parseCoord(s){
+  s = String(s).trim().replace(/[;|]/g, ","); if(!s) return null;
+  const dms = s.match(/(\d{1,3})[°º]\s*(\d{1,2})['′]?\s*(\d{1,2}(?:\.\d+)?)?["″]?\s*([NS])[\s,]+(\d{1,3})[°º]\s*(\d{1,2})['′]?\s*(\d{1,2}(?:\.\d+)?)?["″]?\s*([EOW])/i);
+  if(dms){ const lat = (+dms[1] + (+dms[2])/60 + (+(dms[3]||0))/3600) * (/s/i.test(dms[4]) ? -1 : 1); const lon = (+dms[5] + (+dms[6])/60 + (+(dms[7]||0))/3600) * (/[ow]/i.test(dms[8]) ? -1 : 1); return [lat, lon]; }
+  const nums = s.match(/-?\d+(?:\.\d+)?/g); if(!nums || nums.length<2) return null;
+  let lat = parseFloat(nums[0]), lon = parseFloat(nums[1]);
+  if(Math.abs(lat)>90 && Math.abs(lon)<=90){ [lat,lon] = [lon,lat]; }
+  if(lon>86 && lon<=118) lon = -lon;                       // México está al oeste: 108.95 se entiende como -108.95
+  if(Math.abs(lat)>90 || Math.abs(lon)>180) return null; return [lat, lon];
+}
+$("#coord-ir").addEventListener("click", ()=>{ const c = parseCoord($("#coord-centro").value); if(!c){ toast("No entendí la coordenada: use 25.7812, -108.9534"); return; } setPin(c[0], c[1], {zoom:true}); toast("Centro del lote ubicado"); });
+$("#coord-dibujar").addEventListener("click", ()=>{
+  const pts = $("#coord-vertices").value.split("\n").map(parseCoord).filter(Boolean); if(pts.length<3){ toast("Hacen falta al menos 3 vértices, uno por renglón"); return; }
+  const g = G(); const aParcela = editing && editing.type==="parcela";
+  if(aParcela) g.parcelas[editing.i].poly = pts; else { g.poly = pts; g.confirmado = false; }
+  if(!g.pin){ const c = centroid(pts); g.pin = {lat:c[0], lon:c[1]}; }
+  geoSave(); if(editing) stopEdit(); drawLot(); setPin(g.pin.lat, g.pin.lon);
+  if(map){ map.fitBounds(L.latLngBounds(pts), {padding:[30,30]}); setBase("sat"); }
+  toast(`${aParcela ? "Parcela" : "Polígono"} dibujado: ${areaHa(pts).toFixed(2)} ha`);
+});
+$("#coord-copiar").addEventListener("click", ()=>{ const g = G(); if(!g.poly){ toast("No hay polígono todavía"); return; } $("#coord-vertices").value = g.poly.map(p=>`${p[0].toFixed(6)}, ${p[1].toFixed(6)}`).join("\n"); toast("Vértices copiados al cuadro"); });
+
+// --- al entrar a la pantalla o cambiar de lote
+function renderLote(){
+  renderLoteKV(); renderPolyKV(); renderParcelas();
+  if(!map || $("#s-lote").hidden) return;
+  if(editing){ clearHandles(); editing = null; selVtx = null; $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; }
+  if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } if(accCircle){ map.removeLayer(accCircle); accCircle = null; }
+  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon};
+  drawLot(); setPin(p.lat, p.lon);
+  if(g.poly && lotPoly) map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); else map.setView([p.lat, p.lon], g.pin ? 16 : 15);
+  $("#map-hint").textContent = g.poly ? (g.confirmado ? "Borde confirmado. \"Ajustar\" para moverlo; toque una parcela para editarla." : "Borde propuesto, sin confirmar. \"Ajustar\" para moverlo con los dedos, \"Confirmar\" para fijarlo.") : "Toque el mapa donde está el lote (o use su ubicación). Después \"Proponer polígono\" y ajuste el borde arrastrando los vértices.";
+  renderRes();
+}
+function openLote(){ initMap(); if(!map) return; setTimeout(()=>{ map.invalidateSize(); renderLote(); }, 40); }
 
 // ---------------------------------------------------------------- navegación
 const SCREENS = ["hoy","semana","registrar","lote","mas"];
@@ -634,20 +858,25 @@ function go(name){
   $$("nav.bottom button").forEach(b=>{ if(b.dataset.nav===name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   try{ history.replaceState(null,"","#"+name); }catch(e){}
   window.scrollTo({top:0});
+  if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
 function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
-  const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); pin=null; renderAll(); return; }
+  const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); renderAll(); return; }
   const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow, flow); return; }
   const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeSheet(false); return; }
   const rm = ev.target.closest("[data-rm]"); if(rm){ const c = rm.closest(".prop"); if(c){ libProps.splice(+c.dataset.i, 1); renderLibRows(); } return; }
+  const pedit = ev.target.closest("[data-pedit]"); if(pedit){ startEdit({type:"parcela", i:+pedit.dataset.pedit}); return; }
+  const pdel = ev.target.closest("[data-pdel]"); if(pdel){ G().parcelas.splice(+pdel.dataset.pdel,1); geoSave(); if(editing && editing.type==="parcela") stopEdit(); else drawLot(); return; }
+  const rml = ev.target.closest("[data-rml]"); if(rml){ libLines.splice(+rml.dataset.rml, 1); libEdited = true; renderLibLines(); return; }
+  const useobs = ev.target.closest("[data-useobs]"); if(useobs){ const u = libUnparsed.splice(+useobs.dataset.useobs, 1)[0]; if(u) libProps.push(withDefaults({tipo:"observacion", fecha:hoyISO, linea:u.linea, leido:u.texto, dudas:["fecha","que","donde","sev"], nota:"tomada de una línea sin fecha ni evento claro: complete los campos"})); renderLibRows(); return; }
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
-function renderAll(){ renderLotSel(); renderHoy(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderMap(); }
+function renderAll(){ renderLotSel(); renderHoy(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); }
 
 // ---------------------------------------------------------------- registrar: flujos
 const ULTIMOS = [{p:"Fungicida preventivo", d:"2", u:"kg/ha", t:"fungicida"},{p:"Fertilizante foliar", d:"3", u:"L/ha", t:"fertilizante"},{p:"Insecticida (paratrioza)", d:"0.5", u:"L/ha", t:"insecticida"}];
@@ -670,7 +899,7 @@ function openFlow(name, btn){
   $("#sheet-title").textContent = TITULOS[name]; $("#sheet-lot").textContent = LOTES[lotIdx].nombre;
   if(name==="aplique"){ $("#ult-chips").innerHTML = ULTIMOS.map((u,i)=>`<button class="chip" aria-pressed="false" data-ult="${i}">${esc(u.p)} · ${u.d} ${u.u}</button>`).join(""); $("#ap-fecha").value = hoyISO; }
   if(name==="regue"){ $("#rg-fecha").value = hoyISO; }
-  if(name==="libreta"){ $("#lib-save").hidden = true; }                 // hasta que haya algo que revisar
+  if(name==="libreta"){ libShow("step1"); }                              // los botones de interpretar/guardar aparecen por etapa
   const sh = $("#sheet"); clearTimeout(sheetTimer); sh.hidden = false; $("#sheet-body").scrollTop = 0;
   requestAnimationFrame(()=>requestAnimationFrame(()=>sh.classList.add("open")));
   document.body.classList.add("noscroll"); sheetOpen = name;
@@ -717,58 +946,194 @@ function previewPhoto(input, target, afterTxt){
 }
 $("#etq-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#etq-preview"), "Foto guardada. Lectura automática de producto, dosis y fecha: etapa 1. Por ahora confirme o corrija los campos."); if(!$("#ap-prod").value) $("#ap-prod").placeholder = "lo que diga la etiqueta"; toast("Foto de la etiqueta guardada"); });
 $("#vi-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#vi-preview"), "Foto con fecha y lugar guardada."); });
-// ---------------------------------------------------------------- libreta: foto -> lectura -> revisión -> bitácora
-// En este prototipo la lectura es un ejemplo fijo (lo dice el banner). En la versión conectada, la foto va a un modelo de visión
-// que devuelve un registro por renglón con su campo "leído" y la duda por campo; la pantalla de revisión es la misma.
-const LIB_EJEMPLO = [
-  {tipo:"aplicacion", fecha:"2026-10-15", producto:"Fertilizante de fondo", dosis:"300", unidad:"kg/ha", clase:"fertilizante", leido:"15/10 fert. fondo 300 kg/ha P7", dudas:["dosis"], nota:"¿300 o 350? El trazo no se distingue."},
-  {tipo:"riego", fecha:"2026-10-16", horas:"5", metodo:"aspersión", leido:"16/10 riego asp. 5 hs", dudas:[]},
-  {tipo:"observacion", fecha:"2026-10-14", que:"encharcamiento", donde:"la orilla", sev:"1", leido:"14/10 charco orilla N", dudas:["fecha"], nota:"El año no está escrito; se asumió 2026."},
+// ---------------------------------------------------------------- libreta: foto -> transcripción (corregible) -> interpretación -> bitácora
+// Dos etapas separadas a propósito: primero "lo que leí" (la transcripción renglón por renglón, que la persona corrige), después
+// "lo que entendí" (un registro por evento, anclado a su renglón). Nada se rellena sin pasar por la transcripción.
+// Motor: si LECTOR.url está definido, la foto va al lector (función en la nube que llama a un modelo de visión; ver lector/worker.js)
+// y vuelve la transcripción con sus dudas y los registros. Sin lector, la transcripción es un EJEMPLO (lo dice la pantalla) y la
+// interpretación la hace el intérprete local por reglas de aquí abajo, que también es el respaldo cuando no hay señal.
+const LECTOR = { url: "", token: "ec-b077-029c-7a4f-b5c5" };     // url: se fija al desplegar lector/worker.js; también se puede guardar desde Más → Acerca
+try{ const u = localStorage.getItem("engram-campo-lector"); if(u) LECTOR.url = u; }catch(e){}
+$("#lector-url").value = LECTOR.url;
+async function lectorProbar(){ const el = $("#lector-estado"); if(!LECTOR.url){ el.textContent = "Sin lector: modo ejemplo."; return; } el.textContent = "Probando…"; try{ const r = await fetch(LECTOR.url, {method:"GET"}); const j = await r.json(); el.textContent = j && j.ok ? `Conectado · ${j.modelo || "lector"}` : "Responde, pero no es el lector."; }catch(e){ el.textContent = "No responde (¿dirección correcta?, ¿ya está publicado?)."; } }
+$("#lector-save").addEventListener("click", ()=>{ const u = $("#lector-url").value.trim().replace(/\/+$/,""); LECTOR.url = u; try{ if(u) localStorage.setItem("engram-campo-lector", u); else localStorage.removeItem("engram-campo-lector"); }catch(e){} toast(u ? "Lector configurado en este teléfono" : "Lector desactivado: modo ejemplo"); lectorProbar(); });
+const LIB_EJEMPLO_LINEAS = [
+  {texto:"Parcela 7 — oct 2026", confianza:.95, dudas:[]},
+  {texto:"14/10 charco orilla N", confianza:.9, dudas:[]},
+  {texto:"15/10 siembra (Fianna)", confianza:.85, dudas:["el nombre entre paréntesis podría ser otra variedad"]},
+  {texto:"15/10 fert. fondo 300 kg/ha P7", confianza:.7, dudas:["300 podría ser 350: el trazo no se distingue"]},
+  {texto:"16/10 riego asp. 5 hs", confianza:.9, dudas:[]},
+  {texto:"ver tizón la otra semana", confianza:.9, dudas:[]},
 ];
 const TIPOS_PROP = [["aplicacion","Aplicación"],["riego","Riego"],["observacion","Observación"],["cosecha","Cosecha"]];
 const VI_TIPOS = ["enfermedad","plaga","helada","granizo","falta de agua","encharcamiento","fenología"], VI_DONDE = ["un manchón","la orilla","toda la parcela"];
-let libProps = [], libTimers = [], libURL = null;
 const PROP_DEFAULTS = {aplicacion:{unidad:"kg/ha", clase:"fungicida"}, riego:{metodo:"aspersión"}, observacion:{que:"enfermedad", donde:"un manchón", sev:"1"}, cosecha:{}};
-function withDefaults(p){ const d = PROP_DEFAULTS[p.tipo] || {}; Object.keys(d).forEach(k=>{ if(p[k]===undefined || p[k]==="") p[k] = d[k]; }); return p; }
-function libStart(file){
-  if(!file) return;
-  if(libURL) URL.revokeObjectURL(libURL); libURL = URL.createObjectURL(file);
-  $("#lib-img").src = libURL; $("#lib-img2").src = libURL;
-  $("#lib-step1").hidden = true; $("#lib-reading").hidden = true; $("#lib-review").hidden = true;
-  $("#lib-reading").hidden = false; $("#sheet-body").scrollTop = 0;
-  const pasos = [[150,"Enderezando la página…",18],[900,"Leyendo fechas y cantidades…",48],[1600,"Separando los renglones en registros…",78],[2300,"Listo",100]];
-  libTimers.forEach(clearTimeout); libTimers = pasos.map(([t,msg,pct])=>setTimeout(()=>{ $("#lib-status").textContent = msg; $("#lib-bar").style.width = pct+"%"; if(pct===100){ libProps = JSON.parse(JSON.stringify(LIB_EJEMPLO)); renderLibRows(); $("#lib-reading").hidden = true; $("#lib-review").hidden = false; $("#lib-save").hidden = false; $("#sheet-body").scrollTop = 0; } }, t));
+function withDefaults(p){ const d = PROP_DEFAULTS[p.tipo] || {}; Object.keys(d).forEach(k=>{ if(p[k]===undefined || p[k]==="") p[k] = d[k]; }); if(!Array.isArray(p.dudas)) p.dudas = []; return p; }
+let libLines = [], libProps = [], libUnparsed = [], libSim = true, libEdited = false, libTimers = [], libURL = null;
+
+function libShow(stage){ ["step1","reading","trans","review"].forEach(s=>{ $("#lib-"+s).hidden = s!==stage; }); $("#lib-interp").hidden = stage!=="trans"; $("#lib-save").hidden = stage!=="review"; $("#sheet-body").scrollTop = 0; }
+function libProgress(pasos){ libTimers.forEach(clearTimeout); libTimers = pasos.map(([t,msg,pct,fn])=>setTimeout(()=>{ $("#lib-status").textContent = msg; $("#lib-bar").style.width = pct+"%"; if(fn) fn(); }, t)); }
+function libReset(){ libTimers.forEach(clearTimeout); libTimers = []; libLines = []; libProps = []; libUnparsed = []; libEdited = false; $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-lines").innerHTML = ""; $("#lib-rows").innerHTML = ""; $("#lib-banner").textContent = ""; libShow("step1"); }
+
+// --- motor remoto (opcional)
+function downscale(file, max=1600, q=.85){
+  return new Promise((res, rej)=>{ const img = new Image(); img.onload = ()=>{ const s = Math.min(1, max/Math.max(img.width, img.height)); const c = document.createElement("canvas"); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); const url = c.toDataURL("image/jpeg", q); URL.revokeObjectURL(img.src); res({b64: url.split(",")[1], mt:"image/jpeg"}); }; img.onerror = rej; img.src = URL.createObjectURL(file); });
 }
+function lectorCtx(){ const l = LOTES[lotIdx]; return {hoy: hoyISO, lote: l.nombre, cultivo: l.cultivo, region: l.region}; }
+async function lectorPost(payload){
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 60000);
+  try{ const r = await fetch(LECTOR.url, {method:"POST", headers:{"content-type":"application/json", "x-engram-token": LECTOR.token}, body: JSON.stringify(payload), signal: ctrl.signal}); if(!r.ok) throw new Error("lector "+r.status); return await r.json(); }
+  finally{ clearTimeout(to); }
+}
+async function lectorLeer(file){ const {b64, mt} = await downscale(file); return lectorPost({modo:"leer", imagen:b64, media_type:mt, ...lectorCtx()}); }
+async function lectorInterpretar(lines){ return lectorPost({modo:"interpretar", lineas:lines, ...lectorCtx()}); }
+function normLines(ls){ return (ls||[]).map(l=>({texto:String(l.texto ?? ""), confianza: typeof l.confianza==="number" ? l.confianza : 1, dudas: Array.isArray(l.dudas) ? l.dudas.map(String) : []})); }
+function normRecs(rs){ const ok = new Set(TIPOS_PROP.map(x=>x[0])); return (rs||[]).filter(r=>r && ok.has(r.tipo)).map(r=>{ const p = {}; Object.keys(r).forEach(k=>{ p[k] = (r[k]===null||r[k]===undefined) ? "" : (Array.isArray(r[k]) ? r[k] : String(r[k])); }); p.linea = r.linea; p.dudas = Array.isArray(r.dudas) ? r.dudas : []; p.nota = r.nota ? String(r.nota) : ""; return withDefaults(p); }); }
+function normUnp(us){ return (us||[]).map(u=>({linea:u.linea, texto:String(u.texto ?? ""), motivo:String(u.motivo ?? "")})); }
+
+// --- etapa 1: la foto llega
+async function libStart(file){
+  if(!file) return;
+  if(libURL) URL.revokeObjectURL(libURL); libURL = URL.createObjectURL(file); $("#lib-img").src = libURL; $("#lib-img2").src = libURL;
+  libProps = []; libUnparsed = []; libEdited = false; $("#lib-bar").style.width = "0"; libShow("reading");
+  if(LECTOR.url){
+    libProgress([[200,"Enviando la página al lector…",15],[1500,"Transcribiendo renglón por renglón…",45],[4500,"Interpretando los registros…",75]]);
+    try{
+      const res = await lectorLeer(file); libTimers.forEach(clearTimeout); $("#lib-bar").style.width = "100%";
+      libSim = false; libLines = normLines(res.lineas); libProps = normRecs(res.registros); libUnparsed = normUnp(res.sin_interpretar);
+      if(!libLines.length){ $("#lib-banner").textContent = (res.pagina && res.pagina.comentario) || "No encontré anotaciones legibles en esta foto. Pruebe con más luz y la hoja completa, o escriba las líneas a mano."; libLines = [{texto:"", confianza:1, dudas:[]}]; }
+      else $("#lib-banner").textContent = `Transcripción del lector: ${libLines.length} línea${libLines.length===1?"":"s"}. Compare con la página y corrija lo que no coincida.`;
+    }catch(e){
+      libTimers.forEach(clearTimeout); libSim = true; libLines = [{texto:"", confianza:1, dudas:[]}];
+      $("#lib-banner").textContent = "No pude conectar con el lector (sin señal o servicio apagado). Escriba las líneas tal como están en la página; la interpretación se hace aquí en el teléfono.";
+    }
+    renderLibLines(); libShow("trans"); return;
+  }
+  libProgress([[150,"Enderezando la página…",18],[900,"Transcribiendo renglón por renglón…",55],[1800,"Listo",100, ()=>{
+    libSim = true; libLines = JSON.parse(JSON.stringify(LIB_EJEMPLO_LINEAS));
+    $("#lib-banner").textContent = "Transcripción de EJEMPLO: este prototipo todavía no lee su foto. Edite estas líneas o escriba las suyas para probar la interpretación; en la versión conectada aquí aparece lo que dice su página.";
+    renderLibLines(); libShow("trans");
+  }]]);
+}
+$("#lib-input").addEventListener("change", e=>libStart(e.target.files && e.target.files[0]));
+$("#lib-gal").addEventListener("change", e=>libStart(e.target.files && e.target.files[0]));
+
+// --- etapa 2: lo que leí (líneas corregibles)
+function renderLibLines(){
+  $("#lib-lines").innerHTML = libLines.map((l,i)=>`<div class="tline"><span class="tdot${l.confianza<.8?" warn":""}"></span><span class="ln">${i+1}</span><input value="${esc(l.texto)}" data-l="${i}" class="${l.confianza<.8?"warn":""}" placeholder="escriba la línea tal como está en la página" autocapitalize="off"><button class="x" data-rml="${i}" aria-label="Quitar línea">×</button>${l.dudas.length ? `<div class="duda">${esc(l.dudas.join(" · "))}</div>` : ""}</div>`).join("");
+  const n = libLines.filter(l=>l.texto.trim()).length; $("#lib-nlines").textContent = `${libLines.length} línea${libLines.length===1?"":"s"}`;
+  $("#lib-interp").textContent = n ? `Interpretar ${n===1?"la línea":"las "+n+" líneas"}` : "Escriba al menos una línea"; $("#lib-interp").disabled = !n;
+}
+$("#lib-lines").addEventListener("input", e=>{ const i = +e.target.dataset.l; if(isNaN(i) || !libLines[i]) return; libLines[i].texto = e.target.value; libLines[i].confianza = 1; libLines[i].dudas = []; libEdited = true; e.target.classList.remove("warn"); const row = e.target.closest(".tline"); row.querySelector(".tdot").classList.remove("warn"); const d = row.querySelector(".duda"); if(d) d.remove(); const n = libLines.filter(l=>l.texto.trim()).length; $("#lib-interp").textContent = n ? `Interpretar ${n===1?"la línea":"las "+n+" líneas"}` : "Escriba al menos una línea"; $("#lib-interp").disabled = !n; });
+$("#lib-addline").addEventListener("click", ()=>{ libLines.push({texto:"", confianza:1, dudas:[]}); libEdited = true; renderLibLines(); const ins = $$("#lib-lines input"); ins[ins.length-1].focus(); });
+
+// --- intérprete local por reglas (respaldo sin lector / sin señal)
+const normTxt = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const ABREV = [[/\bfert\.?(?=\s|$)/g,"fertilizante"],[/\bfung\.?(?=\s|$)/g,"fungicida"],[/\binsect?\.?(?=\s|$)/g,"insecticida"],[/\bherb\.?(?=\s|$)/g,"herbicida"],[/\bbioest\.?(?=\s|$)/g,"bioestimulante"],[/\basp\.?(?=\s|$)/g,"aspersión"],[/\bgrav\.?(?=\s|$)/g,"gravedad"],[/\bpiv\.?(?=\s|$)/g,"pivote"],[/\borilla n\b/g,"orilla norte"],[/\borilla s\b/g,"orilla sur"],[/\borilla e\b/g,"orilla este"],[/\borilla o\b/g,"orilla oeste"]];
+function expandAbrev(s){ let t = s; ABREV.forEach(([re,rep])=>{ t = t.replace(re, rep); }); return t; }
+const MESES = {ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,set:9,oct:10,nov:11,dic:12};
+function parseFecha(t){
+  const hoy = new Date(hoyISO+"T12:00:00"); let m;
+  if(/\bhoy\b/.test(t)) return {iso: hoyISO, duda:null};
+  if(/\bayer\b/.test(t)){ const d = new Date(hoy); d.setDate(d.getDate()-1); return {iso: d.toISOString().slice(0,10), duda:null}; }
+  if((m = t.match(/\b(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?\b/))){
+    const dd = +m[1], mm = +m[2]; let yy = m[3] ? +m[3] : null; if(yy!==null && yy<100) yy += 2000;
+    if(dd<1||dd>31||mm<1||mm>12) return {iso:null, duda:"la fecha no se entiende"};
+    let duda = null;
+    if(yy===null){ yy = hoy.getFullYear(); if(new Date(yy, mm-1, dd, 12) > hoy){ yy -= 1; duda = "sin año: la fecha quedaría en el futuro, se asumió el año pasado"; } }
+    return {iso: `${yy}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`, duda};
+  }
+  if((m = t.match(/\b(\d{1,2})\s*(?:de\s*)?(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*\b/))){ return {iso: `${hoy.getFullYear()}-${String(MESES[m[2]]).padStart(2,"0")}-${String(+m[1]).padStart(2,"0")}`, duda:null}; }
+  return {iso:null, duda:"sin fecha: se usó la de hoy"};
+}
+const OBS_MAP = [[/tizon|manch|hongo|enferm|roya|alternaria|rizoc|erwinia|pudric|mildiu/,"enfermedad"],[/plaga|gusano|mosca|pulg|paratrioza|trips|minador|palomilla|arana|acaro|chicharr|larva|picudo/,"plaga"],[/helad|hielo|escarcha/,"helada"],[/graniz/,"granizo"],[/charco|encharc|inund|anegad|agua estancada/,"encharcamiento"],[/falta de agua|\bseca\b|sequia|estres hidrico|marchit/,"falta de agua"],[/emerg|nacen|florac|\bflor\b|tuberiz|senesc|brot|amacoll|espig|llenado|madur/,"fenología"]];
+const RE_HORAS = /(\d+(?:[.,]\d+)?)\s*(hs?|hrs?|horas?)\b/, RE_DOSIS = /(\d+(?:[.,]\d+)?)\s*(kg\/ha|l\/ha|lt\/ha|g\/ha|ml\/ha|kg|lts?|l)\b/, RE_FECHA = /\b\d{1,2}[\/\-.]\d{1,2}(?:[\/\-.]\d{2,4})?\b/, RE_LOTE = /\b(?:p|l|lote|parcela)\s?-?(\d{1,3})\b/;
+function eventClass(t){ if(/cosech|\brend|t\/ha|\bton\b|tonelad|\bsacos|\bbultos/.test(t)) return "cosecha"; if(/\bfert|\bfung|\binsect|\bherb|\bbioest|\baplic|kg\/ha|l\/ha|lt\/ha|g\/ha|ml\/ha|\bdosis|\bkg\b|\blts?\b|\burea\b|\babono/.test(t)) return "aplic"; if(/\brieg|\brego\b|\bregue\b|\basp\b|aspersion|goteo|gravedad|pivote/.test(t) || RE_HORAS.test(t)) return "riego"; if(/siembra|sembr|trasplant|plant[eo]\b/.test(t)) return "siembra"; if(OBS_MAP.some(([re])=>re.test(t))) return "obs"; return null; }
+function splitEvents(raw){           // "13/10 riego 6 hs y fert 50 kg/ha" -> dos eventos de tipo distinto; "manchas y gusanos" se queda junto
+  const prot = raw.replace(/(\d),(\d)/g, "$1§$2");   // protege la coma decimal (0,5) antes de separar
+  const parts = prot.split(/\s*(?:;|\+|,|\by\b)\s*/i).map(x=>x.replace(/§/g, ",").trim()).filter(Boolean); if(parts.length < 2) return [raw];
+  const classes = parts.map(x=>eventClass(normTxt(x))); if(classes.some(c=>!c) || new Set(classes).size !== classes.length) return [raw];
+  const date = (raw.match(RE_FECHA)||[""])[0]; return parts.map((x,i)=> i===0 || RE_FECHA.test(x) || !date ? x : `${date} ${x}`);
+}
+function interpretOne(raw, n, l, leidoFull){
+  const t = normTxt(raw), dudasLinea = l.dudas.slice(), low = l.confianza < .8;
+  const esRecordatorio = /^(ver|revisar|checar|chequear|pendiente|comprar|pedir|llamar|recordar|ojo|falta|hay que|preguntar)\b/.test(t) || /la otra semana|la proxima|\bmanana\b|proxim/.test(t);
+  const fecha = parseFecha(t), cls = eventClass(t), obs = OBS_MAP.find(([re])=>re.test(t));
+  const esRiego = cls==="riego" || /\brieg|\brego\b|\bregue\b|\basp\b|aspersion|goteo|gravedad|pivote/.test(t) || RE_HORAS.test(t);
+  const esAplic = cls==="aplic", esCosecha = cls==="cosecha", esSiembra = /siembra|sembr|trasplant|plant[eo]\b/.test(t);
+  if(esRecordatorio && !fecha.iso) return {sin:{linea:n, texto:raw, motivo:"parece un recordatorio, no algo que ya pasó"}};
+  if(!fecha.iso && !cls) return {sin:{linea:n, texto:raw, motivo: /parcela|lote|\b(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\b|20\d\d/.test(t) ? "parece un encabezado" : "no describe algo que pasó"}};
+  if(fecha.iso && !cls) return {sin:{linea:n, texto:raw, motivo:"tiene fecha pero no entiendo qué pasó"}};
+  const base = {linea:n, leido: leidoFull || raw, fecha: fecha.iso || hoyISO, dudas:[], nota:""}; const notas = [];
+  if(fecha.duda){ base.dudas.push("fecha"); notas.push(fecha.duda); }
+  const lote = t.match(RE_LOTE); if(lote){ base.lote = lote[0].toUpperCase().replace(/\s|-/g,""); }
+  if(esRiego && !esAplic && !esCosecha){
+    base.tipo = "riego"; const h = t.match(RE_HORAS); base.horas = h ? h[1].replace(",",".") : ""; if(!h){ base.dudas.push("horas"); notas.push("no dice cuántas horas"); }
+    if(/goteo/.test(t)) base.metodo = "goteo"; else if(/grav/.test(t)) base.metodo = "gravedad"; else if(/piv/.test(t)) base.metodo = "pivote"; else if(/asp/.test(t)) base.metodo = "aspersión"; else { base.metodo = "aspersión"; base.dudas.push("metodo"); notas.push("no dice el método: se supuso aspersión"); }
+    if(h && (low || dudasLinea.length)) base.dudas.push("horas");
+  } else if(esCosecha){
+    base.tipo = "cosecha"; const r = t.match(/(\d+(?:[.,]\d+)?)\s*(t\/ha|ton|tonelad)/); base.rend = r ? r[1].replace(",",".") : ""; const pz = t.match(/(\d+(?:[.,]\d+)?)\s*%/); base.perdida = pz ? pz[1].replace(",",".") : ""; if(!r){ base.dudas.push("rend"); notas.push("no dice el rendimiento en t/ha"); }
+  } else if(esAplic){
+    base.tipo = "aplicacion"; const d = t.match(RE_DOSIS); base.dosis = d ? d[1].replace(",",".") : "";
+    base.unidad = d ? ({"l/ha":"L/ha","lt/ha":"L/ha","kg/ha":"kg/ha","g/ha":"g/ha","ml/ha":"mL/ha","kg":"kg total","l":"L total","lt":"L total","lts":"L total"})[d[2]] || "kg/ha" : "kg/ha";
+    base.clase = /fung/.test(t) ? "fungicida" : /fert|urea|nitrat|fosf|potas|abono/.test(t) ? "fertilizante" : /insect/.test(t) ? "insecticida" : /herb/.test(t) ? "herbicida" : /bioest/.test(t) ? "bioestimulante" : "otro";
+    let prod = raw.replace(RE_FECHA,"").replace(new RegExp(RE_DOSIS.source,"i"),"").replace(new RegExp(RE_LOTE.source,"i"),"").replace(/\b(aplic\w*|apliqu\w*|hoy|ayer)\b/i,"").replace(/\s{2,}/g," ").trim().replace(/^[\-–·,.:]+|[\-–·,.:]+$/g,"").trim();
+    base.producto = prod ? expandAbrev(prod.toLowerCase()).replace(/^\w/, c=>c.toUpperCase()) : ""; if(!base.producto){ base.dudas.push("producto"); notas.push("no dice qué producto"); }
+    if(!d){ base.dudas.push("dosis"); notas.push("no dice la dosis"); } else if(low || dudasLinea.length){ base.dudas.push("dosis"); }
+  } else {
+    base.tipo = "observacion";
+    if(esSiembra && !obs){ base.que = "fenología"; base.donde = "toda la parcela"; base.sev = "0"; notas.push("siembra o trasplante: fija el inicio de la etapa del lote"); }
+    else {
+      base.que = obs ? obs[1] : "fenología";
+      if(/orilla|borde|cabecera|esquina/.test(t)) base.donde = "la orilla"; else if(/toda|todo el lote|general|parej/.test(t)) base.donde = "toda la parcela"; else if(/manch/.test(t)) base.donde = "un manchón"; else { base.donde = "un manchón"; base.dudas.push("donde"); notas.push("no dice dónde: se supuso un manchón"); }
+      const sv = t.match(/sev(?:eridad)?\s*[:.]?\s*(\d)/); if(sv) base.sev = sv[1]; else if(/fuerte|grave|severo|mucho/.test(t)) base.sev = "4"; else if(/leve|poco|incipiente/.test(t)) base.sev = "1"; else { base.sev = "1"; base.dudas.push("sev"); notas.push("no dice la severidad: se puso 1"); }
+    }
+  }
+  if(dudasLinea.length) notas.push(...dudasLinea);
+  if(base.lote){ const cur = (LOTES[lotIdx].nombre.match(/\d+/)||[""])[0], ln = (base.lote.match(/\d+/)||[""])[0]; if(cur && ln && cur!==ln) notas.push(`la línea dice ${base.lote}: se guardaría en el lote actual (${LOTES[lotIdx].nombre})`); }
+  base.nota = notas.join(" · "); return {reg: withDefaults(base)};
+}
+function interpretLines(lines){
+  const registros = [], sin = [];
+  lines.forEach((l, i)=>{ const raw = l.texto.trim(); if(!raw) return; const segs = splitEvents(raw); segs.forEach(seg=>{ const r = interpretOne(seg, i+1, l, segs.length>1 ? raw : null); if(r.sin) sin.push(r.sin); else registros.push(r.reg); }); });
+  return {registros, sin};
+}
+
+// --- etapa 3: lo que entendí (registros anclados a su línea)
+$("#lib-interp").addEventListener("click", async ()=>{
+  const lines = libLines.map(l=>l.texto.trim()); if(!lines.some(Boolean)) return;
+  $("#lib-interp").disabled = true; $("#lib-interp").textContent = "Interpretando…";
+  let r = null;
+  if(LECTOR.url && !libEdited && libProps.length) r = {registros: libProps, sin: libUnparsed};
+  else if(LECTOR.url){ try{ const res = await lectorInterpretar(lines); r = {registros: normRecs(res.registros), sin: normUnp(res.sin_interpretar)}; }catch(e){ r = null; } }
+  if(!r) r = interpretLines(libLines);
+  libProps = r.registros; libUnparsed = r.sin; libEdited = false; renderLibRows(); libShow("review");
+});
+$("#lib-backlines").addEventListener("click", ()=>{ renderLibLines(); libShow("trans"); });
 function sel(k, opts, val){ return `<select data-k="${k}">${opts.map(o=>`<option${o===val?" selected":""}>${esc(o)}</option>`).join("")}</select>`; }
 function propCard(p, i){
-  const d = k => p.dudas && p.dudas.includes(k) ? " doubt" : "";
+  const d = k => p.dudas.includes(k) ? "doubt" : "";
   const f = (k, label, inner) => `<div class="field"><label>${label}</label>${inner}</div>`;
-  const inp = (k, type, extra="") => `<input class="${d(k).trim()}" type="${type}" value="${esc(p[k] ?? "")}" data-k="${k}" ${extra}>`;
+  const inp = (k, type, extra="") => `<input class="${d(k)}" type="${type}" value="${esc(p[k] ?? "")}" data-k="${k}" ${extra}>`;
   let campos = "";
   if(p.tipo==="aplicacion") campos = f("producto","Producto",inp("producto","text",'placeholder="como lo llama usted"')) + `<div class="grid2">${f("dosis","Dosis",inp("dosis","text",'inputmode="decimal"'))}${f("unidad","Unidad",sel("unidad",["kg/ha","L/ha","g/ha","mL/ha","kg total","L total"],p.unidad||"kg/ha"))}</div>` + f("clase","Tipo",sel("clase",["fungicida","fertilizante","insecticida","herbicida","bioestimulante","otro"],p.clase||"fungicida"));
   if(p.tipo==="riego") campos = `<div class="grid2">${f("horas","Horas",inp("horas","text",'inputmode="decimal"'))}${f("metodo","Método",sel("metodo",["aspersión","goteo","gravedad","pivote"],p.metodo||"aspersión"))}</div>`;
   if(p.tipo==="observacion") campos = f("que","Qué vio",sel("que",VI_TIPOS,p.que||"enfermedad")) + `<div class="grid2">${f("donde","Dónde",sel("donde",VI_DONDE,p.donde||"un manchón"))}${f("sev","Severidad 0–5",sel("sev",["0","1","2","3","4","5"],String(p.sev ?? "1")))}</div>`;
   if(p.tipo==="cosecha") campos = `<div class="grid2">${f("rend","Rendimiento (t/ha)",inp("rend","text",'inputmode="decimal"'))}${f("perdida","Pérdida (%)",inp("perdida","text",'inputmode="decimal"'))}</div>`;
   const tipoChips = TIPOS_PROP.map(([v,l])=>`<button class="chip" aria-pressed="${p.tipo===v}" data-ptipo="${v}">${l}</button>`).join("");
-  return `<div class="card prop" data-i="${i}">
-    <div class="row between"><div class="chips mini">${tipoChips}</div><button class="inline-link" data-rm>Quitar</button></div>
-    ${p.leido ? `<div class="leido">Leído: «${esc(p.leido)}»</div>` : ""}
-    ${f("fecha","Fecha",inp("fecha","date"))}
-    ${campos}
-    ${p.nota ? `<div class="dudanota">${esc(p.nota)}</div>` : ""}
-  </div>`;
+  const fuente = p.leido ? `<div class="leido">${p.linea ? `Línea ${p.linea}: ` : "Leído: "}«${esc(p.leido)}»</div>` : "";
+  return `<div class="card prop" data-i="${i}"><div class="row between"><div class="chips mini">${tipoChips}</div><button class="inline-link" data-rm>Quitar</button></div>${fuente}${f("fecha","Fecha",inp("fecha","date"))}${campos}${p.nota ? `<div class="dudanota">${esc(p.nota)}</div>` : ""}</div>`;
 }
 function renderLibRows(){
   $("#lib-rows").innerHTML = libProps.map(propCard).join("");
-  const n = libProps.length; $("#lib-found").textContent = `${n} registro${n===1?"":"s"} ${n===1?"encontrado":"encontrados"}`;
-  $("#lib-save").textContent = n ? `Guardar ${n} registro${n===1?"":"s"} en la bitácora` : "No queda nada por guardar"; $("#lib-save").disabled = !n;
+  const n = libProps.length; $("#lib-found").textContent = n ? `${n} registro${n===1?"":"s"} ${n===1?"entendido":"entendidos"}` : "Ningún registro entendido";
+  $("#lib-unparsed").hidden = !libUnparsed.length;
+  $("#lib-unparsed-list").innerHTML = libUnparsed.map((u,i)=>`<div class="unp"><span class="ln">${u.linea ?? ""}</span><div><div>«${esc(u.texto)}»</div><div class="m">${esc(u.motivo)} · <button class="inline-link" data-useobs="${i}">tomarla como observación</button></div></div></div>`).join("");
+  $("#lib-save").textContent = n ? `Guardar ${n} registro${n===1?"":"s"} en la bitácora` : "No hay nada que guardar"; $("#lib-save").disabled = !n;
 }
-$("#lib-rows").addEventListener("input", e=>{ const c = e.target.closest(".prop"); const k = e.target.dataset.k; if(!c || !k) return; const p = libProps[+c.dataset.i]; p[k] = e.target.value; p.dudas = (p.dudas||[]).filter(x=>x!==k); e.target.classList.remove("doubt"); const dn = c.querySelector(".dudanota"); if(dn && !p.dudas.length){ dn.remove(); } });
+$("#lib-rows").addEventListener("input", e=>{ const c = e.target.closest(".prop"); const k = e.target.dataset.k; if(!c || !k) return; const p = libProps[+c.dataset.i]; p[k] = e.target.value; p.dudas = p.dudas.filter(x=>x!==k); e.target.classList.remove("doubt"); if(!p.dudas.length){ const dn = c.querySelector(".dudanota"); if(dn) dn.remove(); } });
 $("#lib-rows").addEventListener("change", e=>{ const c = e.target.closest(".prop"); const k = e.target.dataset.k; if(!c || !k) return; libProps[+c.dataset.i][k] = e.target.value; });
-$("#lib-add").addEventListener("click", ()=>{ libProps.push(withDefaults({tipo:"aplicacion", fecha:hoyISO, dudas:[]})); renderLibRows(); const cards = $$("#lib-rows .prop"); cards[cards.length-1].scrollIntoView({behavior:"smooth", block:"center"}); });
-function libReset(){ libTimers.forEach(clearTimeout); libTimers = []; libProps = []; $("#lib-step1").hidden = false; $("#lib-reading").hidden = true; $("#lib-review").hidden = true; $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-rows").innerHTML = ""; }
-$("#lib-input").addEventListener("change", e=>libStart(e.target.files && e.target.files[0]));
-$("#lib-gal").addEventListener("change", e=>libStart(e.target.files && e.target.files[0]));
+$("#lib-add").addEventListener("click", ()=>{ libProps.push(withDefaults({tipo:"aplicacion", fecha:hoyISO, dudas:[], nota:""})); renderLibRows(); const cards = $$("#lib-rows .prop"); cards[cards.length-1].scrollIntoView({behavior:"smooth", block:"center"}); });
 $("#lib-save").addEventListener("click", ()=>{
   const n = libProps.length; if(!n) return;
   libProps.forEach(p=>{
@@ -828,7 +1193,7 @@ $("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$
 // ---------------------------------------------------------------- toast y arranque
 let toastT = null;
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 2600); }
-renderAll(); renderPoly(false);
+renderAll();
 const h = (location.hash||"").replace("#","").split("/")[0]; go(SCREENS.includes(h) ? h : "hoy");
 })();
 </script>
