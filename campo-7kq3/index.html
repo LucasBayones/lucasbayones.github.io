@@ -608,10 +608,10 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div id="login-paso1" class="flow">
       <div class="field"><label for="login-email">Correo con el que fue invitado</label><input id="login-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com" autocapitalize="off" autocorrect="off"></div>
       <button class="btn acc" id="login-enviar">Enviar código</button>
-      <p class="note" id="login-msg">Le llega un código de 6 dígitos por correo. Esta versión es privada: solo entran las personas invitadas.</p>
+      <p class="note" id="login-msg">Le llega un código por correo. Esta versión es privada: solo entran las personas invitadas.</p>
     </div>
     <div id="login-paso2" class="flow" hidden>
-      <div class="field"><label for="login-code">Código de 6 dígitos</label><input id="login-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="123456" style="letter-spacing:5px;font-size:24px;text-align:center"></div>
+      <div class="field"><label for="login-code">Código del correo</label><input id="login-code" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="one-time-code" placeholder="código" style="letter-spacing:5px;font-size:24px;text-align:center"></div>
       <button class="btn acc" id="login-entrar">Entrar</button>
       <button class="inline-link" id="login-otra">Usar otro correo o pedir otro código</button>
       <p class="note" id="login-msg2"></p>
@@ -1122,14 +1122,14 @@ $("#login-enviar").addEventListener("click", async ()=>{
   finally{ $("#login-enviar").disabled = false; }
 });
 $("#login-entrar").addEventListener("click", async ()=>{
-  const email = $("#login-email").value.trim().toLowerCase(), code = $("#login-code").value.trim(); if(code.length < 6){ $("#login-msg2").textContent = "El código tiene 6 dígitos."; return; }
+  const email = $("#login-email").value.trim().toLowerCase(), code = $("#login-code").value.replace(/\D/g, ""); if(code.length < 6){ $("#login-msg2").textContent = "Escriba el código completo tal como viene en el correo (6 a 10 dígitos)."; return; }
   $("#login-entrar").disabled = true; $("#login-msg2").textContent = "Entrando…";
   try{ await verificarCodigo(email, code); await entrarModoNube(); toast(`Bienvenido${perfil && perfil.nombre ? ", " + perfil.nombre : ""}`); }
   catch(e){ $("#login-msg2").textContent = /expired|invalid|token|otp/i.test(e.message) ? "Código incorrecto o vencido. Pida otro." : "No se pudo entrar: " + e.message; }
   finally{ $("#login-entrar").disabled = false; }
 });
 $("#login-code").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#login-entrar").click(); });
-$("#login-otra").addEventListener("click", ()=>{ $("#login-paso2").hidden = true; $("#login-paso1").hidden = false; $("#login-code").value = ""; $("#login-msg").textContent = "Le llega un código de 6 dígitos por correo. Esta versión es privada: solo entran las personas invitadas."; });
+$("#login-otra").addEventListener("click", ()=>{ $("#login-paso2").hidden = true; $("#login-paso1").hidden = false; $("#login-code").value = ""; $("#login-msg").textContent = "Le llega un código por correo. Esta versión es privada: solo entran las personas invitadas."; });
 $("#login-demo").addEventListener("click", ()=>{ mostrarLogin(false); toast("Modo demostración: datos de ejemplo"); });
 
 async function entrarModoNube(){
