@@ -923,7 +923,7 @@ function openLote(){ initMap(); if(!map) return; setTimeout(()=>{ map.invalidate
 // ---------------------------------------------------------------- nube (etapa 0): sesión por invitación, lotes, registros, archivos y reportes
 // Supabase por REST puro, sin librerías: Auth (código por correo), PostgREST (tablas con reglas por fila) y Storage (archivos).
 // La app solo lleva la dirección del proyecto y la clave pública (anon); la llave de servicio vive en el RIG. Sin configuración: modo demostración.
-const NUBE = { url: "", anon: "" };
+const NUBE = { url: "https://lnwgbkdpylnyzuxvzzeg.supabase.co", anon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2dia2RweWxueXp1eHZ6emVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMDMyMTIsImV4cCI6MjEwNzc3OTIxMn0.EkN8Kji6oll8lRYjm2X-pGGJRg3xcrO1wRwTIHx5BKg" };   // proyecto engram-campo; la anon key es pública por diseño (las reglas por fila protegen los datos)
 try{ const u = localStorage.getItem("engram-campo-nube-url"), a = localStorage.getItem("engram-campo-nube-anon"); if(u) NUBE.url = u; if(a) NUBE.anon = a; }catch(e){}
 let MODO = "demo", sesion = null, perfil = null, vaciando = false, pendLotes = {};
 const SES_KEY = "engram-campo-sesion-v1", COLA_KEY = "engram-campo-cola-v1", LOGN_KEY = "engram-campo-bitacora-nube-v1", CACHE_KEY = "engram-campo-lotes-cache-v1", PEND_KEY = "engram-campo-pend-lotes-v1";
