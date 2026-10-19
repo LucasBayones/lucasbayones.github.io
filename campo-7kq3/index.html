@@ -27,16 +27,17 @@
   --accent:#C98C14; --accent-ink:#0B1C26; --blue:#2F7FB8; --bar:#0B1C26; --bar-fg:#F2EDE4; --bar-muted:#8FA3AE;
   --ok:#2F8A45; --ok-bg:#E3F2E6; --warn:#B5781A; --warn-bg:#FBEFD6; --bad:#C43A25; --bad-bg:#FBE3DF;
   --shadow:0 10px 30px rgba(11,28,38,.10);
+  --on-fg:#F2EDE4;   /* texto sobre un control "encendido" (fondo --ink): claro en modo claro, oscuro en modo oscuro */
   --serif:"Source Serif 4", Georgia, "Times New Roman", serif; --sans:"IBM Plex Sans", "Segoe UI", Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0B1C26; --surface:#13293A; --surface-2:#1B3447; --ink:#F2EDE4; --fg:#E9EEF0; --muted:#8FA3AE; --line:#24404F;
   --accent:#E0A63A; --accent-ink:#0B1C26; --blue:#5FB0E5; --bar:#071219; --bar-fg:#F2EDE4; --bar-muted:#8FA3AE;
-  --ok:#5CC274; --ok-bg:#15392A; --warn:#E0A63A; --warn-bg:#3D2E12; --bad:#F07A66; --bad-bg:#46201B; --shadow:0 10px 30px rgba(0,0,0,.4); color-scheme:dark }}
+  --ok:#5CC274; --ok-bg:#15392A; --warn:#E0A63A; --warn-bg:#3D2E12; --bad:#F07A66; --bad-bg:#46201B; --shadow:0 10px 30px rgba(0,0,0,.4); --on-fg:#0B1C26; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#0B1C26; --surface:#13293A; --surface-2:#1B3447; --ink:#F2EDE4; --fg:#E9EEF0; --muted:#8FA3AE; --line:#24404F;
   --accent:#E0A63A; --accent-ink:#0B1C26; --blue:#5FB0E5; --bar:#071219; --bar-fg:#F2EDE4; --bar-muted:#8FA3AE;
-  --ok:#5CC274; --ok-bg:#15392A; --warn:#E0A63A; --warn-bg:#3D2E12; --bad:#F07A66; --bad-bg:#46201B; --shadow:0 10px 30px rgba(0,0,0,.4); color-scheme:dark }
+  --ok:#5CC274; --ok-bg:#15392A; --warn:#E0A63A; --warn-bg:#3D2E12; --bad:#F07A66; --bad-bg:#46201B; --shadow:0 10px 30px rgba(0,0,0,.4); --on-fg:#0B1C26; color-scheme:dark }
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
@@ -45,7 +46,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 p{margin:0}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
-.phone{max-width:430px;margin:0 auto;min-height:100%;position:relative;background:var(--bg)}
+.phone{max-width:430px;margin:0 auto;min-height:100%;position:relative;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}   /* sin esto, el encabezado pegajoso baja la altura de la barra de estado y tapa el primer título */
 @media (min-width:700px){ body{background:var(--surface-2)} .phone{margin:24px auto;min-height:calc(100% - 48px);border-radius:28px;box-shadow:var(--shadow);overflow:hidden} }
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bar);color:var(--bar-fg);padding-block:12px 10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -56,7 +57,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .lotsel::-webkit-scrollbar{display:none}
 .lot-chip{flex:0 0 auto;border:1px solid var(--bar-muted);background:transparent;color:var(--bar-fg);border-radius:12px;padding:8px 12px;text-align:left;line-height:1.2}
 .lot-chip small{display:block;color:var(--bar-muted);font-size:11px}
-.lot-chip[aria-pressed="true"]{background:var(--bar-fg);color:var(--ink);border-color:var(--bar-fg)}
+.lot-chip[aria-pressed="true"]{background:var(--bar-fg);color:#0B1C26;border-color:var(--bar-fg)}
 .lot-chip[aria-pressed="true"] small{color:#5B6B74}
 .lot-chip.add{border-style:dashed;color:var(--bar-muted)}
 /* Entrada por invitación (modo nube) */
@@ -104,22 +105,22 @@ td.hot{color:var(--bad);font-weight:600} td.warm{color:var(--warn);font-weight:6
 .bigbtn .ic{width:28px;height:28px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent);font-weight:700;font-family:var(--serif)}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-size:14px}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--bar-fg);border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--on-fg);border-color:var(--ink)}
 .field{display:grid;gap:6px} .field label{font-size:13px;color:var(--muted);font-weight:500}
 .field input,.field select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%}
-.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:600;background:var(--ink);color:var(--bar-fg)}
+.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:600;background:var(--ink);color:var(--on-fg)}
 .btn.sec{background:var(--surface-2);color:var(--fg)} .btn.acc{background:var(--accent);color:var(--accent-ink)}
 .btn:disabled{opacity:.5;cursor:default}
 .seg{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .seg button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 0;font-weight:600}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bar-fg);border-color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-fg);border-color:var(--ink)}
 .photo{display:grid;place-items:center;border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center;gap:6px;background:var(--surface-2);cursor:pointer}
 .photo img{max-width:100%;max-height:220px;border-radius:10px}
 .hiddeninput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .log{display:grid;gap:8px}
 .log-item{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px}
 .log-item .d{font-family:var(--serif);font-weight:600;color:var(--blue);white-space:nowrap}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bar-fg);padding:10px 16px;border-radius:999px;font-size:14px;box-shadow:var(--shadow);opacity:0;transition:opacity .25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--on-fg);padding:10px 16px;border-radius:999px;font-size:14px;box-shadow:var(--shadow);opacity:0;transition:opacity .25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bar);color:var(--bar-muted);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
 nav.bottom .inner{width:100%;max-width:430px;display:grid;grid-template-columns:repeat(5,1fr);padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
@@ -162,7 +163,7 @@ nav.bottom button.reg{color:var(--accent)} nav.bottom button.reg[aria-current="p
 .verdor-etq{font-size:13px;color:var(--muted);margin-top:2px}
 .verdor-cambio{font-size:14px} .verdor-cambio b{font-variant-numeric:tabular-nums}
 .leyenda-ndvi{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)} .leyenda-ndvi i{display:inline-block;width:64px;height:8px;border-radius:4px;background:linear-gradient(90deg,#a6611a,#dfc27d,#f5f5aa,#80cd64,#016e32)}
-#verdor-btn[aria-pressed="true"]{background:var(--ink);color:var(--bar-fg)}
+#verdor-btn[aria-pressed="true"]{background:var(--ink);color:var(--on-fg)}
 .steps{display:grid;gap:10px}
 .step{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
 .step .n{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-family:var(--serif);font-weight:600;color:var(--accent)}
@@ -231,7 +232,7 @@ body.noscroll{overflow:hidden}
 .lmap .leaflet-control-attribution{font-size:9px;background:rgba(255,255,255,.72);color:#333} .lmap .leaflet-control-attribution a{color:#2F7FB8}
 .lmap .leaflet-bar a{color:#0B1C26}
 .maptools{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.seg2{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden} .seg2 button{border:0;background:var(--surface);padding:9px 14px;font-size:14px;font-weight:500} .seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--bar-fg)}
+.seg2{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden} .seg2 button{border:0;background:var(--surface);padding:9px 14px;font-size:14px;font-weight:500} .seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--on-fg)}
 .btn.sm{padding:9px 12px;font-size:14px}
 .row.wrap{flex-wrap:wrap}
 .vtx{width:22px;height:22px;border-radius:50%;background:#E0A63A;border:2px solid #0B1C26;box-shadow:0 1px 5px rgba(0,0,0,.45);cursor:grab}
@@ -356,11 +357,13 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="small muted maphint" id="map-hint">Toque el mapa donde está el lote (o use su ubicación). Después "Proponer polígono" y ajuste el borde arrastrando los vértices.</p>
     <div class="row wrap" id="poly-tools">
       <button class="btn" id="poly-propose">Proponer polígono</button>
+      <button class="btn sec" id="poly-circle">Círculo (pivote)</button>
       <button class="btn sec" id="poly-edit">Ajustar</button>
       <button class="btn sec" id="poly-done" hidden>Listo</button>
       <button class="btn sec" id="vtx-del" hidden>Quitar vértice</button>
       <button class="btn acc" id="poly-ok">Confirmar</button>
     </div>
+    <div class="field" id="circle-ctl" hidden><label for="circle-r">Radio del pivote: <b id="circle-r-v">200</b> m · <span id="circle-ha"></span></label><input id="circle-r" type="range" min="40" max="800" step="5" value="200"></div>
     <div class="kv" id="poly-kv"></div>
     <div class="kv" id="lote-kv"></div>
     <details>
@@ -858,6 +861,7 @@ function proposePoly(){
 function targetPoly(){ const g = G(); return editing.type==="lote" ? g.poly : (g.parcelas[editing.i] || {}).poly; }
 function setTargetPoly(arr){ const g = G(); if(editing.type==="lote"){ g.poly = arr; g.confirmado = false; } else g.parcelas[editing.i].poly = arr; geoSave(); }
 function startEdit(t){
+  if(t && t.type==="lote"){ const g = G(); if(g.forma==="circulo"){ g.forma = "poligono"; geoSave(); } $("#circle-ctl").hidden = true; }
   if(!map) return; editing = t; selVtx = null;
   if(t.type==="lote"){ G().confirmado = false; geoSave(); if(lotPoly) lotPoly.setStyle({dashArray:"7 5"}); }
   $("#poly-edit").hidden = true; $("#poly-done").hidden = false; $("#poly-propose").hidden = true; $("#poly-ok").hidden = true; $("#vtx-del").hidden = true;
@@ -887,14 +891,29 @@ function livePoly(){ const g = G(); if(editing.type==="lote"){ if(lotPoly) lotPo
 $("#vtx-del").addEventListener("click", ()=>{ if(selVtx===null) return; const arr = targetPoly(); if(arr.length<=3){ toast("Un polígono necesita al menos 3 vértices"); return; } arr.splice(selVtx,1); setTargetPoly(arr); selVtx = null; $("#vtx-del").hidden = true; livePoly(); renderHandles(); renderParcelas(); });
 $("#poly-edit").addEventListener("click", ()=>{ if(!G().poly){ toast("Primero proponga o dibuje el polígono"); return; } startEdit({type:"lote"}); });
 $("#poly-done").addEventListener("click", stopEdit);
-$("#poly-propose").addEventListener("click", proposePoly);
+$("#poly-propose").addEventListener("click", ()=>{ const g = G(); g.forma = "poligono"; $("#circle-ctl").hidden = true; proposePoly(); });
+// Círculo de pivote central: un polígono de 48 vértices alrededor del punto; el radio se ajusta con el control (o se deduce de las hectáreas).
+function circlePoly(lat, lon, r){ const k = Math.PI/180, R = 6371008.8, n = 48; const pts = []; for(let i=0;i<n;i++){ const a = i/n*2*Math.PI; pts.push([lat + (r*Math.cos(a))/(R*k), lon + (r*Math.sin(a))/(R*k*Math.cos(lat*k))]); } return pts; }
+function proposeCircle(r){
+  if(LOTES[lotIdx].sin){ toast("Primero cree un lote"); return; }
+  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat ?? 23.6, lon:LOTES[lotIdx].lon ?? -102.5}; if(!g.pin) setPin(p.lat, p.lon, {zoom:true});
+  if(r==null){ const ha = parseFloat(String($("#lt-ha").value).replace(",",".")) || LOTES[lotIdx].ha; r = ha ? Math.round(Math.sqrt(ha*10000/Math.PI)/5)*5 : 200; r = Math.max(40, Math.min(800, r)); }
+  g.forma = "circulo"; g.radio = r; g.poly = circlePoly(p.lat, p.lon, r); g.confirmado = false; geoSave();
+  if(editing) { clearHandles(); editing = null; selVtx = null; }
+  drawLot(); if(lotPoly) map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); setBase("sat"); renderPolyKV();
+  $("#circle-ctl").hidden = false; $("#circle-r").value = r; $("#circle-r-v").textContent = r; $("#circle-ha").textContent = `${(Math.PI*r*r/10000).toFixed(1)} ha`;
+  $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true;
+  $("#map-hint").textContent = "Círculo de pivote centrado en el punto. Mueva el control del radio hasta que coincida con el borde regado; \"Confirmar\" lo fija. Si el pivote no cubre el círculo completo, use \"Ajustar\" para recortarlo.";
+}
+$("#poly-circle").addEventListener("click", ()=>proposeCircle());
+$("#circle-r").addEventListener("input", e=>{ const r = +e.target.value; $("#circle-r-v").textContent = r; $("#circle-ha").textContent = `${(Math.PI*r*r/10000).toFixed(1)} ha`; const g = G(); if(g.forma!=="circulo") return; const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon}; if(!p || p.lat==null) return; g.poly = circlePoly(p.lat, p.lon, r); g.radio = r; g.confirmado = false; geoSave(); if(lotPoly) lotPoly.setLatLngs(g.poly); else drawLot(); renderPolyKV(); });
 $("#poly-ok").addEventListener("click", ()=>{ const g = G(); if(!g.poly){ toast("No hay polígono que confirmar: propóngalo o dibújelo"); return; } g.confirmado = true; geoSave(); drawLot(); toast(`Polígono confirmado: ${areaHa(g.poly).toFixed(2)} ha`); const lc = LOTES[lotIdx]; lc.ha = Math.round(areaHa(g.poly)*100)/100; $("#lt-ha").value = lc.ha; patchLote(lc, {poligono:g.poly, superficie_ha:lc.ha, lat:(g.pin||{}).lat, lon:(g.pin||{}).lon}); $("#map-hint").textContent = "Confirmado. Dentro de este borde se seguirá el verdor del lote cada 5 días (etapa 1)."; });
 
 function renderPolyKV(){
   const g = G();
   if(!g.poly){ $("#poly-kv").innerHTML = kv([["Polígono", "todavía no hay"],["Superficie declarada", (LOTES[lotIdx].ha ? LOTES[lotIdx].ha+" ha" : "—")]]); return; }
   const ha = areaHa(g.poly);
-  $("#poly-kv").innerHTML = kv([["Superficie del polígono", `${ha.toFixed(2)} ha · ${g.confirmado ? "confirmado" : "sin confirmar"}`],["Perímetro", `${Math.round(perimM(g.poly))} m`],["Vértices", String(g.poly.length)],["Píxeles Sentinel‑2 dentro", `≈ ${Math.round(ha*100)} de 10 m`]]);
+  $("#poly-kv").innerHTML = kv([["Superficie del polígono", `${ha.toFixed(2)} ha · ${g.confirmado ? "confirmado" : "sin confirmar"}`],["Perímetro", `${Math.round(perimM(g.poly))} m`],[g.forma==="circulo" ? "Forma" : "Vértices", g.forma==="circulo" ? `círculo de pivote, radio ${g.radio} m` : String(g.poly.length)],["Píxeles Sentinel‑2 dentro", `≈ ${Math.round(ha*100)} de 10 m`]]);
 }
 function renderLoteKV(){
   const g = G(); const l = LOTES[lotIdx]; const p = g.pin || ((l.lat!=null && l.lon!=null) ? {lat:l.lat, lon:l.lon} : null);
@@ -949,6 +968,7 @@ function renderLote(){
   { const v = lx && lx.verdor, img = v && v.imagen; const b = $("#verdor-btn"); if(b) b.hidden = !(img && (img.ruta || img.url) && img.bounds); if(verdorLayer && (!verdorLayer._engramLote || verdorLayer._engramLote !== (lx.uuid||lx.id))) quitarVerdor(); }
   if(lx.sin){ $("#lote-kv").innerHTML = kv([["Lote", "todavía no hay: cree uno con \"+ Nuevo lote\""]]); $("#poly-kv").innerHTML = ""; $("#parc-list").innerHTML = ""; if(map && !$("#s-lote").hidden){ map.setView([23.6, -102.5], 5); if(lotPoly){ map.removeLayer(lotPoly); lotPoly = null; } if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } renderRes(); } return; }
   renderLoteKV(); renderPolyKV(); renderParcelas();
+  { const g = G(); const c = $("#circle-ctl"); if(c){ c.hidden = g.forma!=="circulo" || !g.poly; if(!c.hidden){ $("#circle-r").value = g.radio || 200; $("#circle-r-v").textContent = g.radio || 200; $("#circle-ha").textContent = `${(Math.PI*(g.radio||200)**2/10000).toFixed(1)} ha`; } } }
   if(!map || $("#s-lote").hidden) return;
   if(editing){ clearHandles(); editing = null; selVtx = null; $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; }
   if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } if(accCircle){ map.removeLayer(accCircle); accCircle = null; }
@@ -1226,7 +1246,7 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
-const APP_VERSION = "11 · 19 oct 2026";
+const APP_VERSION = "12 · 19 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
@@ -1320,8 +1340,11 @@ function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor
 function sparkline(serie){
   const pts = (serie||[]).slice(-12); if(pts.length < 2) return "";
   const W = 150, H = 46, x = i => 4 + i * (W - 8) / (pts.length - 1), y = m => H - 4 - Math.max(0, Math.min(0.9, m)) / 0.9 * (H - 8);
-  const d = pts.map((p,i)=>`${i?"L":"M"}${x(i).toFixed(1)} ${y(p.m).toFixed(1)}`).join(" ");
-  return `<line x1="4" y1="${y(0.2).toFixed(1)}" x2="${W-4}" y2="${y(0.2).toFixed(1)}"/><line x1="4" y1="${y(0.6).toFixed(1)}" x2="${W-4}" y2="${y(0.6).toFixed(1)}"/><path d="${d}"/><circle cx="${x(pts.length-1).toFixed(1)}" cy="${y(pts[pts.length-1].m).toFixed(1)}" r="3.2"/>`;
+  const buenas = pts.map((p,i)=>({p,i})).filter(o=>!o.p.d);                       // las dudosas (nube no detectada) no van en la línea: se dibujan huecas
+  const d = buenas.map((o,k)=>`${k?"L":"M"}${x(o.i).toFixed(1)} ${y(o.p.m).toFixed(1)}`).join(" ");
+  const huecas = pts.map((p,i)=>p.d ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.m).toFixed(1)}" r="2.6" style="fill:var(--surface);stroke:var(--muted);stroke-width:1.2"/>` : "").join("");
+  const ult = buenas[buenas.length-1];
+  return `<line x1="4" y1="${y(0.2).toFixed(1)}" x2="${W-4}" y2="${y(0.2).toFixed(1)}"/><line x1="4" y1="${y(0.6).toFixed(1)}" x2="${W-4}" y2="${y(0.6).toFixed(1)}"/><path d="${d}"/>${huecas}${ult ? `<circle cx="${x(ult.i).toFixed(1)}" cy="${y(ult.p.m).toFixed(1)}" r="3.2"/>` : ""}`;
 }
 function renderVerdor(){
   const card = $("#hoy-verdor"); if(!card) return; const l = LOTES[lotIdx]; const v = l && l.verdor;
@@ -1330,7 +1353,7 @@ function renderVerdor(){
   if(!v.ultimo){ $("#verdor-fecha").textContent = ""; $("#verdor-main").hidden = true; $("#verdor-cambio").textContent = ""; $("#verdor-parc").innerHTML = ""; $("#verdor-nota").textContent = v.nota || "Sin escena despejada todavía."; $("#verdor-mapa").hidden = true; return; }
   const u = v.ultimo; $("#verdor-main").hidden = false;
   $("#verdor-fecha").textContent = `${fmtD(u.fecha)}${v.ejemplo ? " · ejemplo" : ""}${v.geometria==="punto" ? " · alrededor del punto" : ""}`;
-  $("#verdor-num").textContent = Number(u.mediana).toFixed(2); $("#verdor-etq").textContent = `NDVI mediano · ${u.etiqueta || ""}`;
+  $("#verdor-num").textContent = Number(u.mediana).toFixed(2); $("#verdor-etq").textContent = `NDVI mediano · ${u.etiqueta || ""}${u.por_confirmar ? " · por confirmar" : ""}`;
   $("#verdor-spark").innerHTML = sparkline(v.serie);
   const c = v.cambio; let txt = "";
   if(c){ const d = Number(c.delta); txt = `${d > 0.02 ? "▲ subió" : d < -0.02 ? "▼ bajó" : "= sin cambio"} <b>${Math.abs(d).toFixed(2)}</b> en ${c.dias} día${c.dias===1?"":"s"}`; }
