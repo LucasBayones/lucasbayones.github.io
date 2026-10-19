@@ -1027,7 +1027,7 @@ async function cargarLotes(){
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
     db("GET","parcelas",{select:"*"}),
     db("GET","estado_rig",{select:"*"}).catch(()=>null),
-    db("GET","alertas",{select:"*", or:`(vigente.eq.true,cerrada_en.gte.${desde})`, order:"emitida.desc"}).catch(()=>null),   // vigentes + cerradas en los últimos 14 días
+    db("GET","alertas",{select:"*", or:`(vigente.eq.true,cerrada_en.gte.${desde})`, order:"emitida.desc"}).then(r=>{ alertasError = null; return r; }).catch(e=>{ alertasError = String(e && e.message || e).slice(0,140); return null; }),   // vigentes + cerradas en los últimos 14 días
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
@@ -1131,7 +1131,7 @@ function mostrarLogin(on){ $("#login").hidden = !on; document.body.classList.tog
 function renderSesion(){
   const kv_ = $("#sesion-kv"); if(!kv_) return;
   const conf = NUBE.url && NUBE.anon;
-  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()]] : []));
+  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()],["Alertas", alertasError ? `no se pudieron leer: ${alertasError}` : `${ALERTAS.length} cargada${ALERTAS.length===1?"":"s"} (${ALERTAS.filter(a=>a.vigente).length} vigente${ALERTAS.filter(a=>a.vigente).length===1?"":"s"})`]] : []).concat([["Versión de la app", APP_VERSION]]));
   $("#sesion-salir").hidden = !(MODO==="nube"); $("#sesion-entrar").hidden = !(conf && MODO!=="nube");
   $("#nube-url").value = NUBE.url; $("#nube-anon").value = NUBE.anon;
 }
@@ -1198,7 +1198,8 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // Las abre el RIG cada noche cuando el riesgo (probabilidad × sensibilidad de la etapa) cruza el umbral alto en los próximos 7 días,
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
-let ALERTAS = [], pendAlertas = {};
+let ALERTAS = [], pendAlertas = {}, alertasError = null;
+const APP_VERSION = "10.2 · 19 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
