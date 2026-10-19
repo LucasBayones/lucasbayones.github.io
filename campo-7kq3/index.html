@@ -140,10 +140,22 @@ nav.bottom button.reg{color:var(--accent)} nav.bottom button.reg[aria-current="p
 .list{display:grid;gap:2px}
 .list button{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);padding:14px 16px;border-radius:12px}
 .list button span{color:var(--muted)}
-.alert{display:grid;grid-template-columns:4px 1fr;gap:12px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
-.alert i{display:block;background:var(--warn)} .alert.hot i{background:var(--bad)}
-.alert div{padding:12px 12px 12px 0}
-.alert b{display:block}
+/* Alertas del motor: barra roja = vigente, gris = cerrada; "nueva" (sin ver) lleva fondo pálido; ejemplo = borde punteado */
+.alertas{display:grid;gap:10px}
+.alerta{display:grid;grid-template-columns:4px 1fr;gap:12px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.alerta>i{display:block;background:var(--bad)} .alerta.cerrada>i{background:var(--muted)} .alerta.ejemplo{border-style:dashed}
+.alerta.nueva{background:var(--bad-bg)}
+.alerta>div{padding:12px 12px 12px 0;display:grid;gap:6px;min-width:0}
+.alerta b{display:block;line-height:1.25;font-size:16px}
+.alerta .txt{font-size:14px;line-height:1.4}
+.alerta .meta{font-size:12px;color:var(--muted)}
+.alerta .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.alerta .acts .btn{padding:9px 12px;font-size:13px;border-radius:10px}
+.alerta .resp{font-size:13px;color:var(--ok);font-weight:600}
+.alerta .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--muted);margin-left:6px;vertical-align:middle}
+.card.alerta-card{border-color:var(--bad)}
+.lot-chip .ndot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-left:6px;vertical-align:middle}
+.list button .cnt{color:var(--bad);font-weight:600}
 .steps{display:grid;gap:10px}
 .step{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
 .step .n{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-family:var(--serif);font-weight:600;color:var(--accent)}
@@ -240,6 +252,11 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 <main>
 <!-- ============================ HOY ============================ -->
 <section class="screen" id="s-hoy" aria-labelledby="h-hoy">
+  <div class="card alerta-card" id="hoy-alertas" hidden>
+    <div class="row between"><span class="eyebrow" style="color:var(--bad)">Alerta del motor</span><span class="small muted" id="hoy-alertas-meta"></span></div>
+    <div class="alertas" id="hoy-alertas-list"></div>
+    <p class="note">Solo avisamos cuando la probabilidad cruza el umbral alto en la etapa en que su cultivo es sensible. Qué hacer con esto lo decide usted con su agrónomo; "No aplica" nos ayuda a ajustar el umbral de su lote.</p>
+  </div>
   <div class="card">
     <div class="row between"><span class="eyebrow" id="hoy-fecha">Viernes 16 de octubre</span><span class="lvl bajo" id="hoy-nivel">Riesgo bajo</span></div>
     <h2 id="h-hoy">Hoy en tu lote</h2>
@@ -369,7 +386,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   <div class="card" id="mas-home">
     <h2 id="h-mas">Más</h2>
     <div class="list">
-      <button data-go="mas-alertas">Alertas <span>cuando algo cruza el umbral en su etapa</span></button>
+      <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>tendencia, años parecidos</span></button>
       <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
@@ -380,9 +397,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   <div class="card" id="mas-alertas" hidden>
     <div class="row between"><span class="eyebrow">Alertas</span><button class="inline-link" data-back>Volver</button></div>
     <h2>Le avisamos cuando importa</h2>
-    <div class="alert"><i></i><div><b>Jueves 22: 12 % de condiciones de tizón</b><span class="small muted">Parcela 7 · primer día con señal en 14 días. La planta está emergiendo: susceptibilidad baja. Sin acción.</span></div></div>
-    <div class="alert hot"><i></i><div><b>Ejemplo de alerta alta</b><span class="small muted">"Mañana 6 de cada 10 escenarios hielan y su lote está en llenado." Así se vería una alerta que sí pide actuar.</span></div></div>
-    <p class="note">La mayoría de los días la app no dice nada. Ese silencio es parte del diseño: solo avisa cuando la probabilidad cruza el umbral en la etapa en que su cultivo es sensible.</p>
+    <div class="alertas" id="mas-alertas-list"></div>
+    <p class="note">La mayoría de los días la app no dice nada. Ese silencio es parte del diseño: el motor abre una alerta cuando el riesgo (probabilidad del ensamble × sensibilidad de la etapa) cruza el umbral alto en alguno de los próximos 7 días, la actualiza cada noche mientras siga y la cierra cuando baja. Sus respuestas ("Visto", "No aplica") quedan guardadas y sirven para ajustar los umbrales de su lote.</p>
   </div>
 
   <div class="card" id="mas-memoria" hidden>
@@ -415,7 +431,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   <div class="card" id="mas-acerca" hidden>
     <div class="row between"><span class="eyebrow">Acerca de esta versión</span><button class="inline-link" data-back>Volver</button></div>
     <h2>Preliminar, privada, de los socios</h2>
-    <p class="small">Prototipo del 16 de octubre de 2026. Los datos de pronóstico de la Parcela 7 (Valle del Fuerte) son los reales del ensamble de hoy; el lote de Toluca es de ejemplo. Las fotos y notas se quedan en este teléfono: la sincronización con la nube y el motor es la etapa 0 del plan.</p>
+    <p class="small">Versión preliminar (octubre de 2026). En la demostración, el pronóstico de la Parcela 7 (Valle del Fuerte) es el real del ensamble del 16 de octubre y el lote de Toluca es de ejemplo. Con sesión, los lotes, registros y fotos se guardan en la nube cuando hay señal, el motor los recoge cada noche y devuelve el reporte y las alertas por lote.</p>
     <p class="small">El motor corre en el RIG y nunca se expone: cada noche recoge lo registrado y publica los reportes. Esta app muestra resultados; los modelos no salen de ahí.</p>
     <div class="kv" id="sesion-kv"></div>
     <div class="row"><button class="btn sec" id="sesion-salir" hidden>Cerrar sesión</button><button class="btn sec" id="sesion-entrar" hidden>Entrar con mi correo</button></div>
@@ -678,7 +694,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 
 // ---------------------------------------------------------------- render: selector y pantallas
 function renderLotSel(){
-  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}<small>${esc(l.cultivo)} · ${esc(l.region || "zona por definir")}</small></button>`).join("")
+  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}${alertasDe(l).some(alertaNueva) ? `<i class="ndot" title="alerta sin ver"></i>` : ""}<small>${esc(l.cultivo)} · ${esc(l.region || "zona por definir")}</small></button>`).join("")
     + (MODO==="nube" ? `<button class="lot-chip add" data-flow="nuevolote">+ Nuevo lote<small>crear otro</small></button>` : "");
 }
 function renderHoy(){
@@ -947,7 +963,7 @@ async function pedirCodigo(email){ await authPost("otp", {email, create_user:fal
 async function verificarCodigo(email, token){ const j = await authPost("verify", {type:"email", email, token}); if(!j || !j.access_token) throw new Error("respuesta sin sesión"); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user:{id:j.user.id, email:j.user.email}}); }
 async function refrescar(){ if(!sesion) return false; try{ const j = await authPost("token?grant_type=refresh_token", {refresh_token: sesion.refresh_token}); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user: j.user ? {id:j.user.id, email:j.user.email} : sesion.user}); return true; }catch(e){ return false; } }
 async function token(){ if(!sesion) throw new Error("sin sesión"); if(Date.now() > sesion.expires_at - 60000){ if(!(await refrescar())){ if(navigator.onLine){ cerrarSesion(true); throw new Error("sesión vencida"); } } } return sesion.access_token; }
-function cerrarSesion(silencio){ sesGuardar(null); perfil = null; MODO = "demo"; LOTES = DEMO_LOTES; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
+function cerrarSesion(silencio){ sesGuardar(null); perfil = null; MODO = "demo"; LOTES = DEMO_LOTES; ALERTAS = []; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
 
 // --- tablas (PostgREST) y archivos (Storage)
 async function db(method, tabla, params, body, prefer){
@@ -1001,20 +1017,26 @@ function armarLotes(filas, reps, parcs){
   (parcs||[]).forEach(pc=>{ const g = geo[pc.lote_id]; if(!g) return; const ex = g.parcelas.find(x=>x.uuid===pc.id); if(ex){ ex.nombre = pc.nombre; ex.poly = pc.poligono || ex.poly; } else g.parcelas.push({uuid:pc.id, nombre:pc.nombre, poly:pc.poligono}); });
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
+let ultimoCache = {};
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS})); }catch(e){} }
 async function cargarLotes(){
-  const [filas, reps, perf, parcs, est] = await Promise.all([
+  const desde = localISO(new Date(Date.now() - 14*86400000));
+  const [filas, reps, perf, parcs, est, als] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
     db("GET","parcelas",{select:"*"}),
     db("GET","estado_rig",{select:"*"}).catch(()=>null),
+    db("GET","alertas",{select:"*", or:`(vigente.eq.true,cerrada_en.gte.${desde})`, order:"emitida.desc"}).catch(()=>null),   // vigentes + cerradas en los últimos 14 días
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({filas, reps, parcs, perfil, estadoRig})); }catch(e){}
+  const pend = pendAlertas || {};
+  ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
+  ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
-function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}`; }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
   const nube = (filas||[]).map(r=>({lote:r.lote_id, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id}));
@@ -1083,14 +1105,14 @@ async function vaciarCola(){
         }catch(e){ fallidos.add(item.cliente_id); if(String(e.message).includes("sesión") || !navigator.onLine) { pasada = 99; break; } }
       }
     }
-    await vaciarPendLotes();
+    await vaciarPendLotes(); await vaciarPendAlertas();
   } finally { vaciando = false; save(); renderLog(); renderSync(); }
 }
 function renderSync(){
   const el = $("#sync-estado"), nota = $("#sync-nota"); if(!el) return;
   if(MODO!=="nube"){ el.hidden = true; if(nota) nota.hidden = false; return; }
   el.hidden = false; if(nota) nota.hidden = true;
-  const n = colaCargar().length + Object.keys(pendLotes).length;
+  const n = colaCargar().length + Object.keys(pendLotes).length + Object.keys(pendAlertas).length;
   el.innerHTML = !navigator.onLine ? `<i class="off"></i>Sin señal: ${n} cambio${n===1?"":"s"} guardado${n===1?"":"s"} en el teléfono; suben solos al volver la señal.` : n ? `<i class="pend"></i>${n} cambio${n===1?"":"s"} por subir…` : `<i></i>Sincronizado con la nube${perfil && perfil.nombre ? ` · ${perfil.nombre}` : ""}${estadoRig && estadoRig.ultima_corrida ? ` · motor: corrida del ${latidoTxt().split(" · ")[0].replace(/\.$/, "")}` : "."}`;
 }
 window.addEventListener("online", ()=>{ vaciarCola(); }); window.addEventListener("offline", renderSync);
@@ -1135,13 +1157,14 @@ $("#login-otra").addEventListener("click", ()=>{ $("#login-paso2").hidden = true
 $("#login-demo").addEventListener("click", ()=>{ mostrarLogin(false); toast("Modo demostración: datos de ejemplo"); });
 
 async function entrarModoNube(){
-  MODO = "nube"; hoyISO = localISO(); pendCargar();
+  MODO = "nube"; hoyISO = localISO(); pendCargar(); pendACargar();
   try{ log = JSON.parse(localStorage.getItem(LOGN_KEY)) || []; }catch(e){ log = []; }
   let ok = true;
   try{ await cargarLotes(); await cargarRegistros(); }
   catch(e){ ok = false; if(!sesion) return; if(!cargarLotesCache()){ LOTES = [loteVacio()]; } }
   lotIdx = Math.min(lotIdx, LOTES.length-1); mostrarLogin(false); renderSesion(); renderAll(); renderSync();
   if(!ok) toast(navigator.onLine ? "No se pudo leer la nube: se muestra lo guardado en el teléfono" : "Sin señal: se muestra lo guardado en el teléfono");
+  else avisarAlertasNuevas();
   vaciarCola();
 }
 async function nubeInit(){
@@ -1171,6 +1194,72 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
   $("#"+id).addEventListener("change", e=>{ const l = LOTES[lotIdx]; if(!l || l.sin) return; let v = e.target.value; if(campo==="ha"){ v = parseFloat(String(v).replace(",",".")); if(isNaN(v)) v = null; } if(campo==="siembra" && !v) v = null; l[campo] = v===null ? (campo==="ha" ? null : "") : v; if(campo==="nombre" || campo==="cultivo") renderLotSel(); patchLote(l, {[col]: v}); if(MODO==="nube" && l.nube) toast("Dato del lote guardado"); });
 });
 
+// ---------------------------------------------------------------- alertas (etapa 1, punto 3)
+// Las abre el RIG cada noche cuando el riesgo (probabilidad × sensibilidad de la etapa) cruza el umbral alto en los próximos 7 días,
+// las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
+// (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
+let ALERTAS = [], pendAlertas = {};
+const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
+const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
+const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
+const DEMO_ALERTAS = [
+  {id:"ej-1", lote_id:"L-007", peligro:"helada", nivel:"alto", titulo:"Helada: riesgo alto el mar 20", mensaje:"Así se vería una alerta que sí pide atención: \"6 de cada 10 escenarios hielan la noche del martes y el lote está en llenado, etapa muy sensible a este peligro\". Hoy el riesgo real de la Parcela 7 es bajo: esta tarjeta es solo un ejemplo.", inicio:"2026-10-20", fin:"2026-10-20", vigente:true, emitida:"2026-10-16T04:47:00-06:00", actualizada_en:"2026-10-16T04:47:00-06:00", detalle:{calibrado:false}, ejemplo:true},
+  {id:"ej-2", lote_id:"L-001", peligro:"tizon_tardio", nivel:"alto", titulo:"Tizón tardío: riesgo alto del lun 3 al jue 6", mensaje:"4 de 7 días con riesgo alto; probabilidad máxima 81 % el mié 5. El cultivo estaba en llenado, etapa muy sensible a este peligro. Revise hojas bajas y orillas húmedas; si ve manchas, regístrelas con foto en \"Vi algo\".", inicio:"2026-08-03", fin:"2026-08-06", vigente:false, emitida:"2026-08-02T04:50:00-06:00", actualizada_en:"2026-08-08T04:50:00-06:00", cerrada_en:"2026-08-08T04:50:00-06:00", respuesta:"visto", respondida_en:"2026-08-02T07:10:00-06:00", detalle:{calibrado:false}, ejemplo:true},
+];
+const idLote = l => l ? (l.uuid || l.id) : null;
+function listaAlertas(){ return MODO==="nube" ? ALERTAS : DEMO_ALERTAS; }
+function alertasDe(l){ const id = idLote(l); return listaAlertas().filter(a=>a.lote_id===id); }
+function alertaNueva(a){ return a.vigente && !a.vista_en && !a.respuesta && !a.ejemplo; }
+function fmtDT(iso){ if(!iso) return ""; const d = new Date(iso); if(isNaN(d)) return String(iso).slice(0,10); return `${d.getDate()} ${["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][d.getMonth()]} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
+function alertaHTML(a, conLote){
+  const l = LOTES.find(x=>idLote(x)===a.lote_id);
+  const cuando = a.inicio ? (a.inicio===a.fin ? `para el ${fmtD(a.inicio)}` : `del ${fmtD(a.inicio)} al ${fmtD(a.fin)}`) : "";
+  const meta = [conLote && l ? l.nombre : "", cuando, a.actualizada_en || a.emitida ? `motor del ${fmtDT(a.actualizada_en || a.emitida)}` : "", (a.detalle && a.detalle.calibrado) ? "calibrado" : "sin calibrar"].filter(Boolean).join(" · ");
+  let pie;
+  if(a.respuesta) pie = `<span class="resp">${esc(RESP_TXT[a.respuesta] || a.respuesta)}${a.respondida_en ? ` · ${fmtD(String(a.respondida_en).slice(0,10))}` : ""}${a.vigente ? ` <button class="inline-link" data-aresp="${esc(a.id)}" data-r="">cambiar</button>` : ""}</span>`;
+  else if(a.vigente) pie = `<div class="acts"><button class="btn sec" data-aresp="${esc(a.id)}" data-r="visto">Visto</button><button class="btn sec" data-aresp="${esc(a.id)}" data-r="no_aplica">No aplica a mi lote</button></div>`;
+  else pie = `<span class="meta">Cerrada el ${fmtD(String(a.cerrada_en || a.actualizada_en || a.emitida).slice(0,10))}: el riesgo bajó del umbral.</span>`;
+  return `<div class="alerta${a.vigente ? "" : " cerrada"}${a.ejemplo ? " ejemplo" : ""}${alertaNueva(a) ? " nueva" : ""}"><i></i><div><b>${esc(a.titulo || PELIGRO_TXT[a.peligro] || a.peligro)}${a.ejemplo ? `<span class="tag">ejemplo</span>` : alertaNueva(a) ? `<span class="tag" style="color:var(--bad);border-color:var(--bad)">nueva</span>` : ""}</b><span class="txt">${esc(a.mensaje || "")}</span><span class="meta">${esc(meta)}</span>${pie}</div></div>`;
+}
+function renderAlertas(){
+  const card = $("#hoy-alertas"); if(!card) return;
+  const l = LOTES[lotIdx]; const vig = (l ? alertasDe(l) : []).filter(a=>a.vigente && !a.ejemplo);
+  card.hidden = !vig.length;
+  if(vig.length){ const n = vig.filter(alertaNueva).length; $("#hoy-alertas-meta").textContent = n ? `${n} nueva${n===1?"":"s"}` : `${vig.length} vigente${vig.length===1?"":"s"}`; $("#hoy-alertas-list").innerHTML = vig.map(a=>alertaHTML(a, false)).join(""); }
+  const todas = listaAlertas().slice().sort((a,b)=>String(b.actualizada_en||b.emitida||"").localeCompare(String(a.actualizada_en||a.emitida||"")));
+  const vigentes = todas.filter(a=>a.vigente), cerradas = todas.filter(a=>!a.vigente);
+  const vacio = MODO==="nube" ? "Sin alertas vigentes: ningún peligro cruza el umbral alto en los próximos 7 días para sus lotes. El motor vuelve a revisar cada noche." : "En la demostración no hay alertas reales; abajo, dos ejemplos de cómo se ven.";
+  const lista = $("#mas-alertas-list"); if(lista) lista.innerHTML = (vigentes.length ? vigentes.map(a=>alertaHTML(a, true)).join("") : `<p class="note">${vacio}</p>`) + (cerradas.length ? `<span class="eyebrow" style="margin-top:6px">Cerradas hace poco</span>` + cerradas.map(a=>alertaHTML(a, true)).join("") : "");
+  const sub = $("#mas-alertas-sub"); if(sub){ const nv = (MODO==="nube" ? ALERTAS : []).filter(a=>a.vigente).length, nn = ALERTAS.filter(alertaNueva).length; sub.innerHTML = nv ? `<span class="cnt">${nv} vigente${nv===1?"":"s"}${nn ? ` · ${nn} sin ver` : ""}</span>` : "cuando algo cruza el umbral en su etapa"; }
+}
+async function responderAlerta(id, r){
+  const a = listaAlertas().find(x=>x.id===id); if(!a) return;
+  const ahora = new Date().toISOString();
+  if(r){ a.respuesta = r; a.respondida_en = ahora; a.vista_en = a.vista_en || ahora; } else { a.respuesta = null; a.respondida_en = null; }
+  renderAlertas(); renderLotSel();
+  if(MODO!=="nube" || a.ejemplo){ toast("En la demostración la respuesta no se guarda"); return; }
+  pendAlertas[id] = {vista_en:a.vista_en, respuesta:a.respuesta, respondida_en:a.respondida_en, respondida_por: sesion && sesion.user ? sesion.user.id : null}; pendAGuardar(); cacheGuardar();
+  toast(r ? (r==="no_aplica" ? "Anotado: no aplica a este lote. Gracias, eso ajusta el umbral." : "Marcada como vista") : "Respuesta quitada");
+  vaciarPendAlertas();
+}
+function pendACargar(){ try{ pendAlertas = JSON.parse(localStorage.getItem(PENDA_KEY)) || {}; }catch(e){ pendAlertas = {}; } }
+function pendAGuardar(){ try{ localStorage.setItem(PENDA_KEY, JSON.stringify(pendAlertas)); }catch(e){} }
+async function vaciarPendAlertas(){
+  if(MODO!=="nube" || !sesion || !navigator.onLine) return;
+  for(const [id, campos] of Object.entries(pendAlertas)){
+    try{ await db("PATCH","alertas",{id:"eq."+id}, campos, "return=minimal"); delete pendAlertas[id]; pendAGuardar(); }
+    catch(e){ if(e.status && e.status!==0 && e.status<500 && e.status!==401){ delete pendAlertas[id]; pendAGuardar(); toast("La nube rechazó la respuesta a una alerta: " + e.message.slice(0,80)); } }
+  }
+  renderSync();
+}
+function avisarAlertasNuevas(){                  // una vez por alerta: aviso al abrir la app si llegó algo nuevo desde la última vez
+  if(MODO!=="nube") return; let avisadas = []; try{ avisadas = JSON.parse(localStorage.getItem(AVIS_KEY)) || []; }catch(e){}
+  const nuevas = ALERTAS.filter(a=>alertaNueva(a) && !avisadas.includes(a.id)); if(!nuevas.length) return;
+  const l = LOTES.find(x=>idLote(x)===nuevas[0].lote_id);
+  toast(nuevas.length===1 ? `Alerta nueva${l ? " en " + l.nombre : ""}: ${PELIGRO_TXT[nuevas[0].peligro] || nuevas[0].peligro}` : `${nuevas.length} alertas nuevas del motor`);
+  try{ localStorage.setItem(AVIS_KEY, JSON.stringify(avisadas.concat(nuevas.map(a=>a.id)).slice(-200))); }catch(e){}
+}
+
 // ---------------------------------------------------------------- navegación
 const SCREENS = ["hoy","semana","registrar","lote","mas"];
 function go(name){
@@ -1182,11 +1271,12 @@ function go(name){
   if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
-function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); }
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
   const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); renderAll(); return; }
+  const ar = ev.target.closest("[data-aresp]"); if(ar){ responderAlerta(ar.dataset.aresp, ar.dataset.r || null); return; }
   const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow, flow); return; }
   const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeSheet(false); return; }
   const rm = ev.target.closest("[data-rm]"); if(rm){ const c = rm.closest(".prop"); if(c){ libProps.splice(+c.dataset.i, 1); renderLibRows(); } return; }
@@ -1197,7 +1287,7 @@ document.addEventListener("click", ev => {
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
-function renderAll(){ renderLotSel(); renderHoy(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); }
+function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); }
 
 // ---------------------------------------------------------------- registrar: flujos
 const ULTIMOS = [{p:"Fungicida preventivo", d:"2", u:"kg/ha", t:"fungicida"},{p:"Fertilizante foliar", d:"3", u:"L/ha", t:"fertilizante"},{p:"Insecticida (paratrioza)", d:"0.5", u:"L/ha", t:"insecticida"}];
@@ -1279,7 +1369,7 @@ $("#vi-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#vi-pre
 // Motor: si LECTOR.url está definido, la foto va al lector (función en la nube que llama a un modelo de visión; ver lector/worker.js)
 // y vuelve la transcripción con sus dudas y los registros. Sin lector, la transcripción es un EJEMPLO (lo dice la pantalla) y la
 // interpretación la hace el intérprete local por reglas de aquí abajo, que también es el respaldo cuando no hay señal.
-const LECTOR = { url: "", token: "ec-b077-029c-7a4f-b5c5" };     // url: se fija al desplegar lector/worker.js; también se puede guardar desde Más → Acerca
+const LECTOR = { url: "https://engram-lector.lucasbayones.workers.dev", token: "ec-b077-029c-7a4f-b5c5" };     // url: se fija al desplegar lector/worker.js; también se puede guardar desde Más → Acerca
 try{ const u = localStorage.getItem("engram-campo-lector"); if(u) LECTOR.url = u; }catch(e){}
 $("#lector-url").value = LECTOR.url;
 async function lectorProbar(){ const el = $("#lector-estado"); if(!LECTOR.url){ el.textContent = "Sin lector: modo ejemplo."; return; } el.textContent = "Probando…"; try{ const r = await fetch(LECTOR.url, {method:"GET"}); const j = await r.json(); el.textContent = j && j.ok ? `Conectado · ${j.modelo || "lector"}` : "Responde, pero no es el lector."; }catch(e){ el.textContent = "No responde (¿dirección correcta?, ¿ya está publicado?)."; } }
