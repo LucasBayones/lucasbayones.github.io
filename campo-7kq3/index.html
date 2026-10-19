@@ -925,7 +925,7 @@ function openLote(){ initMap(); if(!map) return; setTimeout(()=>{ map.invalidate
 // La app solo lleva la dirección del proyecto y la clave pública (anon); la llave de servicio vive en el RIG. Sin configuración: modo demostración.
 const NUBE = { url: "https://lnwgbkdpylnyzuxvzzeg.supabase.co", anon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2dia2RweWxueXp1eHZ6emVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMDMyMTIsImV4cCI6MjEwNzc3OTIxMn0.EkN8Kji6oll8lRYjm2X-pGGJRg3xcrO1wRwTIHx5BKg" };   // proyecto engram-campo; la anon key es pública por diseño (las reglas por fila protegen los datos)
 try{ const u = localStorage.getItem("engram-campo-nube-url"), a = localStorage.getItem("engram-campo-nube-anon"); if(u) NUBE.url = u; if(a) NUBE.anon = a; }catch(e){}
-let MODO = "demo", sesion = null, perfil = null, vaciando = false, pendLotes = {};
+let MODO = "demo", sesion = null, perfil = null, estadoRig = null, vaciando = false, pendLotes = {};
 const SES_KEY = "engram-campo-sesion-v1", COLA_KEY = "engram-campo-cola-v1", LOGN_KEY = "engram-campo-bitacora-nube-v1", CACHE_KEY = "engram-campo-lotes-cache-v1", PEND_KEY = "engram-campo-pend-lotes-v1";
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x" ? r : (r&0x3|0x8)).toString(16); }));
 const localISO = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -1002,17 +1002,19 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 async function cargarLotes(){
-  const [filas, reps, perf, parcs] = await Promise.all([
+  const [filas, reps, perf, parcs, est] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
     db("GET","parcelas",{select:"*"}),
+    db("GET","estado_rig",{select:"*"}).catch(()=>null),
   ]);
-  perfil = (perf && perf[0]) || null;
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({filas, reps, parcs, perfil})); }catch(e){}
+  perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({filas, reps, parcs, perfil, estadoRig})); }catch(e){}
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
   const nube = (filas||[]).map(r=>({lote:r.lote_id, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id}));
@@ -1089,7 +1091,7 @@ function renderSync(){
   if(MODO!=="nube"){ el.hidden = true; if(nota) nota.hidden = false; return; }
   el.hidden = false; if(nota) nota.hidden = true;
   const n = colaCargar().length + Object.keys(pendLotes).length;
-  el.innerHTML = !navigator.onLine ? `<i class="off"></i>Sin señal: ${n} cambio${n===1?"":"s"} guardado${n===1?"":"s"} en el teléfono; suben solos al volver la señal.` : n ? `<i class="pend"></i>${n} cambio${n===1?"":"s"} por subir…` : `<i></i>Sincronizado con la nube${perfil && perfil.nombre ? ` · ${perfil.nombre}` : ""}.`;
+  el.innerHTML = !navigator.onLine ? `<i class="off"></i>Sin señal: ${n} cambio${n===1?"":"s"} guardado${n===1?"":"s"} en el teléfono; suben solos al volver la señal.` : n ? `<i class="pend"></i>${n} cambio${n===1?"":"s"} por subir…` : `<i></i>Sincronizado con la nube${perfil && perfil.nombre ? ` · ${perfil.nombre}` : ""}${estadoRig && estadoRig.ultima_corrida ? ` · motor: corrida del ${latidoTxt().split(" · ")[0].replace(/\.$/, "")}` : "."}`;
 }
 window.addEventListener("online", ()=>{ vaciarCola(); }); window.addEventListener("offline", renderSync);
 
@@ -1107,7 +1109,7 @@ function mostrarLogin(on){ $("#login").hidden = !on; document.body.classList.tog
 function renderSesion(){
   const kv_ = $("#sesion-kv"); if(!kv_) return;
   const conf = NUBE.url && NUBE.anon;
-  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]]);
+  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()]] : []));
   $("#sesion-salir").hidden = !(MODO==="nube"); $("#sesion-entrar").hidden = !(conf && MODO!=="nube");
   $("#nube-url").value = NUBE.url; $("#nube-anon").value = NUBE.anon;
 }
@@ -1307,7 +1309,9 @@ function downscale(file, max=1600, q=.85){
 function lectorCtx(){ const l = LOTES[lotIdx]; return {hoy: hoyISO, lote: l.nombre, cultivo: l.cultivo, region: l.region}; }
 async function lectorPost(payload){
   const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 60000);
-  try{ const r = await fetch(LECTOR.url, {method:"POST", headers:{"content-type":"application/json", "x-engram-token": LECTOR.token}, body: JSON.stringify(payload), signal: ctrl.signal}); if(!r.ok) throw new Error("lector "+r.status); return await r.json(); }
+  const h = {"content-type":"application/json", "x-engram-token": LECTOR.token};
+  if(MODO==="nube" && sesion){ try{ h.Authorization = "Bearer " + await token(); }catch(e){} }
+  try{ const r = await fetch(LECTOR.url, {method:"POST", headers:h, body: JSON.stringify(payload), signal: ctrl.signal}); if(r.status===401) throw new Error("lector: sin sesión válida (entre con su correo)"); if(!r.ok) throw new Error("lector "+r.status); return await r.json(); }
   finally{ clearTimeout(to); }
 }
 async function lectorLeer(file){ const {b64, mt} = await downscale(file); return lectorPost({modo:"leer", imagen:b64, media_type:mt, ...lectorCtx()}); }
