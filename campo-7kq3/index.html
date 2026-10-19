@@ -99,7 +99,7 @@ th{font-weight:600;color:var(--muted);font-size:12px}
 td:first-child,th:first-child{text-align:left;color:var(--muted);white-space:nowrap}
 td.hot{color:var(--bad);font-weight:600} td.warm{color:var(--warn);font-weight:600}
 .note{font-size:13px;color:var(--muted);line-height:1.4}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px} .grid2>*{min-width:0}
 .bigbtn{display:grid;gap:4px;text-align:left;padding:16px;border-radius:16px;border:1px solid var(--line);background:var(--surface);min-height:96px}
 .bigbtn b{font-size:18px} .bigbtn span{font-size:13px;color:var(--muted)}
 .bigbtn .ic{width:28px;height:28px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent);font-weight:700;font-family:var(--serif)}
@@ -107,7 +107,10 @@ td.hot{color:var(--bad);font-weight:600} td.warm{color:var(--warn);font-weight:6
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-size:14px}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--on-fg);border-color:var(--ink)}
 .field{display:grid;gap:6px} .field label{font-size:13px;color:var(--muted);font-weight:500}
-.field input,.field select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%}
+.field input,.field select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%;min-width:0;max-width:100%}
+/* iOS: el campo de fecha tiene un ancho propio y se sale de su columna (se montaba sobre "Hectáreas"); se fuerza al ancho de la celda y a la izquierda */
+.field input[type="date"]{-webkit-appearance:none;appearance:none;display:block;min-height:46px;text-align:left}
+.field input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
 .btn{border:0;border-radius:12px;padding:13px 16px;font-weight:600;background:var(--ink);color:var(--on-fg)}
 .btn.sec{background:var(--surface-2);color:var(--fg)} .btn.acc{background:var(--accent);color:var(--accent-ink)}
 .btn:disabled{opacity:.5;cursor:default}
@@ -1246,7 +1249,7 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
-const APP_VERSION = "12 · 19 oct 2026";
+const APP_VERSION = "12.1 · 19 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
