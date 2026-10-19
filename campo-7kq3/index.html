@@ -337,6 +337,11 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="note">Todo lo demás se infiere: ubicación, clima, pronóstico, etapa del cultivo y tendencia de la zona. Usted solo cuenta lo que hizo y lo que vio.</p>
   </div>
 
+  <div class="card" id="voz-pend" hidden>
+    <div class="row between"><span class="eyebrow">Notas de voz transcritas · por revisar</span><span class="small muted" id="voz-pend-n"></span></div>
+    <div class="flow" id="voz-pend-list"></div>
+    <p class="note">El motor transcribe sus notas de voz en minutos. Revise lo que oyó, confirme lo que entendió y queda en la bitácora. Nada se guarda sin su visto bueno.</p>
+  </div>
   <div class="card" id="log-card">
     <div class="row between"><span class="eyebrow">Bitácora del lote</span><span class="small muted" id="log-count"></span></div>
     <div class="log" id="log"></div>
@@ -560,9 +565,9 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         </div>
         <div class="flow" id="lib-trans" hidden>
           <div class="banner-ex" id="lib-banner"></div>
-          <div class="card"><details><summary>Ver la página</summary><img id="lib-img2" alt=""></details></div>
-          <div class="row between"><span class="eyebrow">Lo que leí</span><span class="small muted" id="lib-nlines"></span></div>
-          <p class="small muted" style="margin-top:-6px">Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada.</p>
+          <div class="card"><details><summary id="lib-fuente-sum">Ver la página</summary><img id="lib-img2" alt=""><audio id="lib-audio" controls hidden style="width:100%;margin-top:8px"></audio></details></div>
+          <div class="row between"><span class="eyebrow" id="lib-leido-eyebrow">Lo que leí</span><span class="small muted" id="lib-nlines"></span></div>
+          <p class="small muted" style="margin-top:-6px" id="lib-leido-ayuda">Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada.</p>
           <div id="lib-lines" class="flow lines"></div>
           <button class="btn sec" id="lib-addline">+ Agregar una línea</button>
         </div>
@@ -1012,7 +1017,7 @@ async function pedirCodigo(email){ await authPost("otp", {email, create_user:fal
 async function verificarCodigo(email, token){ const j = await authPost("verify", {type:"email", email, token}); if(!j || !j.access_token) throw new Error("respuesta sin sesión"); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user:{id:j.user.id, email:j.user.email}}); }
 async function refrescar(){ if(!sesion) return false; try{ const j = await authPost("token?grant_type=refresh_token", {refresh_token: sesion.refresh_token}); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user: j.user ? {id:j.user.id, email:j.user.email} : sesion.user}); return true; }catch(e){ return false; } }
 async function token(){ if(!sesion) throw new Error("sin sesión"); if(Date.now() > sesion.expires_at - 60000){ if(!(await refrescar())){ if(navigator.onLine){ cerrarSesion(true); throw new Error("sesión vencida"); } } } return sesion.access_token; }
-function cerrarSesion(silencio){ sesGuardar(null); perfil = null; MODO = "demo"; LOTES = DEMO_LOTES; ALERTAS = []; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
+function cerrarSesion(silencio){ sesGuardar(null); perfil = null; MODO = "demo"; LOTES = DEMO_LOTES; ALERTAS = []; TRANSCRIPCIONES = []; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
 
 // --- tablas (PostgREST) y archivos (Storage)
 async function db(method, tabla, params, body, prefer){
@@ -1068,24 +1073,26 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
     db("GET","parcelas",{select:"*"}),
     db("GET","estado_rig",{select:"*"}).catch(()=>null),
     db("GET","alertas",{select:"*", or:`(vigente.eq.true,cerrada_en.gte.${desde})`, order:"emitida.desc"}).then(r=>{ alertasError = null; return r; }).catch(e=>{ alertasError = String(e && e.message || e).slice(0,140); return null; }),   // vigentes + cerradas en los últimos 14 días
+    db("GET","transcripciones",{select:"*", estado:"in.(lista,error)", order:"creado_en.desc"}).catch(()=>null),    // notas de voz transcritas por revisar
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
+  TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -1155,14 +1162,14 @@ async function vaciarCola(){
         }catch(e){ fallidos.add(item.cliente_id); if(String(e.message).includes("sesión") || !navigator.onLine) { pasada = 99; break; } }
       }
     }
-    await vaciarPendLotes(); await vaciarPendAlertas();
+    await vaciarPendLotes(); await vaciarPendAlertas(); await vaciarPendTrans();
   } finally { vaciando = false; save(); renderLog(); renderSync(); }
 }
 function renderSync(){
   const el = $("#sync-estado"), nota = $("#sync-nota"); if(!el) return;
   if(MODO!=="nube"){ el.hidden = true; if(nota) nota.hidden = false; return; }
   el.hidden = false; if(nota) nota.hidden = true;
-  const n = colaCargar().length + Object.keys(pendLotes).length + Object.keys(pendAlertas).length;
+  const n = colaCargar().length + Object.keys(pendLotes).length + Object.keys(pendAlertas).length + Object.keys(pendTrans).length;
   el.innerHTML = !navigator.onLine ? `<i class="off"></i>Sin señal: ${n} cambio${n===1?"":"s"} guardado${n===1?"":"s"} en el teléfono; suben solos al volver la señal.` : n ? `<i class="pend"></i>${n} cambio${n===1?"":"s"} por subir…` : `<i></i>Sincronizado con la nube${perfil && perfil.nombre ? ` · ${perfil.nombre}` : ""}${estadoRig && estadoRig.ultima_corrida ? ` · motor: corrida del ${latidoTxt().split(" · ")[0].replace(/\.$/, "")}` : "."}`;
 }
 window.addEventListener("online", ()=>{ vaciarCola(); }); window.addEventListener("offline", renderSync);
@@ -1207,14 +1214,14 @@ $("#login-otra").addEventListener("click", ()=>{ $("#login-paso2").hidden = true
 $("#login-demo").addEventListener("click", ()=>{ mostrarLogin(false); toast("Modo demostración: datos de ejemplo"); });
 
 async function entrarModoNube(){
-  MODO = "nube"; hoyISO = localISO(); pendCargar(); pendACargar();
+  MODO = "nube"; hoyISO = localISO(); pendCargar(); pendACargar(); pendTCargar();
   try{ log = JSON.parse(localStorage.getItem(LOGN_KEY)) || []; }catch(e){ log = []; }
   let ok = true;
   try{ await cargarLotes(); await cargarRegistros(); }
   catch(e){ ok = false; if(!sesion) return; if(!cargarLotesCache()){ LOTES = [loteVacio()]; } }
   lotIdx = Math.min(lotIdx, LOTES.length-1); mostrarLogin(false); renderSesion(); renderAll(); renderSync();
   if(!ok) toast(navigator.onLine ? "No se pudo leer la nube: se muestra lo guardado en el teléfono" : "Sin señal: se muestra lo guardado en el teléfono");
-  else avisarAlertasNuevas();
+  else { avisarAlertasNuevas(); const nv = TRANSCRIPCIONES.filter(t=>t.estado==="lista").length; if(nv && !ALERTAS.some(alertaNueva)) toast(`${nv} nota${nv===1?"":"s"} de voz transcrita${nv===1?"":"s"} para revisar en Registrar`); }
   vaciarCola();
 }
 async function nubeInit(){
@@ -1249,7 +1256,7 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
-const APP_VERSION = "12.1 · 19 oct 2026";
+const APP_VERSION = "13 · 19 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
@@ -1311,6 +1318,52 @@ function avisarAlertasNuevas(){                  // una vez por alerta: aviso al
   try{ localStorage.setItem(AVIS_KEY, JSON.stringify(avisadas.concat(nuevas.map(a=>a.id)).slice(-200))); }catch(e){}
 }
 
+// ---------------------------------------------------------------- notas de voz transcritas (etapa 1, punto 5)
+// El RIG transcribe cada nota de voz (Whisper) e interpreta las frases con el criterio del lector; aquí se revisan con la misma pantalla
+// que la libreta: lo que oí (frases corregibles) -> lo que entendí (registros) -> guardar. La app solo marca la revisión en la nube.
+let TRANSCRIPCIONES = [], libFuente = "libreta", libTrans = null, pendTrans = {};
+const PENDT_KEY = "engram-campo-pend-trans-v1";
+function pendTCargar(){ try{ pendTrans = JSON.parse(localStorage.getItem(PENDT_KEY)) || {}; }catch(e){ pendTrans = {}; } }
+function pendTGuardar(){ try{ localStorage.setItem(PENDT_KEY, JSON.stringify(pendTrans)); }catch(e){} }
+function renderVozPend(){
+  const card = $("#voz-pend"); if(!card) return;
+  const lst = (MODO==="nube" ? TRANSCRIPCIONES : []).filter(t=>t.estado==="lista" || t.estado==="error");
+  card.hidden = !lst.length; if(!lst.length) return;
+  $("#voz-pend-n").textContent = `${lst.length}`;
+  $("#voz-pend-list").innerHTML = lst.map(t=>{
+    const l = LOTES.find(x=>idLote(x)===t.lote_id); const cuando = fmtDT(t.creado_en); const np = (t.registros_propuestos||[]).length;
+    if(t.estado==="error") return `<div class="unp"><span class="ln">!</span><div><div>Nota de voz del ${cuando}${l ? " · " + esc(l.nombre) : ""}: no se pudo transcribir.</div><div class="m">${esc(t.error||"")} · <button class="inline-link" data-tdesc="${esc(t.id)}">quitar</button></div></div></div>`;
+    return `<button class="optrow" data-trans="${esc(t.id)}"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota del ${cuando}${l ? " · " + esc(l.nombre) : ""}</b><span class="s">«${esc((t.texto||"").slice(0,90))}${(t.texto||"").length>90?"…":""}»${np ? ` · ${np} registro${np===1?"":"s"} propuesto${np===1?"":"s"}` : ""}</span></span><span class="chev">›</span></button>`;
+  }).join("");
+}
+function abrirTranscripcion(id){
+  const t = TRANSCRIPCIONES.find(x=>x.id===id); if(!t) return;
+  const i = LOTES.findIndex(x=>idLote(x)===t.lote_id); if(i>=0 && i!==lotIdx){ lotIdx = i; renderAll(); }   // los registros caen en el lote de la nota
+  openFlow("libreta", null); libReset();
+  libFuente = "voz"; libTrans = t; libFile = null; libSim = false; libEdited = false;
+  libLines = normLines(t.lineas); libProps = normRecs(t.registros_propuestos); libUnparsed = normUnp(t.sin_interpretar); libModelo = t.modelo || "whisper";
+  libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = JSON.parse(JSON.stringify(libProps));
+  $("#sheet-title").textContent = "Nota de voz";
+  $("#lib-banner").textContent = `Lo que oí en su nota del ${fmtDT(t.creado_en)}${t.duracion_s ? ` (${fmtT(t.duracion_s)})` : ""}. Corrija lo que no coincida con lo que dijo y luego "Interpretar".`;
+  $("#lib-fuente-sum").textContent = "Escuchar la nota"; $("#lib-img2").hidden = true; const au = $("#lib-audio"); au.hidden = false; au.removeAttribute("src");
+  $("#lib-leido-eyebrow").textContent = "Lo que oí"; $("#lib-leido-ayuda").textContent = "Corrija cualquier palabra mal oída antes de interpretar. El punto ámbar marca un tramo poco claro; al editar una frase, queda confirmada.";
+  if(t.archivo && MODO==="nube"){ urlFirmada(t.archivo).then(u=>{ au.src = u; }).catch(()=>{ au.hidden = true; }); }
+  if(!libLines.length) libLines = [{texto:"", confianza:1, dudas:[]}];
+  renderLibLines(); libShow("trans");
+}
+function marcarTranscripcion(id, estado, extra){
+  const i = TRANSCRIPCIONES.findIndex(t=>t.id===id); if(i>=0) TRANSCRIPCIONES.splice(i,1); renderVozPend(); cacheGuardar();
+  pendTrans[id] = {estado, revisada_en: new Date().toISOString(), revisada_por: sesion && sesion.user ? sesion.user.id : null, ...(extra||{})}; pendTGuardar(); vaciarPendTrans();
+}
+async function vaciarPendTrans(){
+  if(MODO!=="nube" || !sesion || !navigator.onLine) return;
+  for(const [id, campos] of Object.entries(pendTrans)){
+    try{ await db("PATCH","transcripciones",{id:"eq."+id}, campos, "return=minimal"); delete pendTrans[id]; pendTGuardar(); }
+    catch(e){ if(e.status && e.status!==0 && e.status<500 && e.status!==401){ delete pendTrans[id]; pendTGuardar(); toast("La nube rechazó la revisión de una nota: " + e.message.slice(0,80)); } }
+  }
+  renderSync();
+}
+
 // ---------------------------------------------------------------- navegación
 const SCREENS = ["hoy","semana","registrar","lote","mas"];
 function go(name){
@@ -1328,6 +1381,8 @@ document.addEventListener("click", ev => {
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
   const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); renderAll(); return; }
   const ar = ev.target.closest("[data-aresp]"); if(ar){ responderAlerta(ar.dataset.aresp, ar.dataset.r || null); return; }
+  const tr = ev.target.closest("[data-trans]"); if(tr){ abrirTranscripcion(tr.dataset.trans); return; }
+  const td = ev.target.closest("[data-tdesc]"); if(td){ marcarTranscripcion(td.dataset.tdesc, "descartada"); toast("Nota quitada de la lista"); return; }
   const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow, flow); return; }
   const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeSheet(false); return; }
   const rm = ev.target.closest("[data-rm]"); if(rm){ const c = rm.closest(".prop"); if(c){ libProps.splice(+c.dataset.i, 1); renderLibRows(); } return; }
@@ -1338,7 +1393,7 @@ document.addEventListener("click", ev => {
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
-function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); }
+function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); }
 // ---------------------------------------------------------------- verdor (Sentinel-2 dentro del polígono; lo calcula el RIG cada noche)
 function sparkline(serie){
   const pts = (serie||[]).slice(-12); if(pts.length < 2) return "";
@@ -1491,7 +1546,7 @@ let libLines = [], libProps = [], libUnparsed = [], libSim = true, libEdited = f
 
 function libShow(stage){ ["step1","reading","trans","review"].forEach(s=>{ $("#lib-"+s).hidden = s!==stage; }); $("#lib-interp").hidden = stage!=="trans"; $("#lib-save").hidden = stage!=="review"; $("#sheet-body").scrollTop = 0; }
 function libProgress(pasos){ libTimers.forEach(clearTimeout); libTimers = pasos.map(([t,msg,pct,fn])=>setTimeout(()=>{ $("#lib-status").textContent = msg; $("#lib-bar").style.width = pct+"%"; if(fn) fn(); }, t)); }
-function libReset(){ libTimers.forEach(clearTimeout); libTimers = []; libLines = []; libProps = []; libUnparsed = []; libEdited = false; $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-lines").innerHTML = ""; $("#lib-rows").innerHTML = ""; $("#lib-banner").textContent = ""; libShow("step1"); }
+function libReset(){ libTimers.forEach(clearTimeout); libTimers = []; libLines = []; libProps = []; libUnparsed = []; libEdited = false; libFuente = "libreta"; libTrans = null; { const ey = $("#lib-leido-eyebrow"); if(ey) ey.textContent = "Lo que leí"; const ay = $("#lib-leido-ayuda"); if(ay) ay.textContent = "Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada."; const sm = $("#lib-fuente-sum"); if(sm) sm.textContent = "Ver la página"; const im = $("#lib-img2"); if(im) im.hidden = false; const au = $("#lib-audio"); if(au){ au.hidden = true; au.removeAttribute("src"); } } $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-lines").innerHTML = ""; $("#lib-rows").innerHTML = ""; $("#lib-banner").textContent = ""; libShow("step1"); }
 
 // --- motor remoto (opcional)
 function downscale(file, max=1600, q=.85){
@@ -1624,7 +1679,7 @@ $("#lib-interp").addEventListener("click", async ()=>{
   const lines = libLines.map(l=>l.texto.trim()); if(!lines.some(Boolean)) return;
   $("#lib-interp").disabled = true; $("#lib-interp").textContent = "Interpretando…";
   let r = null;
-  if(LECTOR.url && !libEdited && libProps.length) r = {registros: libProps, sin: libUnparsed};
+  if((LECTOR.url || libFuente==="voz") && !libEdited && libProps.length) r = {registros: libProps, sin: libUnparsed};
   else if(LECTOR.url){ try{ const res = await lectorInterpretar(lines); r = {registros: normRecs(res.registros), sin: normUnp(res.sin_interpretar)}; }catch(e){ r = null; } }
   if(!r) r = interpretLines(libLines);
   libProps = r.registros; libUnparsed = r.sin; libEdited = false; libPropsOrig = JSON.parse(JSON.stringify(libProps)); renderLibRows(); libShow("review");
@@ -1656,14 +1711,16 @@ $("#lib-rows").addEventListener("change", e=>{ const c = e.target.closest(".prop
 $("#lib-add").addEventListener("click", ()=>{ libProps.push(withDefaults({tipo:"aplicacion", fecha:hoyISO, dudas:[], nota:""})); renderLibRows(); const cards = $$("#lib-rows .prop"); cards[cards.length-1].scrollIntoView({behavior:"smooth", block:"center"}); });
 $("#lib-save").addEventListener("click", ()=>{
   const n = libProps.length; if(!n) return;
+  const src = libFuente==="voz" ? "voz" : "libreta"; const extra = libFuente==="voz" && libTrans ? {transcripcion: libTrans.id} : {};
   libProps.forEach(p=>{
-    if(p.tipo==="aplicacion") addLog("aplique", `${p.clase||"otro"}: ${p.producto||"(sin nombre)"}${p.dosis?` · ${p.dosis} ${p.unidad||""}`:""}`, p.fecha||hoyISO, "libreta", {producto:p.producto||"", dosis:p.dosis||"", unidad:p.unidad||"", clase:p.clase||"otro", leido:p.leido||""});
-    else if(p.tipo==="riego") addLog("regue", `Riego ${p.metodo||"aspersión"} · ${p.horas||"?"} h`, p.fecha||hoyISO, "libreta", {horas:p.horas||"", metodo:p.metodo||"aspersión", leido:p.leido||""});
-    else if(p.tipo==="observacion"){ const q = p.que||"observación"; addLog("vi", `${q[0].toUpperCase()+q.slice(1)} · ${p.donde||"un manchón"} · severidad ${p.sev ?? "1"}`, p.fecha||hoyISO, "libreta", {que:q, donde:p.donde||"un manchón", sev:String(p.sev ?? "1"), leido:p.leido||""}); }
-    else addLog("cosecha", `Rendimiento ${p.rend||"?"} t/ha${p.perdida?` · pérdida ${p.perdida} %`:""}`, p.fecha||hoyISO, "libreta", {rend:p.rend||"", perdida:p.perdida||"", leido:p.leido||""});
+    if(p.tipo==="aplicacion") addLog("aplique", `${p.clase||"otro"}: ${p.producto||"(sin nombre)"}${p.dosis?` · ${p.dosis} ${p.unidad||""}`:""}`, p.fecha||hoyISO, src, {producto:p.producto||"", dosis:p.dosis||"", unidad:p.unidad||"", clase:p.clase||"otro", leido:p.leido||"", ...extra});
+    else if(p.tipo==="riego") addLog("regue", `Riego ${p.metodo||"aspersión"} · ${p.horas||"?"} h`, p.fecha||hoyISO, src, {horas:p.horas||"", metodo:p.metodo||"aspersión", leido:p.leido||"", ...extra});
+    else if(p.tipo==="observacion"){ const q = p.que||"observación"; addLog("vi", `${q[0].toUpperCase()+q.slice(1)} · ${p.donde||"un manchón"} · severidad ${p.sev ?? "1"}`, p.fecha||hoyISO, src, {que:q, donde:p.donde||"un manchón", sev:String(p.sev ?? "1"), leido:p.leido||"", ...extra}); }
+    else addLog("cosecha", `Rendimiento ${p.rend||"?"} t/ha${p.perdida?` · pérdida ${p.perdida} %`:""}`, p.fecha||hoyISO, src, {rend:p.rend||"", perdida:p.perdida||"", leido:p.leido||"", ...extra});
   });
-  guardarLectura(libFile, libLinesOrig, libLines, libPropsOrig, libProps, libSim ? "ejemplo+local" : (libModelo || "lector"));
-  afterSave(`${n} registro${n===1?"":"s"} de la libreta guardado${n===1?"":"s"} en la bitácora`);
+  if(libFuente==="voz" && libTrans){ marcarTranscripcion(libTrans.id, "revisada", {lineas_corregidas: libLines, registros_confirmados: libProps}); }
+  else guardarLectura(libFile, libLinesOrig, libLines, libPropsOrig, libProps, libSim ? "ejemplo+local" : (libModelo || "lector"));
+  afterSave(`${n} registro${n===1?"":"s"} ${libFuente==="voz" ? "de la nota de voz" : "de la libreta"} guardado${n===1?"":"s"} en la bitácora`);
 });
 
 // ---------------------------------------------------------------- nota de voz: grabadora propia (micrófono) con respaldo de archivo
@@ -1703,7 +1760,7 @@ $("#voz-rec").addEventListener("click", toggleRec);
 $("#voz-file").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; recBlob = f; recDur = 0; if(recURL) URL.revokeObjectURL(recURL); recURL = URL.createObjectURL(f); const a = $("#voz-play"); a.src = recURL; a.hidden = false; $("#voz-save").disabled = false; });
 $("#voz-play").addEventListener("loadedmetadata", e=>{ if(!recDur && isFinite(e.target.duration)) { recDur = e.target.duration; $("#voz-time").textContent = fmtT(recDur); } });
 function vozReset(){ if(rec && rec.state==="recording"){ rec.onstop = null; try{ rec.stop(); }catch(e){} } if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream = null; } rec = null; clearInterval(recTimer); stopMeter(); $("#voz-time").textContent = "0:00"; const a = $("#voz-play"); a.hidden = true; a.removeAttribute("src"); $("#voz-rec").classList.remove("on"); $("#voz-rec").disabled = false; $("#voz-hint").textContent = VOZ_HINT; $("#voz-save").disabled = true; $("#voz-fallback").hidden = true; $("#voz-file").value = ""; recBlob = null; }
-$("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"} · transcripción y registros para confirmar en la etapa 1`, hoyISO, "voz", {duracion_s: Math.round(recDur||0), kb: Math.round(recBlob.size/1024)}, {bucket:"audios", ext: extDe(recBlob) === "bin" ? "webm" : extDe(recBlob), blob: recBlob}); afterSave("Nota de voz guardada en la bitácora"); });
+$("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"}${MODO==="nube" ? " · se transcribe en minutos: revísela aquí en Registrar" : " · en la versión conectada se transcribe en el motor"}`, hoyISO, "voz", {duracion_s: Math.round(recDur||0), kb: Math.round(recBlob.size/1024)}, {bucket:"audios", ext: extDe(recBlob) === "bin" ? "webm" : extDe(recBlob), blob: recBlob}); afterSave(MODO==="nube" ? "Nota guardada: la transcripción aparece aquí en unos minutos" : "Nota de voz guardada en la bitácora"); });
 
 // ---------------------------------------------------------------- video
 let vidFile = null, vidURL = null;
