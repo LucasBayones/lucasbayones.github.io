@@ -401,7 +401,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <div class="field"><label for="lt-variedad">Variedad</label><input id="lt-variedad" placeholder="opcional"></div>
     </div>
     <div class="grid2">
-      <div class="field"><label for="lt-cultivo">Cultivo</label><select id="lt-cultivo"><option>papa</option><option>tomate</option><option>trigo</option><option>aguacate</option></select></div>
+      <div class="field"><label for="lt-cultivo">Cultivo</label><select id="lt-cultivo"><option value="papa">papa</option><option value="maiz">maíz</option><option value="tomate">tomate</option><option value="trigo">trigo</option><option value="aguacate">aguacate</option></select></div>
       <div class="field"><label for="lt-riego">Riego</label><select id="lt-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option></select></div>
     </div>
     <div class="grid2">
@@ -419,7 +419,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="list">
       <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
-      <button data-go="mas-temporada">Cómo termina la temporada <span>tendencia, años parecidos</span></button>
+      <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
       <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
       <button data-go="mas-acerca">Acerca de esta versión <span>privada, solo socios</span></button>
     </div>
@@ -600,7 +600,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         <div class="card">
           <div class="field"><label for="nl-nombre">Nombre del lote</label><input id="nl-nombre" placeholder="p. ej. Parcela 7, El Potrero norte"></div>
           <div class="grid2">
-            <div class="field"><label for="nl-cultivo">Cultivo</label><select id="nl-cultivo"><option>papa</option><option>tomate</option><option>trigo</option><option>aguacate</option></select></div>
+            <div class="field"><label for="nl-cultivo">Cultivo</label><select id="nl-cultivo"><option value="papa">papa</option><option value="maiz">maíz</option><option value="tomate">tomate</option><option value="trigo">trigo</option><option value="aguacate">aguacate</option></select></div>
             <div class="field"><label for="nl-variedad">Variedad</label><input id="nl-variedad" placeholder="opcional"></div>
           </div>
           <div class="grid2">
@@ -730,7 +730,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 
 // ---------------------------------------------------------------- render: selector y pantallas
 function renderLotSel(){
-  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}${alertasDe(l).some(alertaNueva) ? `<i class="ndot" title="alerta sin ver"></i>` : ""}<small>${esc(l.cultivo)} · ${esc(l.region || "zona por definir")}</small></button>`).join("")
+  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}${alertasDe(l).some(alertaNueva) ? `<i class="ndot" title="alerta sin ver"></i>` : ""}<small>${esc(nombreCultivo(l.cultivo))} · ${esc(l.region || "zona por definir")}</small></button>`).join("")
     + (MODO==="nube" ? `<button class="lot-chip add" data-flow="nuevolote">+ Nuevo lote<small>crear otro</small></button>` : "");
 }
 function renderHoy(){
@@ -777,7 +777,11 @@ function renderMemoria(){
   const max = 36;
   $("#mem-tl").innerHTML = l.memoria.map(m=>`<div class="season"><span class="y">${esc(m.y)}</span><div><div class="small">${esc(m.txt)}</div>${m.t?`<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*m.t/max)}%"></i></div>`:""}</div><span class="t">${m.t?m.t+" t/ha":"—"}</span></div>`).join("");
 }
-function renderTemporada(){ const l = LOTES[lotIdx]; $("#temp-h2").textContent = l.termina.titulo; $("#temp-body").innerHTML = `<p class="small">${l.termina.cuerpo}</p>`; }
+function renderTemporada(){
+  const l = LOTES[lotIdx], pf = perfilDeLote(l);
+  if(pf && !pf.sin_region){ $("#temp-h2").textContent = `Lo que la zona rinde y pierde · ${nombreCultivo(pf.cultivo)}`; $("#temp-body").innerHTML = perfilHTML(pf, l) + `<h3 class="small" style="margin:12px 0 4px">${esc(l.termina.titulo)}</h3><p class="small">${l.termina.cuerpo}</p>`; return; }
+  $("#temp-h2").textContent = l.termina.titulo; $("#temp-body").innerHTML = `<p class="small">${l.termina.cuerpo}</p>` + (pf ? perfilHTML(pf, l) : "");
+}
 
 // ---------------------------------------------------------------- lote: mapa esquemático + punto + zona más cercana
 // ---------------------------------------------------------------- lote: mapa satelital real, polígono editable con los dedos, parcelas y coordenadas
@@ -1046,6 +1050,7 @@ function lotDesdeNube(f, rep){
     l.sem = (hoy.semaforo||[]).map(s=>({k:s.k, v:s.nivel, t:s.t})); l.acciones = (hoy.acciones||[]).map(a=>({a:a.a, p:a.p, c:a.c}));
     l.nota = `${hoy.nota || ""} Reporte emitido el ${fmtD(rep.emitido)}.`.trim();
     if(c.verdor) l.verdor = c.verdor;
+    if(c.perfil) l.perfilRep = c.perfil;
     if(sem && sem.dias && sem.dias.length){
       l.dias = sem.dias; l.sem2 = sem.sem2 || {hutton:"—", p1:"—", helada:"—", lluvia:["—","—","—"], conf:"—"}; l.lluvia14 = sem.lluvia14 || ["—","—","—"];
       l.fuenteTxt = `Fuente: ensamble ${sem.fuente || ""} (${sem.n_miembros || "?"} escenarios) emitido el ${fmtD((c.fuentes && c.fuentes.emitido_ensamble) || rep.emitido)}. ${sem.calibrado ? "Probabilidades calibradas." : "Sin calibrar todavía: fracción de escenarios."} Lluvia 14 días: ${l.lluvia14[1]} mm (rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
@@ -1053,14 +1058,14 @@ function lotDesdeNube(f, rep){
     const m = c.memoria || {}; const nreg = m.registros || 0;
     l.memoria = [{y: temporadaLabel(f.fecha_siembra), t:null, txt:`Temporada en curso · ${nreg} registro${nreg===1?"":"s"}${f.fecha_siembra ? ` · siembra ${fmtD(f.fecha_siembra)}` : ""}`}];
     l.memTxt = `${m.temporadas||1} temporada${(m.temporadas||1)===1?"":"s"} con registro. Con tres, el reporte deja de hablar de la zona y empieza a hablar de este lote; con cinco, el pronóstico de cosecha pasa a ser del lote.`;
-    l.termina = {titulo:"Disponible desde la semana 6 de la temporada", cuerpo:"El pronóstico de cosecha necesita seis semanas observadas del lote. Mientras tanto, la referencia es la tendencia de la zona que ya calcula el reporte regional."};
+    l.termina = {titulo:"El pronóstico del lote llega con la semana 6", cuerpo:"El pronóstico de cosecha del lote necesita seis semanas observadas. Mientras tanto, la referencia es la memoria pública de la zona (arriba, cuando el cultivo ya tiene perfil) y la tendencia regional."};
   } else {
     l.nivel = "sin";
     l.etapaTxt = f.fecha_siembra ? `Siembra del ${fmtD(f.fecha_siembra)} · el reporte del lote llega con la próxima corrida nocturna.` : "Sin fecha de siembra: regístrela en Lote para que la etapa se calcule.";
     l.semVacio = "Todavía no hay reporte para este lote. El motor lo genera cada noche a partir de que el lote existe; mañana por la mañana aparece aquí."; l.nota = "";
     l.acciones = [{a:"Marcar el punto y el borde del lote", p:"En Lote: toque el mapa o use su ubicación, proponga el polígono y confírmelo. Con eso el motor toma la zona y el clima del punto.", c:"alta"}, {a:"Registrar lo que haga desde hoy", p:"Riegos, aplicaciones y lo que vea: la memoria del lote empieza con el primer registro.", c:"alta"}];
     l.memoria = [{y: temporadaLabel(f.fecha_siembra), t:null, txt:"Temporada en curso · sin reporte todavía"}]; l.memTxt = "Este lote empieza hoy su memoria.";
-    l.termina = {titulo:"Sin reporte todavía", cuerpo:"Cuando haya reporte y seis semanas observadas, aquí aparece la tendencia de cosecha."};
+    l.termina = {titulo:"Sin reporte del lote todavía", cuerpo:"Cuando haya reporte y seis semanas observadas, aquí aparece la tendencia de cosecha del lote."};
     l.semanaVacia = "Sin pronóstico para este lote todavía: aparece con la primera corrida nocturna después de crear el lote.";
   }
   return l;
@@ -1073,10 +1078,10 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1084,15 +1089,17 @@ async function cargarLotes(){
     db("GET","estado_rig",{select:"*"}).catch(()=>null),
     db("GET","alertas",{select:"*", or:`(vigente.eq.true,cerrada_en.gte.${desde})`, order:"emitida.desc"}).then(r=>{ alertasError = null; return r; }).catch(e=>{ alertasError = String(e && e.message || e).slice(0,140); return null; }),   // vigentes + cerradas en los últimos 14 días
     db("GET","transcripciones",{select:"*", estado:"in.(lista,error)", order:"creado_en.desc"}).catch(()=>null),    // notas de voz transcritas por revisar
+    db("GET","perfiles_cultivo",{select:"*"}).catch(()=>null),                                                          // perfiles públicos por cultivo y región
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
+  PERFILES_CULTIVO = pcs || [];
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -1256,7 +1263,49 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
-const APP_VERSION = "13 · 19 oct 2026";
+let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
+const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate"};
+const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate"};
+function claveCultivo(c){ const n = String(c||"").trim().toLowerCase(); return CULTIVO_SIN[n] || n.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+function nombreCultivo(c){ return CULTIVO_NOMBRE[claveCultivo(c)] || c || "—"; }
+function kmEntre(a, b, c, d){ const p = Math.PI/180, x = 0.5 - Math.cos((c-a)*p)/2 + Math.cos(a*p)*Math.cos(c*p)*(1-Math.cos((d-b)*p))/2; return 12742*Math.asin(Math.sqrt(Math.max(0, x))); }
+function perfilDeLote(l){                                         // la región más cercana del cultivo del lote (≤ 250 km); si no hay filas, lo que trajo el reporte
+  if(!l || l.sin) return null;
+  const cul = claveCultivo(l.cultivo);
+  if(l.lat!=null && l.lon!=null && PERFILES_CULTIVO.length){
+    let best = null;
+    PERFILES_CULTIVO.filter(r=>r.cultivo===cul && r.lat!=null).forEach(r=>{ const km = kmEntre(l.lat, l.lon, r.lat, r.lon); if(!best || km < best.km) best = {km, r}; });
+    if(best && best.km <= 250){ const c = best.r.contenido || {}; return {cultivo:cul, nombre_cultivo:c.nombre_cultivo, region:best.r.region, estado:best.r.estado, km:Math.round(best.km), ciclo:best.r.ciclo, modalidad:best.r.modalidad, generado:best.r.generado, siap:c.siap, clima:c.clima, fuentes:c.fuentes}; }
+    if(best) return {cultivo:cul, sin_region:true, km:Math.round(best.km), nota:`la zona de referencia más cercana para ${nombreCultivo(cul)} (${best.r.region}) queda a ${Math.round(best.km)} km: no se usa.`};
+  }
+  if(l.perfilRep) return l.perfilRep;
+  return null;
+}
+const n1 = v => v==null ? "—" : Number(v).toLocaleString("es-MX", {maximumFractionDigits:1});
+function perfilHTML(pf, l){
+  if(!pf) return "";
+  if(pf.sin_region) return `<p class="small">${esc(pf.nota || "Sin zona de referencia pública para este cultivo todavía.")}</p>`;
+  const s = pf.siap || {}, out = [];
+  const enc = `<b>${esc(pf.region)}${pf.estado ? ` (${esc(pf.estado)})` : ""}</b>, a ${pf.km} km del lote · ${esc(nombreCultivo(pf.cultivo))} ${pf.modalidad ? esc(String(pf.modalidad).toLowerCase()) : ""} · ciclo ${esc(pf.ciclo || "—")}`;
+  if(s && s.n >= 3){
+    out.push(`<p class="small">${enc} · SIAP ${s.anios ? `${s.anios[0]}–${s.anios[1]}` : ""} (${s.n} cierres).</p>`);
+    out.push(`<p class="small">Rendimiento típico <b>${n1(s.rend_mediana_t_ha)} t/ha</b> por hectárea sembrada (últimos 5 años: ${n1(s.rend_ultimos5_t_ha)}; por hectárea cosechada: ${n1(s.rend_cosechada_mediana_t_ha)}).</p>`);
+    const pe = s.peor_anio || {};
+    out.push(`<p class="small">Siniestro: <b>${n1(s.siniestro_pct_medio)} %</b> de lo sembrado en promedio; ${s.anios_siniestro_10pct} de ${s.n} años perdieron más del 10 %; peor año ${pe.anio} (${n1(pe.siniestro_pct)} %, ${n1(pe.rend_t_ha)} t/ha).${s.p_malo_pct!=null ? ` Años malos (por debajo del 80 % de la tendencia): ${s.p_malo_pct} %.` : ""}</p>`);
+    const e = s.esperado;
+    if(e) out.push(e.publicable
+      ? `<p class="small">Para el cierre ${e.cierre}, la tendencia de la zona espera <b>${n1(e.rend_t_ha)} t/ha</b>${e.intervalo_80 ? ` (80 % entre ${n1(e.intervalo_80[0])} y ${n1(e.intervalo_80[1])})` : ""}${e.error_medido_pct!=null ? `, con un error medido de ${n1(e.error_medido_pct)} % dejando cada año fuera` : ""}.</p>`
+      : `<p class="small">Para el cierre ${e.cierre}: la tendencia no le gana a la climatología en esta zona, así que la referencia es la mediana (${n1(s.rend_mediana_t_ha)} t/ha).</p>`);
+  } else {
+    out.push(`<p class="small">${enc}.</p><p class="small">${esc((s && s.nota) || "Sin cierres SIAP para esta zona todavía.")}</p>`);
+  }
+  const c = pf.clima, w = c && c.semanas && c.semana_hoy ? c.semanas.find(x=>x.sem===c.semana_hoy) : (pf.semana_tipica || null);
+  if(w) out.push(`<p class="small">Esta semana, lo normal en la zona (${c ? c.n_temporadas || "" : ""} temporadas): mínima típica ${n1(w.tmin_tipica)} °C (extrema ${n1(w.tmin_extrema_p10)}), helada ${w.p_helada_pct} %, calor de 35 °C ${w.p_calor35_pct} %, lluvia ${n1(w.lluvia_mediana_mm)} mm (${n1(w.lluvia_p10_mm)}–${n1(w.lluvia_p90_mm)})${w.etapa_tipica ? `; etapa típica con la siembra típica de la zona: ${esc(w.etapa_tipica)}` : ""}.</p>`);
+  else if(c && c.resumen) out.push(`<p class="small">Fuera de la temporada típica de la zona (${esc(c.temporada && c.temporada.inicio_tipico || "")}, ${c.temporada && c.temporada.semanas} semanas). Lluvia típica de temporada: ${n1(c.resumen.lluvia_temporada_mediana_mm)} mm.</p>`);
+  out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001). ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
+  return out.join("");
+}
+const APP_VERSION = "14 · 19 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
@@ -1603,7 +1652,7 @@ $("#lib-lines").addEventListener("input", e=>{ const i = +e.target.dataset.l; if
 $("#lib-addline").addEventListener("click", ()=>{ libLines.push({texto:"", confianza:1, dudas:[]}); libEdited = true; renderLibLines(); const ins = $$("#lib-lines input"); ins[ins.length-1].focus(); });
 
 // --- intérprete local por reglas (respaldo sin lector / sin señal)
-const normTxt = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const normTxt = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const ABREV = [[/\bfert\.?(?=\s|$)/g,"fertilizante"],[/\bfung\.?(?=\s|$)/g,"fungicida"],[/\binsect?\.?(?=\s|$)/g,"insecticida"],[/\bherb\.?(?=\s|$)/g,"herbicida"],[/\bbioest\.?(?=\s|$)/g,"bioestimulante"],[/\basp\.?(?=\s|$)/g,"aspersión"],[/\bgrav\.?(?=\s|$)/g,"gravedad"],[/\bpiv\.?(?=\s|$)/g,"pivote"],[/\borilla n\b/g,"orilla norte"],[/\borilla s\b/g,"orilla sur"],[/\borilla e\b/g,"orilla este"],[/\borilla o\b/g,"orilla oeste"]];
 function expandAbrev(s){ let t = s; ABREV.forEach(([re,rep])=>{ t = t.replace(re, rep); }); return t; }
 const MESES = {ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,set:9,oct:10,nov:11,dic:12};
