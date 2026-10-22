@@ -123,6 +123,9 @@ td.hot{color:var(--bad);font-weight:600} td.warm{color:var(--warn);font-weight:6
 .log{display:grid;gap:8px}
 .log-item{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px}
 .log-item .d{font-family:var(--serif);font-weight:600;color:var(--blue);white-space:nowrap}
+.log-item .par-btn{font-size:12px;margin-left:8px;white-space:nowrap}
+.log-item .par{margin-top:6px;padding:6px 8px;border-left:2px solid var(--line);font-size:13px;color:var(--muted)}
+.log-item .par b{color:var(--fg)} .log-item .par .pct{font-family:var(--serif);color:var(--blue);margin-left:4px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--on-fg);padding:10px 16px;border-radius:999px;font-size:14px;box-shadow:var(--shadow);opacity:0;transition:opacity .25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bar);color:var(--bar-muted);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -775,7 +778,7 @@ let flashNew = [];   // los registros recién guardados, para resaltarlos una ve
 function renderLog(){
   const l = LOTES[lotIdx]; const items = log.filter(x=>x.lote===l.id).reverse().sort((a,b)=>b.f.localeCompare(a.f));   // más reciente primero; a igual fecha, el último guardado
   $("#log-count").textContent = items.length ? `${items.length} registro${items.length===1?"":"s"}` : "sin registros todavía";
-  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
+  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}${x.id && MODO==="nube" ? `<button class="inline-link par-btn" data-par="${esc(x.id)}">parecidas</button><div class="par" data-par-de="${esc(x.id)}" hidden></div>` : ""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
   const last = items[0];
   $("#lastreg").innerHTML = last ? `Último registro: <b>${fmtD(last.f)}</b> · ${esc(last.txt)}` : "Todavía no hay registros de este lote.";
 }
@@ -1111,7 +1114,7 @@ function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACH
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
-  const nube = (filas||[]).map(r=>({lote:r.lote_id, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id}));
+  const nube = (filas||[]).map(r=>({id:r.id, lote:r.lote_id, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id}));
   const cids = new Set(nube.map(x=>x.cid).filter(Boolean));
   const pend = colaCargar().filter(q=>!cids.has(q.cliente_id)).map(q=>({lote:q.lote_id, f:q.fecha, t:q.tipo, txt:q.texto, src: q.fuente && q.fuente!=="app" ? q.fuente : undefined, cid:q.cliente_id, pendiente:true}));
   log = nube.concat(pend); save();
@@ -1271,6 +1274,21 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
+// --- memoria semántica: "parecidas" = las observaciones más cercanas en el espacio de embeddings (las calcula el RIG; la nube solo compara)
+function nombreLoteDe(uuid){ const l = LOTES.find(x=>x.uuid===uuid); return l ? l.nombre : "otro lote"; }
+async function verParecidas(id, box){
+  if(!box.hidden){ box.hidden = true; return; }
+  box.hidden = false; box.innerHTML = `<span>Buscando parecidas…</span>`;
+  try{
+    const rows = await db("POST","rpc/memoria_parecidas",null,{ref:id, k:5});
+    if(!rows || !rows.length){ box.innerHTML = `<span>Sin observaciones parecidas todavía: la memoria crece con cada registro (se embebe en el RIG a los pocos minutos).</span>`; return; }
+    box.innerHTML = rows.map(r=>`<div><b>${esc(fmtD(r.fecha || ""))}</b> · ${esc(nombreLoteDe(r.lote_id))} · ${esc((r.texto||"").replace(/^(Observación|Riego|Aplicación|Cosecha|Nota de voz|Libreta|Sin novedad): /,""))}<span class="pct">${Math.round((r.similitud||0)*100)} %</span>${r.fuente!=="registro" ? `<em class="tag">${esc(r.fuente==="transcripcion"?"voz":r.fuente)}</em>` : ""}</div>`).join("");
+  }catch(e){
+    const st = e && e.status;
+    box.innerHTML = `<span>${st===404 ? "La memoria semántica no está activa todavía en la nube (falta el esquema v8)." : st===401 ? "Sesión vencida." : "No se pudo consultar la memoria: " + esc(String(e && e.message || e).slice(0,120))}</span>`;
+  }
+}
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-par]"); if(!b) return; const box = b.parentElement.querySelector(`[data-par-de="${b.getAttribute("data-par")}"]`); if(box) verParecidas(b.getAttribute("data-par"), box); });
 let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
 const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate"};
 const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate"};
@@ -1317,7 +1335,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "15 · 22 oct 2026";
+const APP_VERSION = "16 · 22 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
