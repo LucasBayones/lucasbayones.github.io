@@ -408,6 +408,10 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <div class="field"><label for="lt-siembra">Fecha de siembra</label><input id="lt-siembra" type="date"></div>
       <div class="field"><label for="lt-ha">Hectáreas (si las sabe)</label><input id="lt-ha" inputmode="decimal" placeholder="opcional"></div>
     </div>
+    <div class="grid2">
+      <div class="field"><label for="lt-condicion">Condición</label><select id="lt-condicion"><option value="campo abierto">campo abierto</option><option value="malla sombra">malla sombra</option><option value="invernadero">invernadero</option></select></div>
+      <div class="field"></div>
+    </div>
     <p class="note">Con la fecha de siembra la etapa se conoce a ±3 días; sin ella se estima con la fecha típica de la zona (±3 semanas) y queda marcada como estimada.</p>
   </div>
 </section>
@@ -607,7 +611,11 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
             <div class="field"><label for="nl-riego">Riego</label><select id="nl-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option></select></div>
             <div class="field"><label for="nl-ha">Hectáreas (si las sabe)</label><input id="nl-ha" inputmode="decimal" placeholder="opcional"></div>
           </div>
-          <div class="field"><label for="nl-siembra">Fecha de siembra o trasplante</label><input id="nl-siembra" type="date"></div>
+          <div class="grid2">
+            <div class="field"><label for="nl-siembra">Fecha de siembra o trasplante</label><input id="nl-siembra" type="date"></div>
+            <div class="field"><label for="nl-condicion">Condición</label><select id="nl-condicion"><option value="campo abierto">campo abierto</option><option value="malla sombra">malla sombra</option><option value="invernadero">invernadero</option></select></div>
+          </div>
+          <p class="note">Condición: en malla sombra o invernadero el motor atenúa helada, lluvia, viento y tizón (tomate); el calor y las noches cálidas se mantienen. No se mide el clima interno.</p>
         </div>
         <p class="note">Después, en Lote, marque el punto y el borde: el motor toma de ahí la zona de referencia y el clima del punto. El reporte del lote aparece en Hoy a partir de la siguiente corrida nocturna.</p>
       </div>
@@ -1043,7 +1051,7 @@ function temporadaLabel(fs){ if(!fs) return String(new Date().getFullYear()); co
 function loteVacio(){ return {id:"__sin__", sin:true, nube:true, nombre:"Sin lotes todavía", cultivo:"—", region:"", nivel:"sin", etapaTxt:"Cree su primer lote con \"+ Nuevo lote\", arriba.", sem:[], semVacio:"Cuando exista un lote, aquí va su semáforo.", nota:"", acciones:[{a:"Crear el primer lote", p:"Toque \"+ Nuevo lote\" en la barra de arriba. Después, en Lote, marque el punto y el borde.", c:"alta"}], memoria:[], memTxt:"La memoria empieza con el primer lote.", termina:{titulo:"Sin lotes", cuerpo:"Cuando haya un lote y seis semanas observadas, aquí aparece la tendencia de cosecha."}, dias:null, agg:null, fechaTxt: fechaLarga(hoyISO)}; }
 function lotDesdeNube(f, rep){
   const c = rep && rep.contenido, hoy = c && c.hoy, sem = c && c.semana;
-  const l = { id:f.id, uuid:f.id, codigo:f.codigo, nombre:f.nombre, cultivo:f.cultivo, variedad:f.variedad||"", region:f.region||"", lat:f.lat, lon:f.lon, ha:f.superficie_ha ? Number(f.superficie_ha) : null, riego:f.riego||"", siembra:f.fecha_siembra||"", nube:true, real:true, fila:f, fechaTxt: fechaLarga(hoyISO), memoria:[], dias:null, agg:null, sem:[], acciones:[], miembros: sem ? sem.n_miembros : null };
+  const l = { id:f.id, uuid:f.id, codigo:f.codigo, nombre:f.nombre, cultivo:f.cultivo, variedad:f.variedad||"", region:f.region||"", lat:f.lat, lon:f.lon, ha:f.superficie_ha ? Number(f.superficie_ha) : null, riego:f.riego||"", condicion:f.condicion||"campo abierto", siembra:f.fecha_siembra||"", nube:true, real:true, fila:f, fechaTxt: fechaLarga(hoyISO), memoria:[], dias:null, agg:null, sem:[], acciones:[], miembros: sem ? sem.n_miembros : null };
   if(c && hoy){
     l.nivel = hoy.nivel || "bajo";
     l.etapaTxt = (f.fecha_siembra ? `Siembra del ${fmtD(f.fecha_siembra)}${hoy.dia!=null ? ` · día ${hoy.dia}` : ""} · ` : "") + (hoy.etapa || "");
@@ -1109,7 +1117,7 @@ async function cargarRegistros(){
   log = nube.concat(pend); save();
 }
 async function crearLote(d){
-  const fila = {propietario: sesion.user.id, nombre:d.nombre, cultivo:d.cultivo, variedad:d.variedad||null, riego:d.riego||null, superficie_ha:d.ha||null, fecha_siembra:d.siembra||null};
+  const fila = {propietario: sesion.user.id, nombre:d.nombre, cultivo:d.cultivo, variedad:d.variedad||null, riego:d.riego||null, condicion:d.condicion||"campo abierto", superficie_ha:d.ha||null, fecha_siembra:d.siembra||null};
   const r = await db("POST","lotes",null,fila,"return=representation"); return r[0];
 }
 function pendCargar(){ try{ pendLotes = JSON.parse(localStorage.getItem(PEND_KEY)) || {}; }catch(e){ pendLotes = {}; } }
@@ -1245,7 +1253,7 @@ $("#nl-save").addEventListener("click", async ()=>{
   $("#nl-save").disabled = true; $("#nl-save").textContent = "Creando…";
   try{
     const ha = parseFloat(String($("#nl-ha").value).replace(",",".")) || null;
-    const fila = await crearLote({nombre, cultivo:$("#nl-cultivo").value, variedad:$("#nl-variedad").value.trim(), riego:$("#nl-riego").value, ha, siembra:$("#nl-siembra").value || null});
+    const fila = await crearLote({nombre, cultivo:$("#nl-cultivo").value, variedad:$("#nl-variedad").value.trim(), riego:$("#nl-riego").value, condicion:$("#nl-condicion").value, ha, siembra:$("#nl-siembra").value || null});
     await cargarLotes(); lotIdx = Math.max(0, LOTES.findIndex(l=>l.uuid===fila.id)); renderAll();
     closeSheet(false); toast(`Lote "${nombre}" creado: ahora marque el punto y el borde`); setTimeout(()=>go("lote"), 350);
     $("#nl-nombre").value = ""; $("#nl-variedad").value = ""; $("#nl-ha").value = ""; $("#nl-siembra").value = "";
@@ -1253,8 +1261,8 @@ $("#nl-save").addEventListener("click", async ()=>{
   finally{ $("#nl-save").disabled = false; $("#nl-save").textContent = "Crear el lote"; }
 });
 // --- datos del lote (pantalla Lote) -> nube
-function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombre").value = l.nombre||""; $("#lt-variedad").value = l.variedad||""; $("#lt-cultivo").value = l.cultivo||"papa"; $("#lt-riego").value = l.riego||"aspersión"; $("#lt-siembra").value = l.siembra||""; $("#lt-ha").value = l.ha!=null ? l.ha : ""; }
-[["lt-nombre","nombre","nombre"],["lt-variedad","variedad","variedad"],["lt-cultivo","cultivo","cultivo"],["lt-riego","riego","riego"],["lt-siembra","siembra","fecha_siembra"],["lt-ha","ha","superficie_ha"]].forEach(([id, campo, col])=>{
+function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombre").value = l.nombre||""; $("#lt-variedad").value = l.variedad||""; $("#lt-cultivo").value = l.cultivo||"papa"; $("#lt-riego").value = l.riego||"aspersión"; $("#lt-condicion").value = l.condicion||"campo abierto"; $("#lt-siembra").value = l.siembra||""; $("#lt-ha").value = l.ha!=null ? l.ha : ""; }
+[["lt-nombre","nombre","nombre"],["lt-variedad","variedad","variedad"],["lt-cultivo","cultivo","cultivo"],["lt-riego","riego","riego"],["lt-condicion","condicion","condicion"],["lt-siembra","siembra","fecha_siembra"],["lt-ha","ha","superficie_ha"]].forEach(([id, campo, col])=>{
   $("#"+id).addEventListener("change", e=>{ const l = LOTES[lotIdx]; if(!l || l.sin) return; let v = e.target.value; if(campo==="ha"){ v = parseFloat(String(v).replace(",",".")); if(isNaN(v)) v = null; } if(campo==="siembra" && !v) v = null; l[campo] = v===null ? (campo==="ha" ? null : "") : v; if(campo==="nombre" || campo==="cultivo") renderLotSel(); patchLote(l, {[col]: v}); if(MODO==="nube" && l.nube) toast("Dato del lote guardado"); });
 });
 
@@ -1275,7 +1283,7 @@ function perfilDeLote(l){                                         // la región 
   if(l.lat!=null && l.lon!=null && PERFILES_CULTIVO.length){
     let best = null;
     PERFILES_CULTIVO.filter(r=>r.cultivo===cul && r.lat!=null).forEach(r=>{ const km = kmEntre(l.lat, l.lon, r.lat, r.lon); if(!best || km < best.km) best = {km, r}; });
-    if(best && best.km <= 250){ const c = best.r.contenido || {}; return {cultivo:cul, nombre_cultivo:c.nombre_cultivo, region:best.r.region, estado:best.r.estado, km:Math.round(best.km), ciclo:best.r.ciclo, modalidad:best.r.modalidad, generado:best.r.generado, siap:c.siap, clima:c.clima, fuentes:c.fuentes}; }
+    if(best && best.km <= 250){ const c = best.r.contenido || {}; return {cultivo:cul, nombre_cultivo:c.nombre_cultivo, region:best.r.region, estado:best.r.estado, km:Math.round(best.km), lejana: best.km > 120, ciclo:best.r.ciclo, modalidad:best.r.modalidad, generado:best.r.generado, siap:c.siap, clima:c.clima, fuentes:c.fuentes}; }
     if(best) return {cultivo:cul, sin_region:true, km:Math.round(best.km), nota:`la zona de referencia más cercana para ${nombreCultivo(cul)} (${best.r.region}) queda a ${Math.round(best.km)} km: no se usa.`};
   }
   if(l.perfilRep) return l.perfilRep;
@@ -1286,10 +1294,13 @@ function perfilHTML(pf, l){
   if(!pf) return "";
   if(pf.sin_region) return `<p class="small">${esc(pf.nota || "Sin zona de referencia pública para este cultivo todavía.")}</p>`;
   const s = pf.siap || {}, out = [];
+  if(pf.lejana) out.push(`<p class="small"><b>Referencia lejana:</b> la zona configurada más cercana para ${esc(nombreCultivo(pf.cultivo))} queda a ${pf.km} km; tómela como orden de magnitud, no como su zona.</p>`);
   const enc = `<b>${esc(pf.region)}${pf.estado ? ` (${esc(pf.estado)})` : ""}</b>, a ${pf.km} km del lote · ${esc(nombreCultivo(pf.cultivo))} ${pf.modalidad ? esc(String(pf.modalidad).toLowerCase()) : ""} · ciclo ${esc(pf.ciclo || "—")}`;
   if(s && s.n >= 3){
     out.push(`<p class="small">${enc} · SIAP ${s.anios ? `${s.anios[0]}–${s.anios[1]}` : ""} (${s.n} cierres).</p>`);
-    out.push(`<p class="small">Rendimiento típico <b>${n1(s.rend_mediana_t_ha)} t/ha</b> por hectárea sembrada (últimos 5 años: ${n1(s.rend_ultimos5_t_ha)}; por hectárea cosechada: ${n1(s.rend_cosechada_mediana_t_ha)}).</p>`);
+    out.push(s.perenne
+      ? `<p class="small">Rendimiento típico <b>${n1(s.rend_mediana_t_ha)} t/ha</b> por hectárea cosechada (últimos 5 años: ${n1(s.rend_ultimos5_t_ha)}). En perennes lo sembrado incluye huertas jóvenes que todavía no producen.</p>`
+      : `<p class="small">Rendimiento típico <b>${n1(s.rend_mediana_t_ha)} t/ha</b> por hectárea sembrada (últimos 5 años: ${n1(s.rend_ultimos5_t_ha)}; por hectárea cosechada: ${n1(s.rend_cosechada_mediana_t_ha)}).</p>`);
     const pe = s.peor_anio || {};
     out.push(`<p class="small">Siniestro: <b>${n1(s.siniestro_pct_medio)} %</b> de lo sembrado en promedio; ${s.anios_siniestro_10pct} de ${s.n} años perdieron más del 10 %; peor año ${pe.anio} (${n1(pe.siniestro_pct)} %, ${n1(pe.rend_t_ha)} t/ha).${s.p_malo_pct!=null ? ` Años malos (por debajo del 80 % de la tendencia): ${s.p_malo_pct} %.` : ""}</p>`);
     const e = s.esperado;
@@ -1302,10 +1313,11 @@ function perfilHTML(pf, l){
   const c = pf.clima, w = c && c.semanas && c.semana_hoy ? c.semanas.find(x=>x.sem===c.semana_hoy) : (pf.semana_tipica || null);
   if(w) out.push(`<p class="small">Esta semana, lo normal en la zona (${c ? c.n_temporadas || "" : ""} temporadas): mínima típica ${n1(w.tmin_tipica)} °C (extrema ${n1(w.tmin_extrema_p10)}), helada ${w.p_helada_pct} %, calor de 35 °C ${w.p_calor35_pct} %, lluvia ${n1(w.lluvia_mediana_mm)} mm (${n1(w.lluvia_p10_mm)}–${n1(w.lluvia_p90_mm)})${w.etapa_tipica ? `; etapa típica con la siembra típica de la zona: ${esc(w.etapa_tipica)}` : ""}.</p>`);
   else if(c && c.resumen) out.push(`<p class="small">Fuera de la temporada típica de la zona (${esc(c.temporada && c.temporada.inicio_tipico || "")}, ${c.temporada && c.temporada.semanas} semanas). Lluvia típica de temporada: ${n1(c.resumen.lluvia_temporada_mediana_mm)} mm.</p>`);
-  out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001). ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
+  const notaCul = pf.fuentes && pf.fuentes.nota_cultivo ? ` ${esc(pf.fuentes.nota_cultivo)}.` : "";
+  out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "14 · 19 oct 2026";
+const APP_VERSION = "15 · 22 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
