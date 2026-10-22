@@ -336,6 +336,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <button class="optrow" data-flow="libreta"><span class="oi"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg></span><span><b>Escanear la libreta</b><span class="s">Foto de la página → registros que usted revisa y confirma</span></span><span class="chev">›</span></button>
     <button class="optrow" data-flow="voz"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota de voz</b><span class="s">Grabe aquí mismo lo que hizo y lo que vio</span></span><span class="chev">›</span></button>
     <button class="optrow" data-flow="video"><span class="oi"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></span><span><b>Video</b><span class="s">Filme la planta o el daño, con fecha y lugar</span></span><span class="chev">›</span></button>
+    <button class="optrow" data-flow="visita"><span class="oi"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Visita técnica</b><span class="s">El formulario completo del cultivo (visitador o agrónomo); también por Excel en Más</span></span><span class="chev">›</span></button>
     <div class="lastreg" id="lastreg"></div>
     <p class="note">Todo lo demás se infiere: ubicación, clima, pronóstico, etapa del cultivo y tendencia de la zona. Usted solo cuenta lo que hizo y lo que vio.</p>
   </div>
@@ -427,6 +428,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
+      <button data-go="mas-planillas">Planillas de visita <span>la plantilla Excel del cultivo y las que subió</span></button>
       <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
       <button data-go="mas-acerca">Acerca de esta versión <span>privada, solo socios</span></button>
     </div>
@@ -450,6 +452,15 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="row between"><span class="eyebrow">Cómo termina la temporada</span><button class="inline-link" data-back>Volver</button></div>
     <h2 id="temp-h2"></h2>
     <div id="temp-body"></div>
+  </div>
+
+  <div class="card" id="mas-planillas" hidden>
+    <div class="row between"><span class="eyebrow">Planillas de visita</span><button class="inline-link" data-back>Volver</button></div>
+    <h2 id="pla-h2">Visitas por Excel</h2>
+    <p class="small">La misma visita técnica de Registrar, en una planilla para llenar en la computadora o imprimir: una fila por visita. Al subirla, el motor la revisa esa noche y le dice fila por fila qué entró.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sec" id="pla-descargar">Descargar plantilla</button><label class="btn acc" for="pla-input" style="cursor:pointer">Subir planilla llena</label><input id="pla-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div>
+    <p class="note" id="pla-nota"></p>
+    <div id="pla-list"></div>
   </div>
 
   <div class="card" id="mas-como" hidden>
@@ -623,6 +634,10 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         <p class="note">Después, en Lote, marque el punto y el borde: el motor toma de ahí la zona de referencia y el clima del punto. El reporte del lote aparece en Hoy a partir de la siguiente corrida nocturna.</p>
       </div>
 
+      <div class="flow" id="flow-visita" hidden>
+        <div id="vis-form"></div>
+        <p class="note" id="vis-nota">Solo fecha y etapa son obligatorias; lo demás, lo que haya visto o medido. Sin productos ni dosis. La misma planilla existe en Excel: Más → Planillas de visita.</p>
+      </div>
       <div class="flow" id="flow-video" hidden>
         <label class="photo" for="vid-input" id="vid-drop"><b>Filmar</b><span class="small muted">Abre la cámara en modo video. Recorra la planta o el daño despacio, 10 a 20 segundos, y diga en voz alta lo que ve.</span><input class="hiddeninput" id="vid-input" type="file" accept="video/*" capture="environment"></label>
         <div id="vid-preview" hidden></div>
@@ -638,6 +653,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button class="btn acc" id="ap-save" hidden>Guardar en la bitácora</button>
       <button class="btn acc" id="rg-save" hidden>Guardar en la bitácora</button>
       <button class="btn acc" id="vi-save" hidden>Guardar en la bitácora</button>
+      <button class="btn acc" id="vis-save" hidden>Guardar la visita</button>
       <button class="btn acc" id="lib-interp" hidden>Interpretar las líneas</button>
       <button class="btn acc" id="lib-save" hidden>Guardar en la bitácora</button>
       <button class="btn acc" id="voz-save" hidden disabled>Guardar la nota de voz</button>
@@ -1089,10 +1105,10 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs, pcs] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1101,16 +1117,19 @@ async function cargarLotes(){
     db("GET","alertas",{select:"*", or:`(vigente.eq.true,cerrada_en.gte.${desde})`, order:"emitida.desc"}).then(r=>{ alertasError = null; return r; }).catch(e=>{ alertasError = String(e && e.message || e).slice(0,140); return null; }),   // vigentes + cerradas en los últimos 14 días
     db("GET","transcripciones",{select:"*", estado:"in.(lista,error)", order:"creado_en.desc"}).catch(()=>null),    // notas de voz transcritas por revisar
     db("GET","perfiles_cultivo",{select:"*"}).catch(()=>null),                                                          // perfiles públicos por cultivo y región
+    db("GET","formularios_visita",{select:"*"}).catch(()=>null),                                                        // formulario de visita por cultivo
+    db("GET","planillas",{select:"*", order:"creado_en.desc", limit:"30"}).catch(()=>null),                              // planillas Excel subidas y su informe
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || [];
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -1274,6 +1293,86 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
+// --- visita técnica: el formulario del cultivo viene de la nube (formularios_visita, que el RIG sube desde config/visitas/visita_<cultivo>.json)
+function visCampos(def){ return (def.secciones||[]).flatMap(s=>s.campos.map(f=>({...f, seccion:s.id}))); }
+function visAplica(f, l){ if(!f.solo_condicion) return true; const c = String(l.condicion||"campo abierto").toLowerCase(); return f.solo_condicion.some(x=>String(x).toLowerCase()===c); }
+function visRender(){
+  const l = LOTES[lotIdx], cul = claveCultivo(l.cultivo), def = FORMULARIOS[cul]; const box = $("#vis-form");
+  if(!def){ box.innerHTML = `<p class="note">El formulario de ${esc(nombreCultivo(cul))} todavía no está en la nube (lo sube el motor cada noche desde config/visitas). Mientras tanto use "Vi algo" o la planilla Excel.</p>`; $("#vis-save").disabled = true; return; }
+  $("#vis-save").disabled = false;
+  box.innerHTML = (def.secciones||[]).map(sec=>{
+    const campos = sec.campos.filter(f=>f.t!=="lote" && visAplica(f, l)); if(!campos.length) return "";
+    return `<div class="card"><span class="eyebrow">${esc(sec.titulo)}</span>${sec.nota?`<p class="small muted">${esc(sec.nota)}</p>`:""}${campos.map(f=>visCampoHTML(f)).join("")}</div>`;
+  }).join("");
+  const fe = box.querySelector('[data-k="fecha"]'); if(fe) fe.value = hoyISO;
+  const vi = box.querySelector('[data-k="visitador"]'); if(vi && perfil && perfil.nombre && !vi.value) vi.value = perfil.nombre;
+}
+function visCampoHTML(f){
+  const lab = `<label for="vis-${esc(f.k)}">${esc(f.l)}${f.u?` <small class="muted">(${esc(f.u)})</small>`:""}${f.req?" *":""}</label>`;
+  const ayuda = f.ayuda ? `<span class="small muted">${esc(f.ayuda)}</span>` : "";
+  let inp = "";
+  if(f.t==="fecha") inp = `<input id="vis-${esc(f.k)}" data-k="${esc(f.k)}" type="date">`;
+  else if(f.t==="numero") inp = `<input id="vis-${esc(f.k)}" data-k="${esc(f.k)}" inputmode="decimal" placeholder="${f.min!=null&&f.max!=null?`${f.min}–${f.max}`:""}">`;
+  else if(f.t==="opcion") inp = `<select id="vis-${esc(f.k)}" data-k="${esc(f.k)}"><option value="">—</option>${(f.op||[]).map(o=>`<option>${esc(o)}</option>`).join("")}</select>`;
+  else if(f.t==="si_no") inp = `<select id="vis-${esc(f.k)}" data-k="${esc(f.k)}"><option value="">—</option><option value="sí">sí</option><option value="no">no</option></select>`;
+  else inp = `<input id="vis-${esc(f.k)}" data-k="${esc(f.k)}" placeholder="${f.k==="notas"?"lo que no cupo arriba":""}">`;
+  return `<div class="field">${lab}${inp}${ayuda}</div>`;
+}
+function visLeer(def, l){
+  const datos = {}, errores = [];
+  visCampos(def).forEach(f=>{
+    if(f.t==="lote" || !visAplica(f, l)) return;
+    const el = $("#vis-form").querySelector(`[data-k="${f.k}"]`); if(!el) return;
+    let v = String(el.value||"").trim(); if(!v){ if(f.req) errores.push(`${f.l}: obligatorio`); return; }
+    if(f.t==="numero"){ const x = parseFloat(v.replace(",",".")); if(isNaN(x)){ errores.push(`${f.l}: «${v}» no es un número`); return; } if(f.min!=null && x < f.min){ errores.push(`${f.l}: mínimo ${f.min}`); return; } if(f.max!=null && x > f.max){ errores.push(`${f.l}: máximo ${f.max}`); return; } v = x; }
+    else if(f.t==="si_no"){ v = v==="sí"; }
+    datos[f.k] = v;
+  });
+  return {datos, errores};
+}
+function visResumen(datos){
+  const p = []; const n = v => v==null ? "" : v;
+  if(datos.etapa) p.push(`etapa ${datos.etapa}${datos.etapa_pct!=null?` (${datos.etapa_pct} %)`:""}`);
+  if(datos.problema && String(datos.problema).toLowerCase()!=="ninguno"){ let t = datos.problema; if(datos.incidencia_pct!=null) t += ` ${datos.incidencia_pct} %`; if(datos.severidad_0_5!=null) t += ` sev ${datos.severidad_0_5}`; if(datos.donde) t += ` (${datos.donde})`; p.push(t); }
+  if(datos.humedad_suelo) p.push(`suelo ${datos.humedad_suelo}`);
+  if(datos.danio_tipo && String(datos.danio_tipo).toLowerCase()!=="ninguno") p.push(`daño: ${datos.danio_tipo}${datos.danio_pct!=null?` ${datos.danio_pct} %`:""}`);
+  if(datos.rendimiento_t_ha!=null) p.push(`cosecha ${datos.rendimiento_t_ha} t/ha`);
+  return "Visita técnica" + (p.length?` · ${p.join(" · ")}`:"") + (datos.visitador?` · ${datos.visitador}`:"") + n("");
+}
+$("#vis-save").addEventListener("click", ()=>{
+  const l = LOTES[lotIdx], def = FORMULARIOS[claveCultivo(l.cultivo)]; if(!def) return;
+  const {datos, errores} = visLeer(def, l);
+  if(errores.length){ toast(errores[0]); const k = visCampos(def).find(f=>errores[0].startsWith(f.l)); const el = k && $("#vis-form").querySelector(`[data-k="${k.k}"]`); if(el) el.focus(); return; }
+  datos.formulario = def.version || null;
+  addLog("visita", visResumen(datos), datos.fecha || hoyISO, undefined, datos);
+  afterSave("Visita guardada en la bitácora");
+});
+// --- planillas Excel: la plantilla del cultivo (cubeta plantillas, la arma el RIG) y las que la persona sube (cubeta planillas + tabla planillas)
+function plantillaRuta(cul){ return `plantillas/Visita_${cul}.xlsx`; }
+async function renderPlanillas(){
+  const l = LOTES[lotIdx], cul = claveCultivo(l.cultivo);
+  $("#pla-h2").textContent = `Visitas por Excel · ${nombreCultivo(cul)}`;
+  $("#pla-nota").textContent = MODO!=="nube" ? "Con sesión: aquí se descarga la plantilla del cultivo y se suben las planillas llenas." : `Plantilla de ${nombreCultivo(cul)} con la lista de sus lotes. Las planillas subidas se revisan en la corrida nocturna; abajo queda el informe fila por fila.`;
+  const mias = (PLANILLAS||[]).filter(pl=>!l.sin && pl.lote_id===l.uuid);
+  const EST = {subida:"subida, pendiente de revisar", ingerida:"revisada: todo entró", con_errores:"revisada: entró parte", error:"revisada: no entró"};
+  $("#pla-list").innerHTML = mias.length ? mias.map(pl=>`<div class="log-item"><span class="d">${esc(fmtD(String(pl.creado_en||"").slice(0,10)))}</span><span><b>${esc(pl.nombre||pl.archivo)}</b> · ${esc(EST[pl.estado]||pl.estado)}${pl.filas_ok!=null?` · ${pl.filas_ok} filas entraron${pl.filas_error?`, ${pl.filas_error} no`:""}`:""}${pl.informe&&pl.informe.length?`<div class="par">${pl.informe.slice(0,8).map(x=>`<div>${esc(x)}</div>`).join("")}${pl.informe.length>8?`<div>… ${pl.informe.length-8} líneas más</div>`:""}</div>`:""}</span></div>`).join("") : `<p class="note">${l.sin?"Cree un lote primero.":"Todavía no subió planillas para este lote."}</p>`;
+}
+$("#pla-descargar").addEventListener("click", async ()=>{
+  const l = LOTES[lotIdx], cul = claveCultivo(l.cultivo); if(MODO!=="nube"){ toast("Con sesión se descarga la plantilla"); return; }
+  try{ const u = await urlFirmada(plantillaRuta(cul)); window.open(u, "_blank"); }catch(e){ toast("La plantilla no está en la nube todavía: el motor la sube en la próxima corrida nocturna"); }
+});
+$("#pla-input").addEventListener("change", async e=>{
+  const f = e.target.files && e.target.files[0]; if(!f) return; const l = LOTES[lotIdx];
+  if(MODO!=="nube" || !l || l.sin || !l.nube){ toast("Con sesión y un lote elegido se puede subir"); e.target.value = ""; return; }
+  if(!/\.xlsx$/i.test(f.name)){ toast("Suba el archivo .xlsx de la plantilla"); e.target.value = ""; return; }
+  try{
+    const nombre = f.name.replace(/[^A-Za-z0-9._-]/g, "_"); const ruta = `${l.uuid}/${Date.now()}_${nombre}`;
+    await subirArchivo("planillas", ruta, f);
+    const fila = await db("POST","planillas",null,{lote_id:l.uuid, usuario:sesion.user.id, archivo:`planillas/${ruta}`, nombre:f.name},"return=representation");
+    PLANILLAS.unshift(fila[0]); cacheGuardar(); renderPlanillas(); toast("Planilla subida: el motor la revisa esta noche");
+  }catch(err){ toast("No se pudo subir: " + String(err && err.message || err).slice(0,100)); }
+  e.target.value = "";
+});
 // --- memoria semántica: "parecidas" = las observaciones más cercanas en el espacio de embeddings (las calcula el RIG; la nube solo compara)
 function nombreLoteDe(uuid){ const l = LOTES.find(x=>x.uuid===uuid); return l ? l.nombre : "otro lote"; }
 async function verParecidas(id, box){
@@ -1290,6 +1389,7 @@ async function verParecidas(id, box){
 }
 document.addEventListener("click", e=>{ const b = e.target.closest("[data-par]"); if(!b) return; const box = b.parentElement.querySelector(`[data-par-de="${b.getAttribute("data-par")}"]`); if(box) verParecidas(b.getAttribute("data-par"), box); });
 let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
+let FORMULARIOS = {}, PLANILLAS = [];                             // formulario de visita por cultivo (lo sube el RIG desde config/visitas) y planillas Excel subidas
 const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate"};
 const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate"};
 function claveCultivo(c){ const n = String(c||"").trim().toLowerCase(); return CULTIVO_SIN[n] || n.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
@@ -1335,7 +1435,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "16 · 22 oct 2026";
+const APP_VERSION = "17 · 22 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
@@ -1454,7 +1554,7 @@ function go(name){
   if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
-function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); }
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
@@ -1526,8 +1626,8 @@ $("#verdor-btn").addEventListener("click", ()=>toggleVerdor());
 
 // ---------------------------------------------------------------- registrar: flujos
 const ULTIMOS = [{p:"Fungicida preventivo", d:"2", u:"kg/ha", t:"fungicida"},{p:"Fertilizante foliar", d:"3", u:"L/ha", t:"fertilizante"},{p:"Insecticida (paratrioza)", d:"0.5", u:"L/ha", t:"insecticida"}];
-const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:"Escanear la libreta", voz:"Nota de voz", video:"Video", nuevolote:"Nuevo lote"};
-const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save", nuevolote:"nl-save"};
+const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:"Escanear la libreta", voz:"Nota de voz", video:"Video", visita:"Visita técnica", nuevolote:"Nuevo lote"};
+const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save", visita:"vis-save", nuevolote:"nl-save"};
 const FLOWS = Object.keys(TITULOS);
 let sheetOpen = null, ignorePop = false, sheetTimer = null;
 function openFlow(name, btn){
@@ -1546,6 +1646,7 @@ function openFlow(name, btn){
   if(name==="aplique"){ $("#ult-chips").innerHTML = ULTIMOS.map((u,i)=>`<button class="chip" aria-pressed="false" data-ult="${i}">${esc(u.p)} · ${u.d} ${u.u}</button>`).join(""); $("#ap-fecha").value = hoyISO; }
   if(name==="regue"){ $("#rg-fecha").value = hoyISO; }
   if(name==="libreta"){ libShow("step1"); }                              // los botones de interpretar/guardar aparecen por etapa
+  if(name==="visita"){ visRender(); }
   const sh = $("#sheet"); clearTimeout(sheetTimer); sh.hidden = false; $("#sheet-body").scrollTop = 0;
   requestAnimationFrame(()=>requestAnimationFrame(()=>sh.classList.add("open")));
   document.body.classList.add("noscroll"); sheetOpen = name;
