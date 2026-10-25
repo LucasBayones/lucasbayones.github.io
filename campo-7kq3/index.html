@@ -432,6 +432,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
+      <button data-go="mas-avisos">Avisos al teléfono <span id="btn-avisos-sub">alertas y revisiones, aunque la app esté cerrada</span></button>
       <button data-go="mas-planillas">Planillas de visita <span>la plantilla Excel del cultivo y las que subió</span></button>
       <button data-go="mas-panel" id="btn-panel" hidden>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
       <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
@@ -466,6 +467,17 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sec" id="pla-descargar">Descargar plantilla</button><label class="btn acc" for="pla-input" style="cursor:pointer">Subir planilla llena</label><input id="pla-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div>
     <p class="note" id="pla-nota"></p>
     <div id="pla-list"></div>
+  </div>
+
+  <div class="card" id="mas-avisos" hidden>
+    <div class="row between"><span class="eyebrow">Avisos al teléfono</span><button class="inline-link" data-back>Volver</button></div>
+    <h2>Que le avise aunque la app esté cerrada</h2>
+    <p class="small">Alertas nuevas de sus lotes y lo que el agrónomo revise de lo suyo. Al agrónomo: lo que entra a su cola. Cada teléfono se activa por separado; sin internet el aviso espera.</p>
+    <p class="small" id="av-estado"></p>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn acc" id="av-activar">Activar avisos en este teléfono</button><button class="btn sec" id="av-desactivar" hidden>Desactivar en este teléfono</button></div>
+    <p class="note" id="av-nota">En iPhone: primero agregue la app a la pantalla de inicio (Compartir → Agregar a inicio) y ábrala desde ahí; después toque Activar.</p>
+    <span class="eyebrow">Últimos avisos</span>
+    <div id="av-list"></div>
   </div>
 
   <div class="card" id="mas-panel" hidden>
@@ -1122,7 +1134,7 @@ let ultimoCache = {};
 function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1134,13 +1146,14 @@ async function cargarLotes(){
     db("GET","formularios_visita",{select:"*"}).catch(()=>null),                                                        // formulario de visita por cultivo
     db("GET","planillas",{select:"*", order:"creado_en.desc", limit:"30"}).catch(()=>null),                              // planillas Excel subidas y su informe
     db("GET","revisiones",{select:"*", order:"creado_en.desc", limit:"300"}).catch(()=>null),                              // lo que el agrónomo confirmó/corrigió (el productor ve lo de sus lotes)
+    db("GET","avisos",{select:"*", order:"enviado_en.desc", limit:"30"}).catch(()=>null),                                  // avisos que el RIG le mandó a esta persona
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
-  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || [];
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
@@ -1310,6 +1323,41 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
+// --- avisos al teléfono (Web Push): la suscripción se guarda en suscripciones_push; el RIG firma y manda con su llave VAPID (la pública viene en el latido)
+function b64aU8(b64){ const pad = "=".repeat((4 - b64.length % 4) % 4); const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...raw].map(c=>c.charCodeAt(0))); }
+function avSoporte(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+function avEnInicio(){ return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
+async function avSuscripcionActual(){ try{ const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }catch(e){ return null; } }
+async function renderAvisos(){
+  const sop = avSoporte(), llave = estadoRig && estadoRig.detalle && estadoRig.detalle.vapid_public;
+  const sub = sop ? await avSuscripcionActual() : null; const perm = sop ? Notification.permission : "unsupported";
+  const esIOS = /iPhone|iPad/.test(navigator.userAgent);
+  let estado = !sop ? (esIOS && !avEnInicio() ? "Este iPhone todavía no tiene la app en la pantalla de inicio: agréguela y ábrala desde ahí para activar los avisos." : "Este navegador no soporta avisos.")
+    : MODO!=="nube" ? "Con sesión se activan los avisos."
+    : !llave ? "El motor todavía no publicó su llave de avisos (llega con la próxima corrida nocturna)."
+    : perm==="denied" ? "Los avisos están bloqueados en los ajustes del teléfono para esta app."
+    : sub ? "Avisos activados en este teléfono." : "Avisos no activados en este teléfono.";
+  $("#av-estado").textContent = estado;
+  $("#av-activar").hidden = !(sop && MODO==="nube" && llave && !sub && perm!=="denied"); $("#av-desactivar").hidden = !(sop && sub);
+  $("#av-nota").hidden = !(esIOS && !avEnInicio());
+  const lista = (AVISOS||[]).slice(0,20);
+  $("#av-list").innerHTML = lista.length ? lista.map(a=>`<div class="log-item"><span class="d">${esc(fmtD(String(a.enviado_en||"").slice(0,10)))}</span><span><b>${esc(a.titulo)}</b>${a.cuerpo?`<br><span class="small muted">${esc(a.cuerpo)}</span>`:""}<em class="tag">${esc(a.tipo==="cola"?"cola":a.tipo==="revision"?"agrónomo":a.tipo)}</em></span></div>`).join("") : `<p class="note">Todavía no hay avisos.</p>`;
+}
+$("#av-activar").addEventListener("click", async ()=>{
+  try{
+    const perm = await Notification.requestPermission(); if(perm!=="granted"){ toast("Sin permiso no se puede avisar"); renderAvisos(); return; }
+    const reg = await navigator.serviceWorker.ready; const llave = estadoRig.detalle.vapid_public;
+    const sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey: b64aU8(llave)});
+    const j = sub.toJSON(); const disp = (esIOSFn()? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "navegador") + " · " + (avEnInicio() ? "app instalada" : "navegador");
+    await db("POST","suscripciones_push",{on_conflict:"endpoint"},{usuario:sesion.user.id, endpoint:j.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth, dispositivo:disp, activa:true},"resolution=merge-duplicates,return=minimal");
+    toast("Avisos activados: en unos 10 minutos llega el de bienvenida"); renderAvisos();
+  }catch(e){ toast("No se pudo activar: " + String(e && e.message || e).slice(0,100)); }
+});
+function esIOSFn(){ return /iPhone|iPad/.test(navigator.userAgent); }
+$("#av-desactivar").addEventListener("click", async ()=>{
+  try{ const sub = await avSuscripcionActual(); if(sub){ const ep = sub.endpoint; await sub.unsubscribe(); try{ await db("DELETE","suscripciones_push",{endpoint:"eq."+ep}); }catch(e){} } toast("Avisos desactivados en este teléfono"); renderAvisos(); }
+  catch(e){ toast("No se pudo desactivar"); }
+});
 // --- panel del agrónomo: cola de revisión de la red, lotes, criterios preliminares, revisiones hechas (tabla revisiones = conjunto reservado)
 const VEREDICTO_TXT = {confirmado:"confirmado", corregido:"corregido", descartado:"descartado", umbral_ok:"umbral: bien avisado", umbral_alto:"umbral alto para este lote", umbral_bajo:"umbral bajo para este lote", propuesta:"propuesta"};
 function revDe(regId){ return REVISIONES.filter(r=>r.registro_id===regId); }
@@ -1482,7 +1530,7 @@ async function verParecidas(id, box){
 document.addEventListener("click", e=>{ const b = e.target.closest("[data-par]"); if(!b) return; const box = b.parentElement.querySelector(`[data-par-de="${b.getAttribute("data-par")}"]`); if(box) verParecidas(b.getAttribute("data-par"), box); });
 let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
 let FORMULARIOS = {}, PLANILLAS = [];                             // formulario de visita por cultivo (lo sube el RIG desde config/visitas) y planillas Excel subidas
-let REVISIONES = [], PERFILES_RED = [];                           // revisiones del agrónomo (conjunto reservado) y perfiles de la red (solo equipo)
+let REVISIONES = [], PERFILES_RED = [], AVISOS = [];              // revisiones del agrónomo (conjunto reservado), perfiles de la red (solo equipo), avisos recibidos
 function esEquipo(){ return !!(perfil && ["agronomo","socio","admin"].includes(perfil.rol)); }
 const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate"};
 const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate"};
@@ -1529,7 +1577,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "18 · 22 oct 2026";
+const APP_VERSION = "19 · 24 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -1648,7 +1696,7 @@ function go(name){
   if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
-function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); }
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); if(id==="mas-avisos") renderAvisos(); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
