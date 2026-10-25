@@ -124,6 +124,10 @@ td.hot{color:var(--bad);font-weight:600} td.warm{color:var(--warn);font-weight:6
 .log-item{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:14px}
 .log-item .d{font-family:var(--serif);font-weight:600;color:var(--blue);white-space:nowrap}
 .log-item .par-btn{font-size:12px;margin-left:8px;white-space:nowrap}
+.rev{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--surface)} .rev .meta{font-size:12px;color:var(--muted)} .rev .txt{margin:4px 0 8px} .rev .acts{display:flex;gap:6px;flex-wrap:wrap} .rev .acts .btn{padding:6px 10px;font-size:13px}
+.rev select,.rev input{margin-top:6px;width:100%} .rev img{max-width:100%;border-radius:8px;margin:6px 0}
+.red-item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 10px;border-radius:10px;background:var(--surface-2);margin:6px 0;font-size:13px;text-align:left;width:100%} .red-item b{display:block} .red-item .m{color:var(--muted);font-size:12px}
+.tag.ok{border-color:var(--ok,#3a8a4a);color:var(--ok,#3a8a4a)} .tag.warn{border-color:var(--accent);color:var(--accent)}
 .log-item .par{margin-top:6px;padding:6px 8px;border-left:2px solid var(--line);font-size:13px;color:var(--muted)}
 .log-item .par b{color:var(--fg)} .log-item .par .pct{font-family:var(--serif);color:var(--blue);margin-left:4px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--on-fg);padding:10px 16px;border-radius:999px;font-size:14px;box-shadow:var(--shadow);opacity:0;transition:opacity .25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
@@ -429,6 +433,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
       <button data-go="mas-planillas">Planillas de visita <span>la plantilla Excel del cultivo y las que subió</span></button>
+      <button data-go="mas-panel" id="btn-panel" hidden>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
       <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
       <button data-go="mas-acerca">Acerca de esta versión <span>privada, solo socios</span></button>
     </div>
@@ -461,6 +466,15 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sec" id="pla-descargar">Descargar plantilla</button><label class="btn acc" for="pla-input" style="cursor:pointer">Subir planilla llena</label><input id="pla-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div>
     <p class="note" id="pla-nota"></p>
     <div id="pla-list"></div>
+  </div>
+
+  <div class="card" id="mas-panel" hidden>
+    <div class="row between"><span class="eyebrow">Panel del agrónomo</span><button class="inline-link" data-back>Volver</button></div>
+    <h2 id="pan-h2">La red</h2>
+    <p class="small" id="pan-resumen"></p>
+    <div class="chips" id="pan-tabs"><button class="chip" aria-pressed="true" data-ptab="cola">Por revisar</button><button class="chip" aria-pressed="false" data-ptab="red">Lotes de la red</button><button class="chip" aria-pressed="false" data-ptab="criterios">Criterios preliminares</button><button class="chip" aria-pressed="false" data-ptab="hechas">Revisiones hechas</button></div>
+    <div id="pan-body"></div>
+    <p class="note">Lo que el agrónomo confirma, corrige o descarta queda en una tabla aparte: es el conjunto reservado con el que el motor mide si avisó a tiempo. Nunca se usa para entrenar. Las respuestas del productor ("no aplica") son señal para ajustar umbrales, no la verdad de campo: la verdad la fija usted aquí.</p>
   </div>
 
   <div class="card" id="mas-como" hidden>
@@ -794,7 +808,7 @@ let flashNew = [];   // los registros recién guardados, para resaltarlos una ve
 function renderLog(){
   const l = LOTES[lotIdx]; const items = log.filter(x=>x.lote===l.id).reverse().sort((a,b)=>b.f.localeCompare(a.f));   // más reciente primero; a igual fecha, el último guardado
   $("#log-count").textContent = items.length ? `${items.length} registro${items.length===1?"":"s"}` : "sin registros todavía";
-  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}${x.id && MODO==="nube" ? `<button class="inline-link par-btn" data-par="${esc(x.id)}">parecidas</button><div class="par" data-par-de="${esc(x.id)}" hidden></div>` : ""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
+  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}${revTag(x.id)}${x.id && MODO==="nube" ? `<button class="inline-link par-btn" data-par="${esc(x.id)}">parecidas</button><div class="par" data-par-de="${esc(x.id)}" hidden></div>` : ""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
   const last = items[0];
   $("#lastreg").innerHTML = last ? `Último registro: <b>${fmtD(last.f)}</b> · ${esc(last.txt)}` : "Todavía no hay registros de este lote.";
 }
@@ -1105,10 +1119,10 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1119,21 +1133,24 @@ async function cargarLotes(){
     db("GET","perfiles_cultivo",{select:"*"}).catch(()=>null),                                                          // perfiles públicos por cultivo y región
     db("GET","formularios_visita",{select:"*"}).catch(()=>null),                                                        // formulario de visita por cultivo
     db("GET","planillas",{select:"*", order:"creado_en.desc", limit:"30"}).catch(()=>null),                              // planillas Excel subidas y su informe
+    db("GET","revisiones",{select:"*", order:"creado_en.desc", limit:"300"}).catch(()=>null),                              // lo que el agrónomo confirmó/corrigió (el productor ve lo de sus lotes)
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
-  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || [];
+  if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
+  $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
-  const filas = await db("GET","registros",{select:"id,lote_id,fecha,tipo,texto,fuente,archivo,cliente_id", order:"fecha.desc,creado_en.desc", limit:"500"});
-  const nube = (filas||[]).map(r=>({id:r.id, lote:r.lote_id, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id}));
+  const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
+  const nube = (filas||[]).map(r=>({id:r.id, lote:r.lote_id, u:r.usuario, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id, d:r.datos||{}, arch:r.archivo||null}));
   const cids = new Set(nube.map(x=>x.cid).filter(Boolean));
   const pend = colaCargar().filter(q=>!cids.has(q.cliente_id)).map(q=>({lote:q.lote_id, f:q.fecha, t:q.tipo, txt:q.texto, src: q.fuente && q.fuente!=="app" ? q.fuente : undefined, cid:q.cliente_id, pendiente:true}));
   log = nube.concat(pend); save();
@@ -1225,7 +1242,7 @@ function mostrarLogin(on){ $("#login").hidden = !on; document.body.classList.tog
 function renderSesion(){
   const kv_ = $("#sesion-kv"); if(!kv_) return;
   const conf = NUBE.url && NUBE.anon;
-  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()],["Alertas", alertasError ? `no se pudieron leer: ${alertasError}` : `${ALERTAS.length} cargada${ALERTAS.length===1?"":"s"} (${ALERTAS.filter(a=>a.vigente).length} vigente${ALERTAS.filter(a=>a.vigente).length===1?"":"s"})`]] : []).concat([["Versión de la app", APP_VERSION]]));
+  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()],["Alertas", alertasError ? `no se pudieron leer: ${alertasError}` : `${ALERTAS.length} cargada${ALERTAS.length===1?"":"s"} (${ALERTAS.filter(a=>a.vigente).length} vigente${ALERTAS.filter(a=>a.vigente).length===1?"":"s"})`]].concat(estadoRig && estadoRig.detalle && estadoRig.detalle.evaluacion ? [["Acierto de las alertas", (ev=>`${ev.total} emitidas · ${ev.confirmadas} confirmadas por el agrónomo · ${ev.reportadas} reportadas por el productor · ${ev.sin_evidencia} sin evidencia · ${ev.pendientes} en curso`)(estadoRig.detalle.evaluacion)]] : []) : []).concat([["Versión de la app", APP_VERSION]]));
   $("#sesion-salir").hidden = !(MODO==="nube"); $("#sesion-entrar").hidden = !(conf && MODO!=="nube");
   $("#nube-url").value = NUBE.url; $("#nube-anon").value = NUBE.anon;
 }
@@ -1293,6 +1310,81 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
+// --- panel del agrónomo: cola de revisión de la red, lotes, criterios preliminares, revisiones hechas (tabla revisiones = conjunto reservado)
+const VEREDICTO_TXT = {confirmado:"confirmado", corregido:"corregido", descartado:"descartado", umbral_ok:"umbral: bien avisado", umbral_alto:"umbral alto para este lote", umbral_bajo:"umbral bajo para este lote", propuesta:"propuesta"};
+function revDe(regId){ return REVISIONES.filter(r=>r.registro_id===regId); }
+function revDeAlerta(alId){ return REVISIONES.filter(r=>r.alerta_id===alId); }
+function revTag(regId){ const r = regId ? revDe(regId)[0] : null; if(!r) return ""; const t = r.veredicto==="corregido" ? `agrónomo: ${r.etiqueta_corregida||"corregido"}` : `agrónomo: ${VEREDICTO_TXT[r.veredicto]||r.veredicto}`; return `<em class="tag ${r.veredicto==="descartado"?"":r.veredicto==="corregido"?"warn":"ok"}">${esc(t)}</em>`; }
+function nombreUsuario(uid){ const p = PERFILES_RED.find(x=>x.id===uid); return p ? (p.nombre || "sin nombre") : (sesion && sesion.user && uid===sesion.user.id ? "usted" : "productor"); }
+function loteDe(uuid){ return LOTES.find(l=>l.uuid===uuid); }
+let panTab = "cola";
+function colaRevision(){
+  const items = [];
+  log.forEach(x=>{
+    if(!x.id || revDe(x.id).length) return;
+    if(x.t==="vi" && ["enfermedad","plaga"].includes(String((x.d||{}).que||"").toLowerCase())) items.push({tipo:"observacion", id:x.id, lote:x.lote, u:x.u, f:x.f, txt:x.txt, etiqueta:(x.d||{}).que, arch:x.arch});
+    if(x.t==="visita" && x.d && x.d.problema && String(x.d.problema).toLowerCase()!=="ninguno") items.push({tipo:"visita", id:x.id, lote:x.lote, u:x.u, f:x.f, txt:x.txt, etiqueta:x.d.problema, arch:null});
+  });
+  (ALERTAS||[]).forEach(a=>{ if(a.respuesta==="no_aplica" && !revDeAlerta(a.id).length) items.push({tipo:"alerta", id:a.id, lote:a.lote_id, f:(a.respondida_en||a.emitida||"").slice(0,10), txt:a.titulo + " — el productor respondió: no aplica a mi lote", etiqueta:a.peligro}); });
+  return items.sort((a,b)=>String(b.f).localeCompare(String(a.f)));
+}
+function opcionesProblema(l){ const def = l ? FORMULARIOS[claveCultivo(l.cultivo)] : null; const f = def && visCampos(def).find(c=>c.k==="problema"); return f ? f.op.filter(o=>o!=="ninguno") : []; }
+function renderPanel(){
+  if(!esEquipo()){ $("#pan-body").innerHTML = `<p class="note">Esta vista es del equipo (agrónomo, socios, admin).</p>`; return; }
+  const cola = colaRevision(); const d30 = localISO(new Date(Date.now()-30*86400000));
+  const nProd = new Set(LOTES.filter(l=>!l.sin && l.fila).map(l=>l.fila.propietario)).size;
+  $("#pan-resumen").textContent = `${LOTES.filter(l=>!l.sin).length} lotes · ${nProd} productor${nProd===1?"":"es"} · ${log.filter(x=>x.f>=d30).length} registros en 30 días · ${(ALERTAS||[]).filter(a=>a.vigente).length} alertas vigentes · ${cola.length} por revisar · ${REVISIONES.length} revisiones hechas`;
+  $$("#pan-tabs .chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.ptab===panTab)));
+  const body = $("#pan-body");
+  if(panTab==="cola"){
+    body.innerHTML = cola.length ? cola.map(it=>{
+      const l = loteDe(it.lote); const ops = opcionesProblema(l);
+      const acts = it.tipo==="alerta"
+        ? `<button class="btn sec" data-rev="umbral_ok" data-i="${esc(it.id)}">Bien avisado</button><button class="btn sec" data-rev="umbral_alto" data-i="${esc(it.id)}">Umbral alto para este lote</button>`
+        : `<button class="btn acc" data-rev="confirmado" data-i="${esc(it.id)}">Confirmar</button><button class="btn sec" data-rev="corregido" data-i="${esc(it.id)}">Corregir</button><button class="btn sec" data-rev="descartado" data-i="${esc(it.id)}">Descartar</button>`;
+      return `<div class="rev" data-item="${esc(it.id)}" data-tipo="${it.tipo}" data-lote="${esc(it.lote||"")}" data-etq="${esc(it.etiqueta||"")}">
+        <div class="meta">${esc(fmtD(it.f||""))} · <b>${esc(l ? l.nombre : "lote")}</b>${l ? ` · ${esc(nombreCultivo(l.cultivo))}` : ""}${it.u ? ` · ${esc(nombreUsuario(it.u))}` : ""} · ${it.tipo==="alerta"?"alerta":it.tipo==="visita"?"visita técnica":"sospecha del productor"}</div>
+        <div class="txt">${esc(it.txt)}</div>${it.arch && String(it.arch).startsWith("fotos/") ? `<button class="inline-link" data-foto="${esc(it.arch)}">ver foto</button><div class="foto-box"></div>` : ""}
+        ${it.tipo!=="alerta" ? `<div class="field" data-corr hidden><label>Qué era</label><select data-corr-sel><option value="">elija…</option>${ops.map(o=>`<option>${esc(o)}</option>`).join("")}<option value="__otro">otro (escriba abajo)</option></select><input data-corr-txt placeholder="o escríbalo"></div>` : ""}
+        <input data-nota placeholder="nota (opcional): qué vio, qué recomienda mirar">
+        <div class="acts" style="margin-top:8px">${acts}</div></div>`;
+    }).join("") : `<p class="note">Nada por revisar: todas las sospechas, visitas con sanidad y alertas respondidas ya tienen veredicto.</p>`;
+  } else if(panTab==="red"){
+    body.innerHTML = LOTES.filter(l=>!l.sin).map((l,i)=>{ const vig = alertasDe(l).filter(a=>a.vigente).length; const ult = log.filter(x=>x.lote===l.id).sort((a,b)=>b.f.localeCompare(a.f))[0];
+      return `<button class="red-item" data-goto-lote="${i}"><span><b>${esc(l.nombre)}</b><span class="m">${esc(nombreCultivo(l.cultivo))}${l.condicion && l.condicion!=="campo abierto" ? ` · ${esc(l.condicion)}` : ""} · ${esc(l.region||"zona por definir")} · ${esc(nombreUsuario(l.fila ? l.fila.propietario : null))}</span></span><span class="m" style="text-align:right">${l.nivel==="sin" ? "sin reporte" : `riesgo ${esc(l.nivel)}`}${vig ? ` · ${vig} alerta${vig===1?"":"s"}` : ""}<br>${ult ? `último registro ${esc(fmtD(ult.f))}` : "sin registros"}</span></button>`; }).join("") || `<p class="note">Sin lotes en la red todavía.</p>`;
+  } else if(panTab==="criterios"){
+    const crit = (estadoRig && estadoRig.detalle && estadoRig.detalle.criterios_preliminares) || [
+      {cultivo:"trigo", peligro:"roya_condiciones", nota:"PRELIMINAR: día con Tmedia 15-22 °C y >= 6 h de HR >= 90 %"},
+      {cultivo:"aguacate", peligro:"humedad_enfermedad", nota:"PRELIMINAR: lluvia >= 5 mm y >= 10 h de HR >= 90 % (antracnosis, roña)"},
+      {cultivo:"maiz", peligro:"enfermedad_foliar", nota:"PRELIMINAR: dos días seguidos con Tmedia 17-23 °C y >= 7 h de HR >= 90 % (mancha de asfalto, tizón foliar)"}];
+    body.innerHTML = `<p class="small">Estos criterios los puso el motor con la literatura general y están marcados preliminares hasta que usted los fije. Su propuesta queda registrada y se aplica en la configuración del motor.</p>` + crit.map(c=>{ const prev = REVISIONES.filter(r=>r.tipo==="criterio" && r.etiqueta_original===`${c.cultivo} · ${c.peligro}`);
+      return `<div class="rev" data-crit="${esc(c.cultivo)} · ${esc(c.peligro)}"><div class="meta"><b>${esc(nombreCultivo(c.cultivo))}</b> · ${esc(PELIGRO_TXT[c.peligro]||c.peligro.replace(/_/g," "))}</div><div class="txt">${esc(c.nota||"")}</div>${prev.length ? `<div class="small muted">Propuestas: ${prev.map(r=>esc(r.nota||"")).join(" · ")}</div>` : ""}<input data-nota placeholder="su criterio: umbrales, horas, etapa…"><div class="acts" style="margin-top:8px"><button class="btn sec" data-rev="propuesta">Proponer</button></div></div>`; }).join("");
+  } else {
+    body.innerHTML = REVISIONES.length ? REVISIONES.slice(0,40).map(r=>{ const l = loteDe(r.lote_id); return `<div class="log-item"><span class="d">${esc(fmtD(String(r.creado_en||"").slice(0,10)))}</span><span>${r.tipo==="criterio" ? `criterio ${esc(r.etiqueta_original||"")}` : `${esc(l ? l.nombre : "lote")} · ${esc(r.tipo)}`} · <b>${esc(VEREDICTO_TXT[r.veredicto]||r.veredicto)}</b>${r.etiqueta_corregida ? ` → ${esc(r.etiqueta_corregida)}` : ""}${r.nota ? ` · ${esc(r.nota)}` : ""} <em class="tag">${esc(nombreUsuario(r.agronomo))}</em></span></div>`; }).join("") : `<p class="note">Todavía no hay revisiones.</p>`;
+  }
+}
+$("#pan-tabs").addEventListener("click", e=>{ const c = e.target.closest("[data-ptab]"); if(!c) return; panTab = c.dataset.ptab; renderPanel(); });
+$("#pan-body").addEventListener("click", async e=>{
+  const g = e.target.closest("[data-goto-lote]"); if(g){ lotIdx = +g.dataset.gotoLote; renderAll(); go("hoy"); return; }
+  const fb = e.target.closest("[data-foto]"); if(fb){ const box = fb.nextElementSibling; try{ const u = await urlFirmada(fb.dataset.foto); box.innerHTML = `<img src="${u}" alt="foto del productor">`; fb.hidden = true; }catch(err){ toast("No se pudo abrir la foto"); } return; }
+  const b = e.target.closest("[data-rev]"); if(!b) return;
+  const card = b.closest(".rev"); const ver = b.dataset.rev; const nota = (card.querySelector("[data-nota]")||{}).value || null;
+  if(ver==="propuesta"){ if(!nota){ toast("Escriba su criterio antes de proponer"); return; } await guardarRevision({tipo:"criterio", veredicto:"propuesta", etiqueta_original:card.dataset.crit, nota}); return; }
+  const tipo = card.dataset.tipo, id = card.dataset.item, lote = card.dataset.lote, etq = card.dataset.etq;
+  if(ver==="corregido"){ const box = card.querySelector("[data-corr]"); const sel = card.querySelector("[data-corr-sel]"), txt = card.querySelector("[data-corr-txt]");
+    if(box.hidden){ box.hidden = false; sel.focus(); return; }
+    const corr = (sel.value && sel.value!=="__otro") ? sel.value : (txt.value||"").trim(); if(!corr){ toast("Diga qué era (elija o escriba)"); return; }
+    await guardarRevision({tipo, veredicto:"corregido", lote_id:lote, registro_id:id, etiqueta_original:etq, etiqueta_corregida:corr, nota}); return; }
+  const base = tipo==="alerta" ? {tipo:"alerta", alerta_id:id, lote_id:lote} : {tipo, registro_id:id, lote_id:lote};
+  await guardarRevision({...base, veredicto:ver, etiqueta_original:etq, nota});
+});
+async function guardarRevision(fila){
+  if(!esEquipo() || !sesion){ toast("Solo el equipo puede revisar"); return; }
+  try{
+    const r = await db("POST","revisiones",null,{...fila, agronomo:sesion.user.id},"return=representation");
+    REVISIONES.unshift(r[0]); cacheGuardar(); toast("Revisión guardada: queda en el conjunto reservado"); renderPanel(); renderLog();
+  }catch(e){ toast("No se pudo guardar: " + String(e && e.message || e).slice(0,100)); }
+}
 // --- visita técnica: el formulario del cultivo viene de la nube (formularios_visita, que el RIG sube desde config/visitas/visita_<cultivo>.json)
 function visCampos(def){ return (def.secciones||[]).flatMap(s=>s.campos.map(f=>({...f, seccion:s.id}))); }
 function visAplica(f, l){ if(!f.solo_condicion) return true; const c = String(l.condicion||"campo abierto").toLowerCase(); return f.solo_condicion.some(x=>String(x).toLowerCase()===c); }
@@ -1390,6 +1482,8 @@ async function verParecidas(id, box){
 document.addEventListener("click", e=>{ const b = e.target.closest("[data-par]"); if(!b) return; const box = b.parentElement.querySelector(`[data-par-de="${b.getAttribute("data-par")}"]`); if(box) verParecidas(b.getAttribute("data-par"), box); });
 let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
 let FORMULARIOS = {}, PLANILLAS = [];                             // formulario de visita por cultivo (lo sube el RIG desde config/visitas) y planillas Excel subidas
+let REVISIONES = [], PERFILES_RED = [];                           // revisiones del agrónomo (conjunto reservado) y perfiles de la red (solo equipo)
+function esEquipo(){ return !!(perfil && ["agronomo","socio","admin"].includes(perfil.rol)); }
 const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate"};
 const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate"};
 function claveCultivo(c){ const n = String(c||"").trim().toLowerCase(); return CULTIVO_SIN[n] || n.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
@@ -1435,10 +1529,10 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "17 · 22 oct 2026";
+const APP_VERSION = "18 · 22 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
-const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua"};
+const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
 const DEMO_ALERTAS = [
   {id:"ej-1", lote_id:"L-007", peligro:"helada", nivel:"alto", titulo:"Helada: riesgo alto el mar 20", mensaje:"Así se vería una alerta que sí pide atención: \"6 de cada 10 escenarios hielan la noche del martes y el lote está en llenado, etapa muy sensible a este peligro\". Hoy el riesgo real de la Parcela 7 es bajo: esta tarjeta es solo un ejemplo.", inicio:"2026-10-20", fin:"2026-10-20", vigente:true, emitida:"2026-10-16T04:47:00-06:00", actualizada_en:"2026-10-16T04:47:00-06:00", detalle:{calibrado:false}, ejemplo:true},
   {id:"ej-2", lote_id:"L-001", peligro:"tizon_tardio", nivel:"alto", titulo:"Tizón tardío: riesgo alto del lun 3 al jue 6", mensaje:"4 de 7 días con riesgo alto; probabilidad máxima 81 % el mié 5. El cultivo estaba en llenado, etapa muy sensible a este peligro. Revise hojas bajas y orillas húmedas; si ve manchas, regístrelas con foto en \"Vi algo\".", inicio:"2026-08-03", fin:"2026-08-06", vigente:false, emitida:"2026-08-02T04:50:00-06:00", actualizada_en:"2026-08-08T04:50:00-06:00", cerrada_en:"2026-08-08T04:50:00-06:00", respuesta:"visto", respondida_en:"2026-08-02T07:10:00-06:00", detalle:{calibrado:false}, ejemplo:true},
@@ -1554,7 +1648,7 @@ function go(name){
   if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
-function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); }
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
