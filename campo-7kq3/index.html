@@ -432,6 +432,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
+      <button data-go="mas-pdf">Reporte en PDF <span id="btn-pdf-sub">el reporte completo del lote, para guardar o compartir</span></button>
+      <button data-go="mas-whatsapp">WhatsApp <span id="btn-wa-sub">reportes y alertas al chat; notas, fotos y planillas desde el chat</span></button>
       <button data-go="mas-avisos">Avisos al teléfono <span id="btn-avisos-sub">alertas y revisiones, aunque la app esté cerrada</span></button>
       <button data-go="mas-planillas">Planillas de visita <span>la plantilla Excel del cultivo y las que subió</span></button>
       <button data-go="mas-panel" id="btn-panel" hidden>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
@@ -467,6 +469,32 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sec" id="pla-descargar">Descargar plantilla</button><label class="btn acc" for="pla-input" style="cursor:pointer">Subir planilla llena</label><input id="pla-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div>
     <p class="note" id="pla-nota"></p>
     <div id="pla-list"></div>
+  </div>
+
+  <div class="card" id="mas-pdf" hidden>
+    <div class="row between"><span class="eyebrow">Reporte en PDF</span><button class="inline-link" data-back>Volver</button></div>
+    <h2 id="pdf-h2">El reporte del lote, en una hoja</h2>
+    <p class="small">Lo mismo que muestra la app —hoy, alertas, los próximos 7 días, el verdor del satélite, lo que la zona rinde y pierde, la bitácora de 14 días con lo que revisó el agrónomo— en un PDF para guardar, imprimir o compartir. El motor lo genera cada noche.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn acc" id="pdf-abrir">Abrir el último PDF</button></div>
+    <p class="note" id="pdf-nota"></p>
+    <span class="eyebrow">Reportes anteriores</span>
+    <div id="pdf-list"></div>
+  </div>
+
+  <div class="card" id="mas-whatsapp" hidden>
+    <div class="row between"><span class="eyebrow">WhatsApp</span><button class="inline-link" data-back>Volver</button></div>
+    <h2>Engram Campo en su chat</h2>
+    <p class="small">Escríbale al número de Engram Campo como a cualquier contacto: notas de voz, fotos, videos, texto o la planilla Excel llena quedan en la bitácora de su lote y en minutos le contesta qué entendió. Escriba <b>reporte</b> para recibir el PDF, <b>alertas</b> para las vigentes, <b>lote</b> para elegir a cuál van sus mensajes.</p>
+    <p class="small" id="wa-numero"></p>
+    <div class="field" style="margin-top:8px"><label for="wa-tel">Mi número de WhatsApp</label><input id="wa-tel" inputmode="tel" placeholder="52 1 55 1234 5678" autocomplete="tel"></div>
+    <p class="note">Con código de país, tal como aparece en WhatsApp (México: 52 y luego el número de 10 dígitos). Así el motor sabe que los mensajes son suyos.</p>
+    <div class="field"><label for="wa-lote">Mis mensajes van al lote</label><select id="wa-lote"></select></div>
+    <label class="small" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;cursor:pointer"><input type="checkbox" id="wa-ok" style="margin-top:3px;flex:none"><span>Quiero recibir por WhatsApp las alertas de mis lotes y el reporte en PDF</span></label>
+    <div class="field"><label for="wa-rep">El reporte en PDF me llega</label><select id="wa-rep"><option value="semanal">cada lunes</option><option value="diario">todos los días</option><option value="nunca">solo cuando lo pida (escribiendo "reporte")</option></select></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn acc" id="wa-guardar">Guardar</button><span class="small muted" id="wa-estado"></span></div>
+    <p class="note">Privacidad: lo que mande por WhatsApp pasa por los servidores de Meta antes de llegar al motor; de ahí en adelante vive solo en la nube de Engram (como lo que registra en la app). Si prefiere que algo no pase por WhatsApp, regístrelo aquí en la app.</p>
+    <span class="eyebrow">Últimos mensajes recibidos</span>
+    <div id="wa-list"></div>
   </div>
 
   <div class="card" id="mas-avisos" hidden>
@@ -1131,10 +1159,10 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1147,19 +1175,21 @@ async function cargarLotes(){
     db("GET","planillas",{select:"*", order:"creado_en.desc", limit:"30"}).catch(()=>null),                              // planillas Excel subidas y su informe
     db("GET","revisiones",{select:"*", order:"creado_en.desc", limit:"300"}).catch(()=>null),                              // lo que el agrónomo confirmó/corrigió (el productor ve lo de sus lotes)
     db("GET","avisos",{select:"*", order:"enviado_en.desc", limit:"30"}).catch(()=>null),                                  // avisos que el RIG le mandó a esta persona
+    db("GET","reportes_pdf",{select:"*", order:"emitido.desc", limit:"60"}).catch(()=>null),                                // el reporte de cada lote en PDF (cubeta reportes_pdf)
+    db("GET","whatsapp_mensajes",{select:"wa_id,lote_id,tipo,recibido_en,estado,texto,respuesta,interpretado_en", order:"recibido_en.desc", limit:"30"}).catch(()=>null),   // lo que llegó por WhatsApp (los propios)
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
-  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || [];
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -1323,6 +1353,41 @@ function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombr
 // las actualiza mientras siga y las cierra cuando baja. Aquí se muestran arriba de "Hoy" y la persona responde; la respuesta sube a la nube
 // (solo esas columnas: el texto y el nivel los escribe únicamente el motor). En la demostración se ven dos ejemplos marcados como tales.
 let ALERTAS = [], pendAlertas = {}, alertasError = null;
+// --- reporte del lote en PDF (lo genera el RIG cada noche: reporte_pdf.py -> cubeta reportes_pdf; tabla reportes_pdf)
+function pdfDe(l){ return (REPORTES_PDF||[]).filter(r=>l && !l.sin && r.lote_id===l.uuid).sort((a,b)=>String(b.emitido).localeCompare(String(a.emitido))); }
+function renderPdf(){
+  const l = LOTES[lotIdx]; const mios = pdfDe(l); const u = mios[0];
+  $("#pdf-h2").textContent = l && !l.sin ? `${l.nombre} · en una hoja` : "El reporte del lote, en una hoja";
+  $("#pdf-abrir").disabled = !(MODO==="nube" && u);
+  $("#pdf-nota").textContent = MODO!=="nube" ? "Con sesión: aquí se abre el PDF que el motor genera cada noche para cada lote." : !l || l.sin ? "Cree un lote primero." : u ? `Último reporte: ${fmtD(String(u.emitido))}${u.nivel ? ` · riesgo ese día: ${u.nivel}` : ""}. Se abre en el navegador; desde ahí se guarda o se comparte (también por WhatsApp escribiendo "reporte").` : "Todavía no hay PDF de este lote: el motor lo genera en la próxima corrida nocturna, cuando el lote ya tiene reporte.";
+  $("#pdf-list").innerHTML = mios.length > 1 ? mios.slice(1, 9).map(r=>`<div class="log-item"><span class="d">${esc(fmtD(String(r.emitido)))}</span><span><button class="inline-link" data-pdf="${esc(r.archivo)}">Abrir el reporte del ${esc(fmtD(String(r.emitido)))}</button>${r.nivel?` <span class="small muted">· riesgo ${esc(r.nivel)}</span>`:""}</span></div>`).join("") : `<p class="note">${mios.length ? "Aquí irán quedando los anteriores." : ""}</p>`;
+}
+async function abrirPdf(ruta){ try{ const u = await urlFirmada(ruta); window.open(u, "_blank"); }catch(e){ toast("No se pudo abrir el PDF: " + String(e && e.message || e).slice(0,80)); } }
+$("#pdf-abrir").addEventListener("click", ()=>{ const u = pdfDe(LOTES[lotIdx])[0]; if(u) abrirPdf(u.archivo); });
+// --- WhatsApp: el teléfono, el lote y el consentimiento viven en perfiles; los mensajes recibidos (whatsapp_mensajes) los escribe el RIG
+function waNumeroTxt(n){ const d = String(n||"").replace(/\D/g,""); if(!d) return ""; return d.startsWith("52") && d.length>=12 ? `+52 ${d.slice(-10,-8)} ${d.slice(-8,-4)} ${d.slice(-4)}` : "+" + d; }
+function renderWhatsapp(){
+  const wa = estadoRig && estadoRig.detalle && estadoRig.detalle.whatsapp; const num = wa && wa.numero;
+  $("#wa-numero").innerHTML = MODO!=="nube" ? "Con sesión se configura el WhatsApp." : num ? `Número de Engram Campo: <b>${esc(waNumeroTxt(num))}</b> · <a href="https://wa.me/${esc(String(num).replace(/\D/g,""))}?text=${encodeURIComponent("hola")}" target="_blank" rel="noopener">abrir el chat</a>` : (wa && wa.activo ? "El motor todavía no publicó el número (llega con la próxima corrida)." : "El canal de WhatsApp todavía no está activo en el motor; cuando lo esté, aquí aparece el número.");
+  const p = perfil || {};
+  $("#wa-tel").value = p.telefono || ""; $("#wa-ok").checked = !!p.whatsapp_ok; $("#wa-rep").value = p.whatsapp_reporte || "semanal";
+  const sel = $("#wa-lote"); const lotes = LOTES.filter(l=>!l.sin && l.nube);
+  sel.innerHTML = `<option value="">${lotes.length > 1 ? "preguntarme cada vez" : "mi lote"}</option>` + lotes.map(l=>`<option value="${esc(l.uuid)}">${esc(l.nombre)} (${esc(l.cultivo)})</option>`).join("");
+  sel.value = p.lote_whatsapp && lotes.some(l=>l.uuid===p.lote_whatsapp) ? p.lote_whatsapp : "";
+  const EST = {procesado:"guardado", comando:"atendido", sin_perfil:"número desconocido", sin_lote:"esperando el lote", no_soportado:"no se pudo usar", error:"con error"};
+  const TIPO = {text:"texto", audio:"nota de voz", image:"foto", video:"video", document:"planilla", location:"ubicación"};
+  const lista = (WA_MENSAJES||[]).slice(0,15);
+  $("#wa-list").innerHTML = lista.length ? lista.map(m=>{ const l = LOTES.find(x=>x.uuid===m.lote_id); return `<div class="log-item"><span class="d">${esc(fmtDT(m.recibido_en))}</span><span><b>${esc(TIPO[m.tipo]||m.tipo)}</b>${l?` · ${esc(l.nombre)}`:""} · ${esc(EST[m.estado]||m.estado)}${m.tipo==="audio"&&m.estado==="procesado"&&!m.interpretado_en?" · transcribiendo":""}${m.texto?`<br><span class="small muted">«${esc(String(m.texto).slice(0,120))}»</span>`:""}${m.respuesta?`<br><span class="small muted">↳ ${esc(String(m.respuesta).slice(0,160))}${String(m.respuesta).length>160?"…":""}</span>`:""}</span></div>`; }).join("") : `<p class="note">Todavía no llegó nada por WhatsApp.</p>`;
+}
+$("#wa-guardar").addEventListener("click", async ()=>{
+  if(MODO!=="nube" || !sesion){ toast("Con sesión se guarda"); return; }
+  const tel = $("#wa-tel").value.replace(/\D/g,""); if(tel && tel.length < 10){ $("#wa-estado").textContent = "El número debe llevar código de país y 10 dígitos (México: 52 + 10 dígitos)."; return; }
+  const ok = $("#wa-ok").checked; if(ok && !tel){ $("#wa-estado").textContent = "Para recibir por WhatsApp hace falta el número."; return; }
+  const cambios = {telefono: tel || null, whatsapp_ok: ok, whatsapp_reporte: $("#wa-rep").value, lote_whatsapp: $("#wa-lote").value || null};
+  $("#wa-estado").textContent = "Guardando…";
+  try{ await db("PATCH","perfiles",{id:"eq."+sesion.user.id}, cambios, "return=minimal"); perfil = {...(perfil||{}), ...cambios}; cacheGuardar(); $("#wa-estado").textContent = "Guardado." + (ok ? " El motor lo toma en su próxima corrida." : ""); toast("WhatsApp configurado"); }
+  catch(e){ $("#wa-estado").textContent = "No se pudo guardar: " + String(e && e.message || e).slice(0,120) + (/column|whatsapp_ok/i.test(String(e && e.message)) ? " (falta pegar schema_v12.sql en Supabase)" : ""); }
+});
 // --- avisos al teléfono (Web Push): la suscripción se guarda en suscripciones_push; el RIG firma y manda con su llave VAPID (la pública viene en el latido)
 function b64aU8(b64){ const pad = "=".repeat((4 - b64.length % 4) % 4); const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...raw].map(c=>c.charCodeAt(0))); }
 function avSoporte(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
@@ -1341,7 +1406,7 @@ async function renderAvisos(){
   $("#av-activar").hidden = !(sop && MODO==="nube" && llave && !sub && perm!=="denied"); $("#av-desactivar").hidden = !(sop && sub);
   $("#av-nota").hidden = !(esIOS && !avEnInicio());
   const lista = (AVISOS||[]).slice(0,20);
-  $("#av-list").innerHTML = lista.length ? lista.map(a=>`<div class="log-item"><span class="d">${esc(fmtD(String(a.enviado_en||"").slice(0,10)))}</span><span><b>${esc(a.titulo)}</b>${a.cuerpo?`<br><span class="small muted">${esc(a.cuerpo)}</span>`:""}<em class="tag">${esc(a.tipo==="cola"?"cola":a.tipo==="revision"?"agrónomo":a.tipo)}</em></span></div>`).join("") : `<p class="note">Todavía no hay avisos.</p>`;
+  $("#av-list").innerHTML = lista.length ? lista.map(a=>`<div class="log-item"><span class="d">${esc(fmtD(String(a.enviado_en||"").slice(0,10)))}</span><span><b>${esc(a.titulo)}</b>${a.cuerpo?`<br><span class="small muted">${esc(a.cuerpo)}</span>`:""}<em class="tag">${esc(a.tipo==="cola"?"cola":a.tipo==="revision"?"agrónomo":a.tipo==="wa_alerta"?"WhatsApp":a.tipo==="wa_reporte"?"PDF por WhatsApp":a.tipo)}</em></span></div>`).join("") : `<p class="note">Todavía no hay avisos.</p>`;
 }
 $("#av-activar").addEventListener("click", async ()=>{
   try{
@@ -1530,7 +1595,7 @@ async function verParecidas(id, box){
 document.addEventListener("click", e=>{ const b = e.target.closest("[data-par]"); if(!b) return; const box = b.parentElement.querySelector(`[data-par-de="${b.getAttribute("data-par")}"]`); if(box) verParecidas(b.getAttribute("data-par"), box); });
 let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
 let FORMULARIOS = {}, PLANILLAS = [];                             // formulario de visita por cultivo (lo sube el RIG desde config/visitas) y planillas Excel subidas
-let REVISIONES = [], PERFILES_RED = [], AVISOS = [];              // revisiones del agrónomo (conjunto reservado), perfiles de la red (solo equipo), avisos recibidos
+let REVISIONES = [], PERFILES_RED = [], AVISOS = [], REPORTES_PDF = [], WA_MENSAJES = [];   // revisiones del agrónomo (conjunto reservado), perfiles de la red (solo equipo), avisos recibidos, PDF por lote, mensajes de WhatsApp
 function esEquipo(){ return !!(perfil && ["agronomo","socio","admin"].includes(perfil.rol)); }
 const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate"};
 const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate"};
@@ -1577,7 +1642,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "19 · 24 oct 2026";
+const APP_VERSION = "20 · 24 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -1654,7 +1719,7 @@ function renderVozPend(){
   $("#voz-pend-list").innerHTML = lst.map(t=>{
     const l = LOTES.find(x=>idLote(x)===t.lote_id); const cuando = fmtDT(t.creado_en); const np = (t.registros_propuestos||[]).length;
     if(t.estado==="error") return `<div class="unp"><span class="ln">!</span><div><div>Nota de voz del ${cuando}${l ? " · " + esc(l.nombre) : ""}: no se pudo transcribir.</div><div class="m">${esc(t.error||"")} · <button class="inline-link" data-tdesc="${esc(t.id)}">quitar</button></div></div></div>`;
-    return `<button class="optrow" data-trans="${esc(t.id)}"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota del ${cuando}${l ? " · " + esc(l.nombre) : ""}</b><span class="s">«${esc((t.texto||"").slice(0,90))}${(t.texto||"").length>90?"…":""}»${np ? ` · ${np} registro${np===1?"":"s"} propuesto${np===1?"":"s"}` : ""}</span></span><span class="chev">›</span></button>`;
+    return `<button class="optrow" data-trans="${esc(t.id)}"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>${/whatsapp/i.test(t.modelo||"") ? "WhatsApp" : "Nota"} del ${cuando}${l ? " · " + esc(l.nombre) : ""}</b><span class="s">«${esc((t.texto||"").slice(0,90))}${(t.texto||"").length>90?"…":""}»${np ? ` · ${np} registro${np===1?"":"s"} propuesto${np===1?"":"s"}` : ""}</span></span><span class="chev">›</span></button>`;
   }).join("");
 }
 function abrirTranscripcion(id){
@@ -1664,9 +1729,10 @@ function abrirTranscripcion(id){
   libFuente = "voz"; libTrans = t; libFile = null; libSim = false; libEdited = false;
   libLines = normLines(t.lineas); libProps = normRecs(t.registros_propuestos); libUnparsed = normUnp(t.sin_interpretar); libModelo = t.modelo || "whisper";
   libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = JSON.parse(JSON.stringify(libProps));
-  $("#sheet-title").textContent = "Nota de voz";
-  $("#lib-banner").textContent = `Lo que oí en su nota del ${fmtDT(t.creado_en)}${t.duracion_s ? ` (${fmtT(t.duracion_s)})` : ""}. Corrija lo que no coincida con lo que dijo y luego "Interpretar".`;
-  $("#lib-fuente-sum").textContent = "Escuchar la nota"; $("#lib-img2").hidden = true; const au = $("#lib-audio"); au.hidden = false; au.removeAttribute("src");
+  const porTexto = !t.archivo && /whatsapp texto/i.test(t.modelo || "");
+  $("#sheet-title").textContent = porTexto ? "Mensaje de WhatsApp" : "Nota de voz";
+  $("#lib-banner").textContent = porTexto ? `Lo que escribió por WhatsApp el ${fmtDT(t.creado_en)}. Corrija lo que haga falta y luego "Interpretar".` : `Lo que oí en su nota del ${fmtDT(t.creado_en)}${t.duracion_s ? ` (${fmtT(t.duracion_s)})` : ""}. Corrija lo que no coincida con lo que dijo y luego "Interpretar".`;
+  $("#lib-fuente-sum").textContent = porTexto ? "El mensaje" : "Escuchar la nota"; $("#lib-img2").hidden = true; const au = $("#lib-audio"); au.hidden = porTexto; au.removeAttribute("src");
   $("#lib-leido-eyebrow").textContent = "Lo que oí"; $("#lib-leido-ayuda").textContent = "Corrija cualquier palabra mal oída antes de interpretar. El punto ámbar marca un tramo poco claro; al editar una frase, queda confirmada.";
   if(t.archivo && MODO==="nube"){ urlFirmada(t.archivo).then(u=>{ au.src = u; }).catch(()=>{ au.hidden = true; }); }
   if(!libLines.length) libLines = [{texto:"", confianza:1, dudas:[]}];
@@ -1696,9 +1762,10 @@ function go(name){
   if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
-function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); if(id==="mas-avisos") renderAvisos(); }
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); if(id==="mas-avisos") renderAvisos(); if(id==="mas-pdf") renderPdf(); if(id==="mas-whatsapp") renderWhatsapp(); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
+  const pdfb = ev.target.closest("[data-pdf]"); if(pdfb){ abrirPdf(pdfb.dataset.pdf); return; }
   const back = ev.target.closest("[data-back]"); if(back){ showMas("mas-home"); return; }
   const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); renderAll(); return; }
   const ar = ev.target.closest("[data-aresp]"); if(ar){ responderAlerta(ar.dataset.aresp, ar.dataset.r || null); return; }
