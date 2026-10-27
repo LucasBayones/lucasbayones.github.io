@@ -492,7 +492,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <label class="small" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;cursor:pointer"><input type="checkbox" id="wa-ok" style="margin-top:3px;flex:none"><span>Quiero recibir por WhatsApp las alertas de mis lotes y el reporte en PDF</span></label>
     <div class="field"><label for="wa-rep">El reporte en PDF me llega</label><select id="wa-rep"><option value="semanal">cada lunes</option><option value="diario">todos los días</option><option value="nunca">solo cuando lo pida (escribiendo "reporte")</option></select></div>
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn acc" id="wa-guardar">Guardar</button><span class="small muted" id="wa-estado"></span></div>
-    <p class="note">Privacidad: lo que mande por WhatsApp pasa por los servidores de Meta antes de llegar al motor; de ahí en adelante vive solo en la nube de Engram (como lo que registra en la app). Si prefiere que algo no pase por WhatsApp, regístrelo aquí en la app.</p>
+    <p class="note">Privacidad: lo que mande por WhatsApp pasa por los servidores de WhatsApp (Meta) y del proveedor de mensajería (Twilio) antes de llegar al motor; de ahí en adelante vive solo en la nube de Engram (como lo que registra en la app). Si prefiere que algo no pase por WhatsApp, regístrelo aquí en la app.</p>
     <span class="eyebrow">Últimos mensajes recibidos</span>
     <div id="wa-list"></div>
   </div>
@@ -1365,10 +1365,10 @@ function renderPdf(){
 async function abrirPdf(ruta){ try{ const u = await urlFirmada(ruta); window.open(u, "_blank"); }catch(e){ toast("No se pudo abrir el PDF: " + String(e && e.message || e).slice(0,80)); } }
 $("#pdf-abrir").addEventListener("click", ()=>{ const u = pdfDe(LOTES[lotIdx])[0]; if(u) abrirPdf(u.archivo); });
 // --- WhatsApp: el teléfono, el lote y el consentimiento viven en perfiles; los mensajes recibidos (whatsapp_mensajes) los escribe el RIG
-function waNumeroTxt(n){ const d = String(n||"").replace(/\D/g,""); if(!d) return ""; return d.startsWith("52") && d.length>=12 ? `+52 ${d.slice(-10,-8)} ${d.slice(-8,-4)} ${d.slice(-4)}` : "+" + d; }
+function waNumeroTxt(n){ const d = String(n||"").replace(/\D/g,""); if(!d) return ""; if(d.startsWith("52") && d.length>=12) return `+52 ${d.slice(-10,-8)} ${d.slice(-8,-4)} ${d.slice(-4)}`; if(d.startsWith("1") && d.length===11) return `+1 ${d.slice(1,4)} ${d.slice(4,7)} ${d.slice(7)}`; return "+" + d; }
 function renderWhatsapp(){
-  const wa = estadoRig && estadoRig.detalle && estadoRig.detalle.whatsapp; const num = wa && wa.numero;
-  $("#wa-numero").innerHTML = MODO!=="nube" ? "Con sesión se configura el WhatsApp." : num ? `Número de Engram Campo: <b>${esc(waNumeroTxt(num))}</b> · <a href="https://wa.me/${esc(String(num).replace(/\D/g,""))}?text=${encodeURIComponent("hola")}" target="_blank" rel="noopener">abrir el chat</a>` : (wa && wa.activo ? "El motor todavía no publicó el número (llega con la próxima corrida)." : "El canal de WhatsApp todavía no está activo en el motor; cuando lo esté, aquí aparece el número.");
+  const wa = estadoRig && estadoRig.detalle && estadoRig.detalle.whatsapp; const num = wa && wa.numero; const inicio = (wa && wa.inicio) || "";
+  $("#wa-numero").innerHTML = MODO!=="nube" ? "Con sesión se configura el WhatsApp." : num ? `Número de Engram Campo: <b>${esc(waNumeroTxt(num))}</b> · <a href="https://wa.me/${esc(String(num).replace(/\D/g,""))}?text=${encodeURIComponent(inicio || "hola")}" target="_blank" rel="noopener">abrir el chat</a>${inicio ? `<br><span class="small muted">Para empezar, mande exactamente el mensaje <b>${esc(inicio)}</b> (es la llave de entrada de este número; el enlace ya lo trae escrito). Después escriba o mande lo que quiera.</span>` : ""}` : (wa && wa.activo ? "El motor todavía no publicó el número (llega con la próxima corrida)." : "El canal de WhatsApp todavía no está activo en el motor; cuando lo esté, aquí aparece el número.");
   const p = perfil || {};
   $("#wa-tel").value = p.telefono || ""; $("#wa-ok").checked = !!p.whatsapp_ok; $("#wa-rep").value = p.whatsapp_reporte || "semanal";
   const sel = $("#wa-lote"); const lotes = LOTES.filter(l=>!l.sin && l.nube);
@@ -1642,7 +1642,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "20 · 24 oct 2026";
+const APP_VERSION = "20.1 · 26 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
