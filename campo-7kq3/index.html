@@ -275,6 +275,12 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="alertas" id="hoy-alertas-list"></div>
     <p class="note">Solo avisamos cuando la probabilidad cruza el umbral alto en la etapa en que su cultivo es sensible. Qué hacer con esto lo decide usted con su agrónomo; "No aplica" nos ayuda a ajustar el umbral de su lote.</p>
   </div>
+  <div class="card" id="hoy-lectura" hidden style="border-color:var(--blue)">
+    <div class="row between"><span class="eyebrow">Lectura de hoy</span><span class="small muted" id="lec-meta"></span></div>
+    <p id="lec-resumen" style="font-weight:700;margin:6px 0 4px"></p>
+    <p id="lec-texto" class="small" style="margin:0 0 6px"></p>
+    <details><summary class="small" style="color:var(--blue);cursor:pointer">Lo que no se puede saber con estos datos</summary><div id="lec-nosabemos" class="small muted" style="margin-top:6px"></div></details>
+  </div>
   <div class="card">
     <div class="row between"><span class="eyebrow" id="hoy-fecha">Viernes 16 de octubre</span><span class="lvl bajo" id="hoy-nivel">Riesgo bajo</span></div>
     <h2 id="h-hoy">Hoy en tu lote</h2>
@@ -283,8 +289,9 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="note" id="hoy-nota"></p>
   </div>
   <div class="card">
-    <span class="eyebrow">Qué hacer esta semana</span>
+    <span class="eyebrow" id="hoy-acciones-eyebrow">Qué hacer esta semana</span>
     <div class="sem" id="hoy-acciones"></div>
+    <div id="hoy-temporada-acc" hidden><span class="eyebrow" style="display:block;margin-top:10px">Para la temporada</span><div class="sem" id="hoy-acciones-temp"></div></div>
     <p class="note">Las acciones nacen de los hechos del reporte y pasan por las compuertas: ningún número sin respaldo, ningún producto ni dosis. Lo que hacer con esto lo decide usted con su agrónomo.</p>
   </div>
   <div class="card" id="hoy-verdor" hidden>
@@ -382,6 +389,13 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="field" id="circle-ctl" hidden><label for="circle-r">Radio del pivote: <b id="circle-r-v">200</b> m · <span id="circle-ha"></span></label><input id="circle-r" type="range" min="40" max="800" step="5" value="200"></div>
     <div class="kv" id="poly-kv"></div>
     <div class="kv" id="lote-kv"></div>
+    <div id="ciclo-card" hidden style="margin-top:10px">
+      <span class="eyebrow">Cómo va la temporada</span>
+      <div id="ciclo-barra" style="margin:8px 0 4px;height:10px;border-radius:5px;background:var(--line,#e6ecef);overflow:hidden"><div id="ciclo-fill" style="height:100%;width:0;background:var(--ok,#3a8a4a)"></div></div>
+      <p class="small" id="ciclo-txt" style="margin:0 0 6px"></p>
+      <div class="kv" id="ciclo-kv"></div>
+      <p class="note" id="ciclo-nota"></p>
+    </div>
     <details>
       <summary class="small" style="color:var(--blue);cursor:pointer">Definir por coordenadas</summary>
       <div class="flow" style="margin-top:10px">
@@ -824,6 +838,34 @@ function renderHoy(){
   const n = l.memoria.length; $("#mem-n").innerHTML = `${n} <small>${n===1?"temporada":"temporadas"}</small>`;
   $("#mem-txt").textContent = l.memTxt || (n===1 ? "Este lote empieza hoy su memoria. Con tres temporadas registradas, el reporte deja de hablar de la zona y empieza a hablar de este lote." : "Tres temporadas con el mismo registro. Con cinco, el pronóstico de cosecha pasa a ser del lote.");
   $("#hoy-fecha").textContent = l.fechaTxt || "Viernes 16 de octubre de 2026";
+  const lec = l.lectura; $("#hoy-lectura").hidden = !lec;
+  if(lec){
+    const m = lec._meta || {}; const delModelo = m.origen==="modelo";
+    $("#lec-resumen").textContent = lec.resumen || ""; $("#lec-texto").textContent = lec.lectura || "";
+    $("#lec-meta").textContent = delModelo ? `modelo · ${m.numeros_citados!=null ? m.numeros_citados + " números verificados" : "números verificados"}` : "por reglas";
+    $("#lec-nosabemos").innerHTML = (lec.no_sabemos||[]).length ? lec.no_sabemos.map(x=>`<div>· ${esc(x)}</div>`).join("") : "<div>Nada que anotar hoy.</div>";
+  }
+  $("#hoy-acciones-eyebrow").textContent = lec ? "Esta semana: qué mirar y qué registrar" : "Qué hacer esta semana";
+  $("#hoy-temporada-acc").hidden = !(l.accTemp && l.accTemp.length);
+  if(l.accTemp && l.accTemp.length) $("#hoy-acciones-temp").innerHTML = l.accTemp.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${esc(a.c)}</div></div></div>`).join("");
+}
+function renderCicloLote(){
+  const l = LOTES[lotIdx]; const c = l && l.ciclo; const card = $("#ciclo-card"); if(!card) return;
+  card.hidden = !c; if(!c) return;
+  const et = c.etapa || {}, o = c.observado || {}, b = c.bitacora || {};
+  const pct = et.pct_ciclo!=null ? Math.max(0, Math.min(100, et.pct_ciclo)) : null;
+  $("#ciclo-fill").style.width = (pct!=null ? pct : 0) + "%"; $("#ciclo-barra").hidden = pct==null;
+  $("#ciclo-txt").innerHTML = (et.nombre_es ? `<b>${esc(et.nombre_es)}</b>` : "") + (pct!=null ? ` · ${pct} % del ciclo térmico (${Math.round(et.gdd||0)} de ${et.gdd_madurez||"?"} °Cd)` : "") + (et.cosecha_estimada ? `<br>Cosecha estimada hacia el <b>${esc(fmtD(et.cosecha_estimada))}</b>${et.semanas_para_cosecha!=null ? ` (faltan ${et.semanas_para_cosecha} semanas)` : ""}` : "") + ((et.proximas_etapas||[]).length ? `<br>Próximas etapas: ${et.proximas_etapas.map(x=>`${esc(x.etapa_es||x.etapa)} desde el ${esc(fmtD(x.desde))}`).join(", ")}` : "");
+  const s7 = o.siete_dias || {}, n7 = o.siete_dias_normal || {}, t = o.temporada || {}, tn = o.temporada_normal || {};
+  const f = (v, u)=> v==null ? "—" : `${v}${u||""}`;
+  const pares = [];
+  if(s7.lluvia_mm!=null) pares.push(["Lluvia, últimos 7 días", `${f(s7.lluvia_mm," mm")}${n7.lluvia_mm!=null?` (normal ${f(n7.lluvia_mm," mm")})`:""}`]);
+  if(s7.tmax_media!=null) pares.push(["Máxima media, 7 días", `${f(s7.tmax_media," °C")}${n7.tmax_media!=null?` (normal ${f(n7.tmax_media," °C")})`:""}`]);
+  if(s7.tmin_minima!=null) pares.push(["Mínima más baja, 7 días", `${f(s7.tmin_minima," °C")}${n7.tmin_minima!=null?` (normal ${f(n7.tmin_minima," °C")})`:""}`]);
+  if(t.lluvia_mm!=null) pares.push(["Lluvia desde la siembra", `${f(t.lluvia_mm," mm")}${tn.lluvia_mm!=null?` (normal ${f(tn.lluvia_mm," mm")}${o.temporada_lluvia_pct_normal!=null?`, ${o.temporada_lluvia_pct_normal} %`:""})`:""}`]);
+  if(b.registros!=null) pares.push(["Bitácora de la temporada", `${b.registros} registros${b.riegos&&b.riegos.n?` · ${b.riegos.n} riegos`:""}${b.aplicaciones&&b.aplicaciones.n?` · ${b.aplicaciones.n} aplicaciones`:""}${b.observaciones&&b.observaciones.n?` · ${b.observaciones.n} observaciones`:""}${b.visitas?` · ${b.visitas} visitas`:""}`]);
+  $("#ciclo-kv").innerHTML = kv(pares);
+  $("#ciclo-nota").textContent = (o.lectura||[]).length ? (o.lectura[0].charAt(0).toUpperCase() + o.lectura[0].slice(1) + ".") + (o.ultimo_dato ? ` Clima del punto (NASA POWER) hasta el ${fmtD(o.ultimo_dato)}.` : "") : (o.ultimo_dato ? `Clima del punto (NASA POWER) hasta el ${fmtD(o.ultimo_dato)}.` : "Sin clima diario del punto todavía.");
 }
 function renderSemana(){
   const l = LOTES[lotIdx];
@@ -1132,6 +1174,8 @@ function lotDesdeNube(f, rep){
     l.nota = `${hoy.nota || ""} Reporte emitido el ${fmtD(rep.emitido)}.`.trim();
     if(c.verdor) l.verdor = c.verdor;
     if(c.perfil) l.perfilRep = c.perfil;
+    if(c.lectura && c.lectura.resumen){ l.lectura = c.lectura; if((c.lectura.esta_semana||[]).length) l.acciones = c.lectura.esta_semana.map(a=>({a:a.accion, p:a.por_que, c:a.confianza||"media"})); l.accTemp = (c.lectura.temporada||[]).map(a=>({a:a.accion, p:a.por_que, c:a.confianza||"media"})); }
+    if(c.temporada) l.ciclo = c.temporada;
     if(sem && sem.dias && sem.dias.length){
       l.dias = sem.dias; l.sem2 = sem.sem2 || {hutton:"—", p1:"—", helada:"—", lluvia:["—","—","—"], conf:"—"}; l.lluvia14 = sem.lluvia14 || ["—","—","—"];
       l.fuenteTxt = `Fuente: ensamble ${sem.fuente || ""} (${sem.n_miembros || "?"} escenarios) emitido el ${fmtD((c.fuentes && c.fuentes.emitido_ensamble) || rep.emitido)}. ${sem.calibrado ? "Probabilidades calibradas." : "Sin calibrar todavía: fracción de escenarios."} Lluvia 14 días: ${l.lluvia14[1]} mm (rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
@@ -1642,7 +1686,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "20.1 · 26 oct 2026";
+const APP_VERSION = "21 · 28 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -1781,7 +1825,7 @@ document.addEventListener("click", ev => {
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
-function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); }
+function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); }
 // ---------------------------------------------------------------- verdor (Sentinel-2 dentro del polígono; lo calcula el RIG cada noche)
 function sparkline(serie){
   const pts = (serie||[]).slice(-12); if(pts.length < 2) return "";
