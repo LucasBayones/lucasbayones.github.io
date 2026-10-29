@@ -423,8 +423,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <div class="field"><label for="lt-variedad">Variedad</label><input id="lt-variedad" placeholder="opcional"></div>
     </div>
     <div class="grid2">
-      <div class="field"><label for="lt-cultivo">Cultivo</label><select id="lt-cultivo"><option value="papa">papa</option><option value="maiz">maíz</option><option value="tomate">tomate</option><option value="trigo">trigo</option><option value="aguacate">aguacate</option></select></div>
-      <div class="field"><label for="lt-riego">Riego</label><select id="lt-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option></select></div>
+      <div class="field"><label for="lt-cultivo">Cultivo</label><select id="lt-cultivo"><option value="papa">papa</option><option value="maiz">maíz</option><option value="tomate">tomate</option><option value="trigo">trigo</option><option value="aguacate">aguacate</option><option value="soja">soja</option><option value="girasol">girasol</option><option value="cebada">cebada</option><option value="sorgo">sorgo</option></select></div>
+      <div class="field"><label for="lt-riego">Riego</label><select id="lt-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option><option>secano</option></select></div>
     </div>
     <div class="grid2">
       <div class="field"><label for="lt-siembra">Fecha de siembra</label><input id="lt-siembra" type="date"></div>
@@ -686,11 +686,11 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         <div class="card">
           <div class="field"><label for="nl-nombre">Nombre del lote</label><input id="nl-nombre" placeholder="p. ej. Parcela 7, El Potrero norte"></div>
           <div class="grid2">
-            <div class="field"><label for="nl-cultivo">Cultivo</label><select id="nl-cultivo"><option value="papa">papa</option><option value="maiz">maíz</option><option value="tomate">tomate</option><option value="trigo">trigo</option><option value="aguacate">aguacate</option></select></div>
+            <div class="field"><label for="nl-cultivo">Cultivo</label><select id="nl-cultivo"><option value="papa">papa</option><option value="maiz">maíz</option><option value="tomate">tomate</option><option value="trigo">trigo</option><option value="aguacate">aguacate</option><option value="soja">soja</option><option value="girasol">girasol</option><option value="cebada">cebada</option><option value="sorgo">sorgo</option></select></div>
             <div class="field"><label for="nl-variedad">Variedad</label><input id="nl-variedad" placeholder="opcional"></div>
           </div>
           <div class="grid2">
-            <div class="field"><label for="nl-riego">Riego</label><select id="nl-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option></select></div>
+            <div class="field"><label for="nl-riego">Riego</label><select id="nl-riego"><option>aspersión</option><option>goteo</option><option>gravedad</option><option>pivote</option><option>temporal</option><option>secano</option></select></div>
             <div class="field"><label for="nl-ha">Hectáreas (si las sabe)</label><input id="nl-ha" inputmode="decimal" placeholder="opcional"></div>
           </div>
           <div class="grid2">
@@ -1053,7 +1053,10 @@ function renderPolyKV(){
 function renderLoteKV(){
   const g = G(); const l = LOTES[lotIdx]; const p = g.pin || ((l.lat!=null && l.lon!=null) ? {lat:l.lat, lon:l.lon} : null);
   if(!p){ $("#lote-kv").innerHTML = kv([["Punto del lote", "sin marcar: toque el mapa o use su ubicación"]]); return; }
-  const near = nearest(p.lat, p.lon);
+  const near = nearest(p.lat, p.lon), pais = paisDe(p);
+  if(near.d > 300){   // lejos de las zonas regionales de papa (Argentina, otro estado): el motor crea una zona automática en el punto del lote
+    $("#lote-kv").innerHTML = kv([["Punto del lote", `${p.lat.toFixed(5)}°, ${p.lon.toFixed(5)}°`],["País", pais==="AR" ? "Argentina" : pais==="MX" ? "México" : "por definir"],["Zona de referencia", l.region || "automática: el motor la crea en el punto del lote (pronóstico del ensamble ahí mismo)"],["Clima de referencia", "celda NASA POWER de 50 km en el punto; estaciones (SMN) más adelante"]]); return;
+  }
   $("#lote-kv").innerHTML = kv([["Punto del lote", `${p.lat.toFixed(5)}°, ${p.lon.toFixed(5)}°`],["Zona de referencia", `${near.r.n} (${near.r.e})`],["Distancia al centro de la zona", `${near.d.toFixed(0)} km`],["Ciclo típico", near.r.ciclo],["Clima de referencia", "celda NASA de 50 km + estación SMN más cercana"]]);
 }
 function renderRes(){
@@ -1513,7 +1516,11 @@ function renderPanel(){
     const crit = (estadoRig && estadoRig.detalle && estadoRig.detalle.criterios_preliminares) || [
       {cultivo:"trigo", peligro:"roya_condiciones", nota:"PRELIMINAR: día con Tmedia 15-22 °C y >= 6 h de HR >= 90 %"},
       {cultivo:"aguacate", peligro:"humedad_enfermedad", nota:"PRELIMINAR: lluvia >= 5 mm y >= 10 h de HR >= 90 % (antracnosis, roña)"},
-      {cultivo:"maiz", peligro:"enfermedad_foliar", nota:"PRELIMINAR: dos días seguidos con Tmedia 17-23 °C y >= 7 h de HR >= 90 % (mancha de asfalto, tizón foliar)"}];
+      {cultivo:"maiz", peligro:"enfermedad_foliar", nota:"PRELIMINAR: dos días seguidos con Tmedia 17-23 °C y >= 7 h de HR >= 90 % (mancha de asfalto, tizón foliar)"},
+      {cultivo:"soja", peligro:"humedad_enfermedad", nota:"PRELIMINAR: dos días seguidos con Tmedia 18-28 °C y >= 8 h de HR >= 90 % (roya asiática, enfermedades de fin de ciclo)"},
+      {cultivo:"girasol", peligro:"humedad_enfermedad", nota:"PRELIMINAR: lluvia >= 5 mm y >= 10 h de HR >= 90 % en floración (podredumbre del capítulo, Alternaria)"},
+      {cultivo:"cebada", peligro:"roya_condiciones", nota:"PRELIMINAR: día con Tmedia 15-22 °C y >= 6 h de HR >= 90 % (roya de la hoja, mancha en red, escaldadura)"},
+      {cultivo:"sorgo", peligro:"humedad_enfermedad", nota:"PRELIMINAR: lluvia >= 5 mm y >= 10 h de HR >= 90 % en floración y llenado (mohos de la panoja, ergot)"}];
     body.innerHTML = `<p class="small">Estos criterios los puso el motor con la literatura general y están marcados preliminares hasta que usted los fije. Su propuesta queda registrada y se aplica en la configuración del motor.</p>` + crit.map(c=>{ const prev = REVISIONES.filter(r=>r.tipo==="criterio" && r.etiqueta_original===`${c.cultivo} · ${c.peligro}`);
       return `<div class="rev" data-crit="${esc(c.cultivo)} · ${esc(c.peligro)}"><div class="meta"><b>${esc(nombreCultivo(c.cultivo))}</b> · ${esc(PELIGRO_TXT[c.peligro]||c.peligro.replace(/_/g," "))}</div><div class="txt">${esc(c.nota||"")}</div>${prev.length ? `<div class="small muted">Propuestas: ${prev.map(r=>esc(r.nota||"")).join(" · ")}</div>` : ""}<input data-nota placeholder="su criterio: umbrales, horas, etapa…"><div class="acts" style="margin-top:8px"><button class="btn sec" data-rev="propuesta">Proponer</button></div></div>`; }).join("");
   } else {
@@ -1577,6 +1584,7 @@ function visLeer(def, l){
     else if(f.t==="si_no"){ v = v==="sí"; }
     datos[f.k] = v;
   });
+  if(datos.rendimiento_qq_ha!=null && datos.rendimiento_t_ha==null) datos.rendimiento_t_ha = Math.round(datos.rendimiento_qq_ha*10)/100;   // Argentina: 1 qq = 100 kg
   return {datos, errores};
 }
 function visResumen(datos){
@@ -1641,8 +1649,13 @@ let PERFILES_CULTIVO = [];                                       // perfiles por
 let FORMULARIOS = {}, PLANILLAS = [];                             // formulario de visita por cultivo (lo sube el RIG desde config/visitas) y planillas Excel subidas
 let REVISIONES = [], PERFILES_RED = [], AVISOS = [], REPORTES_PDF = [], WA_MENSAJES = [];   // revisiones del agrónomo (conjunto reservado), perfiles de la red (solo equipo), avisos recibidos, PDF por lote, mensajes de WhatsApp
 function esEquipo(){ return !!(perfil && ["agronomo","socio","admin"].includes(perfil.rol)); }
-const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate"};
-const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate"};
+const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate", soja:"soja", girasol:"girasol", cebada:"cebada", sorgo:"sorgo"};
+const CULTIVO_SIN = {"maíz":"maiz", maiz:"maiz", elote:"maiz", jitomate:"tomate", patata:"papa", palta:"aguacate", soya:"soja", "soja 1ra":"soja", "soja 2da":"soja", "cebada cervecera":"cebada", "sorgo granífero":"sorgo", "sorgo granifero":"sorgo"};
+// Argentina v1 (28 oct 2026): el país sale de las coordenadas del lote (igual que en el RIG, src/paises.py); en Argentina el productor habla en quintales (1 qq = 100 kg)
+function paisDe(l){ if(!l || l.lat==null || l.lon==null) return ""; const la = +l.lat, lo = +l.lon; if(la>=14 && la<=33.5 && lo>=-118.5 && lo<=-86) return "MX"; if(la>=-56 && la<=-21.5 && lo>=-74 && lo<=-53) return "AR"; return ""; }
+const esAR = l => paisDe(l)==="AR";
+const qq = v => v==null ? "—" : Number(v*10).toLocaleString("es-MX", {maximumFractionDigits:1});
+function rendTxt(v, l, dec){ if(v==null) return "—"; const t = Number(v).toLocaleString("es-MX", {maximumFractionDigits: dec==null ? 1 : dec}); return esAR(l) ? `${t} t/ha (${qq(v)} qq/ha)` : `${t} t/ha`; }
 function claveCultivo(c){ const n = String(c||"").trim().toLowerCase(); return CULTIVO_SIN[n] || n.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
 function nombreCultivo(c){ return CULTIVO_NOMBRE[claveCultivo(c)] || c || "—"; }
 function kmEntre(a, b, c, d){ const p = Math.PI/180, x = 0.5 - Math.cos((c-a)*p)/2 + Math.cos(a*p)*Math.cos(c*p)*(1-Math.cos((d-b)*p))/2; return 12742*Math.asin(Math.sqrt(Math.max(0, x))); }
@@ -1652,7 +1665,7 @@ function perfilDeLote(l){                                         // la región 
   if(l.lat!=null && l.lon!=null && PERFILES_CULTIVO.length){
     let best = null;
     PERFILES_CULTIVO.filter(r=>r.cultivo===cul && r.lat!=null).forEach(r=>{ const km = kmEntre(l.lat, l.lon, r.lat, r.lon); if(!best || km < best.km) best = {km, r}; });
-    if(best && best.km <= 250){ const c = best.r.contenido || {}; return {cultivo:cul, nombre_cultivo:c.nombre_cultivo, region:best.r.region, estado:best.r.estado, km:Math.round(best.km), lejana: best.km > 120, ciclo:best.r.ciclo, modalidad:best.r.modalidad, generado:best.r.generado, siap:c.siap, clima:c.clima, fuentes:c.fuentes}; }
+    if(best && best.km <= 250){ const c = best.r.contenido || {}; return {cultivo:cul, nombre_cultivo:c.nombre_cultivo, region:best.r.region, estado:best.r.estado, km:Math.round(best.km), lejana: best.km > 120, ciclo:best.r.ciclo, modalidad:best.r.modalidad, generado:best.r.generado, siap:c.siap, clima:c.clima, fuentes:c.fuentes, pais:c.pais || paisDe(best.r), fuente:c.fuente || ((c.pais || paisDe(best.r))==="AR" ? "MAGyP" : "SIAP")}; }
     if(best) return {cultivo:cul, sin_region:true, km:Math.round(best.km), nota:`la zona de referencia más cercana para ${nombreCultivo(cul)} (${best.r.region}) queda a ${Math.round(best.km)} km: no se usa.`};
   }
   if(l.perfilRep) return l.perfilRep;
@@ -1663,30 +1676,32 @@ function perfilHTML(pf, l){
   if(!pf) return "";
   if(pf.sin_region) return `<p class="small">${esc(pf.nota || "Sin zona de referencia pública para este cultivo todavía.")}</p>`;
   const s = pf.siap || {}, out = [];
+  const ar = (pf.pais || paisDe(l))==="AR", fuente = pf.fuente || (ar ? "MAGyP" : "SIAP"), lAR = ar ? {lat:-34, lon:-60} : null;   // lAR: solo para que rendTxt escriba quintales
   if(pf.lejana) out.push(`<p class="small"><b>Referencia lejana:</b> la zona configurada más cercana para ${esc(nombreCultivo(pf.cultivo))} queda a ${pf.km} km; tómela como orden de magnitud, no como su zona.</p>`);
-  const enc = `<b>${esc(pf.region)}${pf.estado ? ` (${esc(pf.estado)})` : ""}</b>, a ${pf.km} km del lote · ${esc(nombreCultivo(pf.cultivo))} ${pf.modalidad ? esc(String(pf.modalidad).toLowerCase()) : ""} · ciclo ${esc(pf.ciclo || "—")}`;
+  const enc = `<b>${esc(pf.region)}${pf.estado ? ` (${esc(pf.estado)})` : ""}</b>, a ${pf.km} km del lote · ${esc(nombreCultivo(pf.cultivo))} ${pf.modalidad ? esc(String(pf.modalidad).toLowerCase()) : ""} · ${ar ? `campaña ${esc(String(pf.ciclo || "—").toLowerCase())}` : `ciclo ${esc(pf.ciclo || "—")}`}`;
   if(s && s.n >= 3){
-    out.push(`<p class="small">${enc} · SIAP ${s.anios ? `${s.anios[0]}–${s.anios[1]}` : ""} (${s.n} cierres).</p>`);
+    out.push(`<p class="small">${enc} · ${esc(fuente)} ${s.anios ? `${s.anios[0]}–${s.anios[1]}` : ""} (${s.n} ${ar ? "campañas" : "cierres"}).</p>`);
     out.push(s.perenne
-      ? `<p class="small">Rendimiento típico <b>${n1(s.rend_mediana_t_ha)} t/ha</b> por hectárea cosechada (últimos 5 años: ${n1(s.rend_ultimos5_t_ha)}). En perennes lo sembrado incluye huertas jóvenes que todavía no producen.</p>`
-      : `<p class="small">Rendimiento típico <b>${n1(s.rend_mediana_t_ha)} t/ha</b> por hectárea sembrada (últimos 5 años: ${n1(s.rend_ultimos5_t_ha)}; por hectárea cosechada: ${n1(s.rend_cosechada_mediana_t_ha)}).</p>`);
+      ? `<p class="small">Rendimiento típico <b>${rendTxt(s.rend_mediana_t_ha, lAR)}</b> por hectárea cosechada (últimos 5 años: ${rendTxt(s.rend_ultimos5_t_ha, lAR)}). En perennes lo sembrado incluye huertas jóvenes que todavía no producen.</p>`
+      : `<p class="small">Rendimiento típico <b>${rendTxt(s.rend_mediana_t_ha, lAR)}</b> por hectárea sembrada (últimos 5 años: ${rendTxt(s.rend_ultimos5_t_ha, lAR)}; por hectárea cosechada: ${rendTxt(s.rend_cosechada_mediana_t_ha, lAR)}).</p>`);
     const pe = s.peor_anio || {};
-    out.push(`<p class="small">Siniestro: <b>${n1(s.siniestro_pct_medio)} %</b> de lo sembrado en promedio; ${s.anios_siniestro_10pct} de ${s.n} años perdieron más del 10 %; peor año ${pe.anio} (${n1(pe.siniestro_pct)} %, ${n1(pe.rend_t_ha)} t/ha).${s.p_malo_pct!=null ? ` Años malos (por debajo del 80 % de la tendencia): ${s.p_malo_pct} %.` : ""}</p>`);
+    out.push(`<p class="small">${ar ? "Perdido" : "Siniestro"}: <b>${n1(s.siniestro_pct_medio)} %</b> de lo sembrado en promedio; ${s.anios_siniestro_10pct} de ${s.n} años perdieron más del 10 %; peor año ${pe.anio} (${n1(pe.siniestro_pct)} %, ${rendTxt(pe.rend_t_ha, lAR)}).${s.p_malo_pct!=null ? ` Años malos (por debajo del 80 % de la tendencia): ${s.p_malo_pct} %.` : ""}</p>`);
     const e = s.esperado;
     if(e) out.push(e.publicable
-      ? `<p class="small">Para el cierre ${e.cierre}, la tendencia de la zona espera <b>${n1(e.rend_t_ha)} t/ha</b>${e.intervalo_80 ? ` (80 % entre ${n1(e.intervalo_80[0])} y ${n1(e.intervalo_80[1])})` : ""}${e.error_medido_pct!=null ? `, con un error medido de ${n1(e.error_medido_pct)} % dejando cada año fuera` : ""}.</p>`
-      : `<p class="small">Para el cierre ${e.cierre}: la tendencia no le gana a la climatología en esta zona, así que la referencia es la mediana (${n1(s.rend_mediana_t_ha)} t/ha).</p>`);
+      ? `<p class="small">Para el cierre ${e.cierre}, la tendencia de la zona espera <b>${rendTxt(e.rend_t_ha, lAR)}</b>${e.intervalo_80 ? ` (80 % entre ${n1(e.intervalo_80[0])} y ${n1(e.intervalo_80[1])} t/ha)` : ""}${e.error_medido_pct!=null ? `, con un error medido de ${n1(e.error_medido_pct)} % dejando cada año fuera` : ""}.</p>`
+      : `<p class="small">Para el cierre ${e.cierre}: la tendencia no le gana a la climatología en esta zona, así que la referencia es la mediana (${rendTxt(s.rend_mediana_t_ha, lAR)}).</p>`);
   } else {
-    out.push(`<p class="small">${enc}.</p><p class="small">${esc((s && s.nota) || "Sin cierres SIAP para esta zona todavía.")}</p>`);
+    out.push(`<p class="small">${enc}.</p><p class="small">${esc((s && s.nota) || `Sin cierres ${fuente} para esta zona todavía.`)}</p>`);
   }
   const c = pf.clima, w = c && c.semanas && c.semana_hoy ? c.semanas.find(x=>x.sem===c.semana_hoy) : (pf.semana_tipica || null);
   if(w) out.push(`<p class="small">Esta semana, lo normal en la zona (${c ? c.n_temporadas || "" : ""} temporadas): mínima típica ${n1(w.tmin_tipica)} °C (extrema ${n1(w.tmin_extrema_p10)}), helada ${w.p_helada_pct} %, calor de 35 °C ${w.p_calor35_pct} %, lluvia ${n1(w.lluvia_mediana_mm)} mm (${n1(w.lluvia_p10_mm)}–${n1(w.lluvia_p90_mm)})${w.etapa_tipica ? `; etapa típica con la siembra típica de la zona: ${esc(w.etapa_tipica)}` : ""}.</p>`);
   else if(c && c.resumen) out.push(`<p class="small">Fuera de la temporada típica de la zona (${esc(c.temporada && c.temporada.inicio_tipico || "")}, ${c.temporada && c.temporada.semanas} semanas). Lluvia típica de temporada: ${n1(c.resumen.lluvia_temporada_mediana_mm)} mm.</p>`);
-  const notaCul = pf.fuentes && pf.fuentes.nota_cultivo ? ` ${esc(pf.fuentes.nota_cultivo)}.` : "";
-  out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: SIAP (cierres municipales por estado o distrito) y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
+  const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+  const notaCul = ar ? (pf.fuentes && pf.fuentes.nota_cultivo_ar ? ` ${esc(cap(pf.fuentes.nota_cultivo_ar))}.` : "") : (pf.fuentes && pf.fuentes.nota_cultivo ? ` ${esc(cap(pf.fuentes.nota_cultivo))}.` : "");
+  out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "21 · 28 oct 2026";
+const APP_VERSION = "22 · 28 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2080,7 +2095,7 @@ function interpretOne(raw, n, l, leidoFull){
     if(/goteo/.test(t)) base.metodo = "goteo"; else if(/grav/.test(t)) base.metodo = "gravedad"; else if(/piv/.test(t)) base.metodo = "pivote"; else if(/asp/.test(t)) base.metodo = "aspersión"; else { base.metodo = "aspersión"; base.dudas.push("metodo"); notas.push("no dice el método: se supuso aspersión"); }
     if(h && (low || dudasLinea.length)) base.dudas.push("horas");
   } else if(esCosecha){
-    base.tipo = "cosecha"; const r = t.match(/(\d+(?:[.,]\d+)?)\s*(t\/ha|ton|tonelad)/); base.rend = r ? r[1].replace(",",".") : ""; const pz = t.match(/(\d+(?:[.,]\d+)?)\s*%/); base.perdida = pz ? pz[1].replace(",",".") : ""; if(!r){ base.dudas.push("rend"); notas.push("no dice el rendimiento en t/ha"); }
+    base.tipo = "cosecha"; const r = t.match(/(\d+(?:[.,]\d+)?)\s*(t\/ha|ton|tonelad)/); const rq = t.match(/(\d+(?:[.,]\d+)?)\s*(qq|quintal)/); base.rend = r ? r[1].replace(",",".") : rq ? String(Math.round(parseFloat(rq[1].replace(",","."))*10)/100) : ""; const pz = t.match(/(\d+(?:[.,]\d+)?)\s*%/); base.perdida = pz ? pz[1].replace(",",".") : ""; if(!r){ base.dudas.push("rend"); notas.push("no dice el rendimiento en t/ha"); }
   } else if(esAplic){
     base.tipo = "aplicacion"; const d = t.match(RE_DOSIS); base.dosis = d ? d[1].replace(",",".") : "";
     base.unidad = d ? ({"l/ha":"L/ha","lt/ha":"L/ha","kg/ha":"kg/ha","g/ha":"g/ha","ml/ha":"mL/ha","kg":"kg total","l":"L total","lt":"L total","lts":"L total"})[d[2]] || "kg/ha" : "kg/ha";
@@ -2127,7 +2142,7 @@ function propCard(p, i){
   if(p.tipo==="aplicacion") campos = f("producto","Producto",inp("producto","text",'placeholder="como lo llama usted"')) + `<div class="grid2">${f("dosis","Dosis",inp("dosis","text",'inputmode="decimal"'))}${f("unidad","Unidad",sel("unidad",["kg/ha","L/ha","g/ha","mL/ha","kg total","L total"],p.unidad||"kg/ha"))}</div>` + f("clase","Tipo",sel("clase",["fungicida","fertilizante","insecticida","herbicida","bioestimulante","otro"],p.clase||"fungicida"));
   if(p.tipo==="riego") campos = `<div class="grid2">${f("horas","Horas",inp("horas","text",'inputmode="decimal"'))}${f("metodo","Método",sel("metodo",["aspersión","goteo","gravedad","pivote"],p.metodo||"aspersión"))}</div>`;
   if(p.tipo==="observacion") campos = f("que","Qué vio",sel("que",VI_TIPOS,p.que||"enfermedad")) + `<div class="grid2">${f("donde","Dónde",sel("donde",VI_DONDE,p.donde||"un manchón"))}${f("sev","Severidad 0–5",sel("sev",["0","1","2","3","4","5"],String(p.sev ?? "1")))}</div>`;
-  if(p.tipo==="cosecha") campos = `<div class="grid2">${f("rend","Rendimiento (t/ha)",inp("rend","text",'inputmode="decimal"'))}${f("perdida","Pérdida (%)",inp("perdida","text",'inputmode="decimal"'))}</div>`;
+  if(p.tipo==="cosecha") campos = `<div class="grid2">${f("rend", esAR(LOTES[lotIdx]) ? "Rendimiento (t/ha; 32 qq/ha = 3.2)" : "Rendimiento (t/ha)",inp("rend","text",'inputmode="decimal"'))}${f("perdida","Pérdida (%)",inp("perdida","text",'inputmode="decimal"'))}</div>`;
   const tipoChips = TIPOS_PROP.map(([v,l])=>`<button class="chip" aria-pressed="${p.tipo===v}" data-ptipo="${v}">${l}</button>`).join("");
   const fuente = p.leido ? `<div class="leido">${p.linea ? `Línea ${p.linea}: ` : "Leído: "}«${esc(p.leido)}»</div>` : "";
   return `<div class="card prop" data-i="${i}"><div class="row between"><div class="chips mini">${tipoChips}</div><button class="inline-link" data-rm>Quitar</button></div>${fuente}${f("fecha","Fecha",inp("fecha","date"))}${campos}${p.nota ? `<div class="dudanota">${esc(p.nota)}</div>` : ""}</div>`;
