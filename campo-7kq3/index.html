@@ -495,6 +495,14 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div id="temp-body"></div>
   </div>
 
+  <div class="card" id="mas-historial-rev" hidden>
+    <div class="row between"><span class="eyebrow">Historial del campo · revisar</span><button class="inline-link" data-go="mas-planillas">Volver</button></div>
+    <h2 id="hrev-h2">Lo que el motor entendió</h2>
+    <p class="small" id="hrev-resumen"></p>
+    <div id="hrev-hojas"></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:12px 0"><button class="btn acc" id="hrev-confirmar">Confirmar y cargar</button><button class="btn sec" id="hrev-otra">Que lo mire de nuevo</button><button class="btn sec" id="hrev-rechazar">Rechazar</button></div>
+    <p class="note">Nada entra a la memoria del campo hasta que confirme. Corrija aquí lo que el motor entendió mal (qué es cada columna, la unidad, el cultivo o la campaña fijos) y confirme: la carga corre en minutos y deja el informe fila por fila. Lo confirmado se recuerda: la próxima planilla igual entra sola.</p>
+  </div>
   <div class="card" id="mas-planillas" hidden>
     <div class="row between"><span class="eyebrow">Planillas de visita</span><button class="inline-link" data-back>Volver</button></div>
     <h2 id="pla-h2">Visitas por Excel</h2>
@@ -503,7 +511,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="note" id="pla-nota"></p>
     <div id="pla-list"></div>
     <h3 class="small" style="margin:16px 0 4px">Historial del campo: 20 años de un solo Excel</h3>
-    <p class="small">Muchos lotes y muchas campañas en una planilla (lote, campaña, cultivo, siembra, cosecha, rendimiento, cultivo anterior; opcional: labores y lotes nuevos con coordenadas). El motor la lee esa noche, crea los lotes que falten, convierte quintales o kg a t/ha y deduce el cultivo anterior. Repetirla no duplica. Si ya tiene su propio archivo, súbalo tal cual: lo que no entienda lo dice fila por fila.</p>
+    <p class="small">Muchos lotes y muchas campañas en una planilla (lote, campaña, cultivo, siembra, cosecha, rendimiento, cultivo anterior; opcional: labores y lotes nuevos con coordenadas). Súbala tal como la tenga —varias hojas, los años en columnas, quintales o kg—: en unos 10 minutos el motor propone cómo leerla y aquí aparece <b>Revisar y confirmar</b>; nada entra a la memoria del campo hasta que usted confirme. Convierte quintales o kg a t/ha, crea los lotes que falten y deduce el cultivo anterior. Repetirla no duplica.</p>
+    <p class="note">Privacidad: para entender el archivo, el motor le muestra a un modelo de lenguaje los nombres de las hojas y sus primeras filas (encabezados y datos de muestra), no el archivo completo, que queda en su nube y en el motor de Engram.</p>
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sec" id="his-descargar">Descargar plantilla</button><label class="btn acc" for="his-input" style="cursor:pointer">Subir historial</label><input id="his-input" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden></div>
     <div id="his-list"></div>
   </div>
@@ -1649,8 +1658,8 @@ async function renderPlanillas(){
   $("#pla-h2").textContent = `Visitas por Excel · ${nombreCultivo(cul)}`;
   $("#pla-nota").textContent = MODO!=="nube" ? "Con sesión: aquí se descarga la plantilla del cultivo y se suben las planillas llenas." : `Plantilla de ${nombreCultivo(cul)} con la lista de sus lotes. Las planillas subidas se revisan en la corrida nocturna; abajo queda el informe fila por fila.`;
   const mias = (PLANILLAS||[]).filter(pl=>!l.sin && pl.lote_id===l.uuid && (pl.tipo||"visitas")==="visitas");
-  const his = (PLANILLAS||[]).filter(pl=>pl.tipo==="historial"); const ESTH = {subida:"subido, el motor lo lee esta noche", ingerida:"leído: todo entró", con_errores:"leído: entró parte", error:"leído: no entró"};
-  $("#his-list").innerHTML = his.length ? his.map(pl=>`<div class="log-item"><span class="d">${esc(fmtD(String(pl.creado_en||"").slice(0,10)))}</span><span><b>${esc(pl.nombre||pl.archivo)}</b> · ${esc(ESTH[pl.estado]||pl.estado)}${pl.filas_ok!=null?` · ${pl.filas_ok} filas entraron${pl.filas_error?`, ${pl.filas_error} no`:""}`:""}${pl.informe&&pl.informe.length?`<details class="par"><summary>informe (${pl.informe.length} líneas)</summary>${pl.informe.slice(0,60).map(x=>`<div>${esc(x)}</div>`).join("")}${pl.informe.length>60?`<div>… ${pl.informe.length-60} líneas más</div>`:""}</details>`:""}</span></div>`).join("") : `<p class="note">Todavía no subió un historial.</p>`;
+  const his = (PLANILLAS||[]).filter(pl=>pl.tipo==="historial"); const ESTH = {subida:"subido: el motor lo lee en minutos", por_confirmar:"el motor lo entendió: falta su confirmación", confirmada:"confirmado: se carga en minutos", rechazada:"rechazado", ingerida:"cargado: todo entró", con_errores:"cargado: entró parte", error:"no se pudo leer"};
+  $("#his-list").innerHTML = his.length ? his.map(pl=>`<div class="log-item"><span class="d">${esc(fmtD(String(pl.creado_en||"").slice(0,10)))}</span><span><b>${esc(pl.nombre||pl.archivo)}</b> · ${esc(ESTH[pl.estado]||pl.estado)}${pl.filas_ok!=null?` · ${pl.filas_ok} filas entraron${pl.filas_error?`, ${pl.filas_error} no`:""}`:""}${pl.estado==="por_confirmar"?` <button class="btn acc" style="margin-top:6px" data-hrev="${esc(pl.id)}">Revisar y confirmar</button>`:""}${pl.estado==="por_confirmar"&&pl.propuesta&&!pl.propuesta.listo?`<div class="par">El motor marcó problemas: revíselos antes de confirmar.</div>`:""}${pl.informe&&pl.informe.length?`<details class="par"><summary>informe (${pl.informe.length} líneas)</summary>${pl.informe.slice(0,60).map(x=>`<div>${esc(x)}</div>`).join("")}${pl.informe.length>60?`<div>… ${pl.informe.length-60} líneas más</div>`:""}</details>`:""}</span></div>`).join("") : `<p class="note">Todavía no subió un historial.</p>`;
   const EST = {subida:"subida, pendiente de revisar", ingerida:"revisada: todo entró", con_errores:"revisada: entró parte", error:"revisada: no entró"};
   $("#pla-list").innerHTML = mias.length ? mias.map(pl=>`<div class="log-item"><span class="d">${esc(fmtD(String(pl.creado_en||"").slice(0,10)))}</span><span><b>${esc(pl.nombre||pl.archivo)}</b> · ${esc(EST[pl.estado]||pl.estado)}${pl.filas_ok!=null?` · ${pl.filas_ok} filas entraron${pl.filas_error?`, ${pl.filas_error} no`:""}`:""}${pl.informe&&pl.informe.length?`<div class="par">${pl.informe.slice(0,8).map(x=>`<div>${esc(x)}</div>`).join("")}${pl.informe.length>8?`<div>… ${pl.informe.length-8} líneas más</div>`:""}</div>`:""}</span></div>`).join("") : `<p class="note">${l.sin?"Cree un lote primero.":"Todavía no subió planillas para este lote."}</p>`;
 }
@@ -1680,6 +1689,54 @@ $("#pla-descargar").addEventListener("click", async ()=>{
   const l = LOTES[lotIdx], cul = claveCultivo(l.cultivo); if(MODO!=="nube"){ toast("Con sesión se descarga la plantilla"); return; }
   try{ const u = await urlFirmada(plantillaRuta(cul)); window.open(u, "_blank"); }catch(e){ toast("La plantilla no está en la nube todavía: el motor la sube en la próxima corrida nocturna"); }
 });
+// --- historial v2: revisar y confirmar lo que el motor entendió (plan editable + vista previa)
+const HCOLS = {temporadas:["lote","campana","cultivo","variedad","fecha_siembra","fecha_cosecha","superficie_ha","rendimiento_t_ha","cultivo_anterior","riego","perdida_pct","causa_perdida","destino","notas"], eventos:["lote","campana","fecha","tipo","producto","dosis","unidad","notas"], lotes:["lote","lat","lon","superficie_ha","cultivo","riego"]};
+const HCOL_TXT = {lote:"lote", campana:"campaña", cultivo:"cultivo", variedad:"variedad", fecha_siembra:"fecha de siembra", fecha_cosecha:"fecha de cosecha", superficie_ha:"superficie (ha)", rendimiento_t_ha:"rendimiento", cultivo_anterior:"cultivo anterior", riego:"riego", perdida_pct:"pérdida %", causa_perdida:"causa de la pérdida", destino:"destino", notas:"notas", fecha:"fecha", tipo:"tipo de labor", producto:"producto / detalle", dosis:"dosis", unidad:"unidad", lat:"latitud", lon:"longitud", extra:"guardar como extra", ignorar:"ignorar"};
+let hrevId = null;
+function hrevRender(pl){
+  hrevId = pl.id; const pr = pl.propuesta || {}; const plan = (pl.plan_confirmado || pr.plan || {hojas:[]});
+  $("#hrev-h2").textContent = `${pl.nombre || "archivo"}: lo que el motor entendió`;
+  const t = pr.totales || {}; $("#hrev-resumen").textContent = `${pr.resumen || ""} ${t.temporadas!=null ? `${t.temporadas} campañas` : ""}${t.eventos ? ` · ${t.eventos} labores` : ""}${(t.lotes_nuevos||[]).length ? ` · lotes nuevos: ${t.lotes_nuevos.join(", ")}` : ""}${pr.origen ? ` · leído por ${pr.origen}` : ""}${pr.listo===false ? " · CON PROBLEMAS" : ""}`;
+  const hojasP = {}; (pr.hojas||[]).forEach(h=>{ hojasP[h.hoja] = h; });
+  $("#hrev-hojas").innerHTML = (plan.hojas||[]).map((h,i)=>{
+    const info = hojasP[h.hoja] || {}; const tipo = h.tipo || "ignorar"; const cols = Object.keys(h.columnas || {});
+    const sel = (name, opts, val) => `<select data-hrev-k="${name}" data-hoja="${i}">${opts.map(o=>`<option value="${esc(o)}"${o===(val||"")?" selected":""}>${esc(HCOL_TXT[o]||o||"—")}</option>`).join("")}</select>`;
+    const opcCol = (tipo==="ignorar" ? [] : HCOLS[tipo] || []).concat(["extra","ignorar"]);
+    return `<div class="card" style="margin:10px 0;padding:10px">
+      <div class="row between"><b>Hoja «${esc(h.hoja)}»</b><span class="small">${esc(h.orientacion||"larga")}${info.confianza!=null?` · confianza ${Math.round(info.confianza*100)} %`:""}${info.filas!=null?` · ${info.filas} filas`:""}</span></div>
+      <div class="field" style="margin-top:6px"><label>Qué es</label>${sel("tipo", ["temporadas","eventos","lotes","ignorar"], tipo)}</div>
+      ${tipo==="ignorar" ? "" : `
+      ${(info.problemas||[]).length ? `<div class="par" style="border-left-color:#c0392b">${info.problemas.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>` : ""}
+      ${(info.dudas||[]).length ? `<div class="par">${info.dudas.map(x=>`<div>duda: ${esc(x)}</div>`).join("")}</div>` : ""}
+      <table style="min-width:0;margin-top:6px"><thead><tr><th>Columna del archivo</th><th>Es…</th></tr></thead><tbody>${cols.map(c=>`<tr><td>${esc(c)}</td><td>${sel("col:"+c, opcCol, h.columnas[c])}</td></tr>`).join("")}</tbody></table>
+      ${(h.columnas_anchas||[]).length ? `<p class="small" style="margin:6px 0">Columnas por campaña: ${h.columnas_anchas.slice(0,12).map(a=>`«${esc(a.columna)}» → ${esc(a.campana||a.lote||"")}${a.cultivo?` ${esc(a.cultivo)}`:""} ${esc(HCOL_TXT[a.variable]||a.variable||"")}`).join("; ")}${h.columnas_anchas.length>12?` … (${h.columnas_anchas.length})`:""}</p>` : ""}
+      ${tipo==="temporadas" ? `<div class="grid2"><div class="field"><label>Unidad del rendimiento</label>${sel("unidad", ["","qq","kg","t"], h.unidad_rendimiento||"")}</div><div class="field"><label>Cultivo fijo de la hoja</label><input data-hrev-k="fijo:cultivo" data-hoja="${i}" value="${esc((h.fijos||{}).cultivo||"")}" placeholder="vacío = viene en una columna"></div><div class="field"><label>Campaña fija de la hoja</label><input data-hrev-k="fijo:campana" data-hoja="${i}" value="${esc((h.fijos||{}).campana||"")}" placeholder="2023/24 o vacío"></div><div class="field"><label>Lote fijo</label><input data-hrev-k="fijo:lote" data-hoja="${i}" value="${esc((h.fijos||{}).lote||"")}" placeholder="vacío = viene en una columna"></div></div>` : ""}
+      ${info.lotes ? `<p class="small">Lotes: ${info.lotes.conocidos} conocidos de ${info.lotes.total}${(info.lotes.nuevos||[]).length?`; no existen en la app: ${esc(info.lotes.nuevos.slice(0,10).join(", "))}${info.lotes.nuevos.length>10?"…":""} (se crean si hay hoja Lotes con coordenadas; si no, esas filas no entran)`:""}</p>` : ""}
+      ${(info.vista_previa||[]).length ? `<details open><summary class="small">Vista previa (${info.vista_previa.length} filas como las entendió)</summary><div style="overflow:auto"><table style="min-width:0"><tbody>${info.vista_previa.map(v=>`<tr><td class="small" style="white-space:nowrap">${esc(v.origen||"")}</td><td class="small">${Object.entries(v.entendido||{}).map(([k,val])=>`<b>${esc(HCOL_TXT[k]||k)}</b>: ${esc(val)}`).join(" · ")}</td></tr>`).join("")}</tbody></table></div></details>` : ""}`}
+    </div>`; }).join("") + ((pr.conflictos||[]).length ? `<div class="par">${pr.conflictos.slice(0,10).map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>` : "");
+  $("#hrev-hojas").querySelectorAll('select[data-hrev-k="tipo"]').forEach(s=>s.addEventListener("change", ()=>{ pl.plan_confirmado = hrevPlan(pl); hrevRender(pl); }));
+}
+function hrevPlan(pl){
+  const plan = JSON.parse(JSON.stringify(pl.plan_confirmado || (pl.propuesta||{}).plan || {hojas:[]}));
+  $("#hrev-hojas").querySelectorAll("[data-hrev-k]").forEach(el=>{
+    const i = +el.dataset.hoja, k = el.dataset.hrevK, h = plan.hojas[i]; if(!h) return;
+    if(k==="tipo") h.tipo = el.value;
+    else if(k.startsWith("col:")) { h.columnas = h.columnas || {}; h.columnas[k.slice(4)] = el.value; }
+    else if(k==="unidad") h.unidad_rendimiento = el.value || null;
+    else if(k.startsWith("fijo:")) { h.fijos = h.fijos || {}; h.fijos[k.slice(5)] = el.value.trim() || null; }
+  });
+  return plan;
+}
+async function hrevGuardar(estado, extra){
+  const pl = (PLANILLAS||[]).find(x=>x.id===hrevId); if(!pl) return;
+  const body = Object.assign({estado}, extra||{});
+  try{ await db("PATCH","planillas",{id:"eq."+pl.id},body,"return=minimal"); Object.assign(pl, body); cacheGuardar(); showMas("mas-planillas"); toast(estado==="confirmada" ? "Confirmado: el motor lo carga en minutos y deja el informe aquí" : estado==="rechazada" ? "Rechazado: no entra nada" : "El motor lo vuelve a leer en minutos"); }
+  catch(err){ toast("No se pudo guardar: " + String(err && err.message || err).slice(0,120)); }
+}
+$("#hrev-confirmar").addEventListener("click", ()=>{ const pl = (PLANILLAS||[]).find(x=>x.id===hrevId); if(!pl) return; const plan = hrevPlan(pl); plan._confirmado = sesion && sesion.user ? sesion.user.id : "app"; hrevGuardar("confirmada", {plan_confirmado: plan, confirmado_por: sesion.user.id, confirmado_en: new Date().toISOString()}); });
+$("#hrev-rechazar").addEventListener("click", ()=>{ hrevGuardar("rechazada", {comentario: "rechazado desde la app"}); });
+$("#hrev-otra").addEventListener("click", ()=>{ const c = prompt("¿Qué entendió mal? (una línea para el motor)") || ""; hrevGuardar("subida", {comentario: c.slice(0,300), plan_confirmado: null}); });
+$("#his-list").addEventListener("click", ev=>{ const b = ev.target.closest("[data-hrev]"); if(!b) return; const pl = (PLANILLAS||[]).find(x=>x.id===b.dataset.hrev); if(!pl) return; showMas("mas-historial-rev"); hrevRender(pl); });
 $("#his-descargar").addEventListener("click", async ()=>{
   if(MODO!=="nube"){ toast("Con sesión se descarga la plantilla"); return; }
   try{ const u = await urlFirmada("plantillas/Historial_del_campo.xlsx"); window.open(u, "_blank"); }catch(e){ toast("La plantilla no está en la nube todavía: el motor la sube en la próxima corrida nocturna"); }
@@ -1779,7 +1836,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "23 · 29 oct 2026";
+const APP_VERSION = "24 · 30 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
