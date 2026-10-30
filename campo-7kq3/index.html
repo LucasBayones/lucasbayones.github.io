@@ -466,7 +466,26 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   <div class="card" id="mas-memoria" hidden>
     <div class="row between"><span class="eyebrow">Memoria del campo</span><button class="inline-link" data-back>Volver</button></div>
     <h2 id="mem-h2">Temporadas registradas</h2>
+    <div id="mem-resumen" hidden></div>
     <div class="timeline" id="mem-tl"></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn sec" id="mem-agregar" hidden>+ Agregar una campaña anterior</button><button class="btn sec" data-go="mas-planillas">Cargar 20 años de un Excel</button></div>
+    <form id="mem-form" hidden class="form" style="margin-top:8px" autocomplete="off">
+      <div class="grid2">
+        <div class="field"><label for="tp-campana">Campaña</label><input id="tp-campana" placeholder="2023/24"></div>
+        <div class="field"><label for="tp-cultivo">Cultivo</label><select id="tp-cultivo"><option value="soja">soja</option><option value="maiz">maíz</option><option value="trigo">trigo</option><option value="girasol">girasol</option><option value="cebada">cebada</option><option value="sorgo">sorgo</option><option value="papa">papa</option><option value="tomate">tomate</option><option value="aguacate">aguacate</option></select></div>
+        <div class="field"><label for="tp-siembra">Fecha de siembra</label><input id="tp-siembra" type="date"></div>
+        <div class="field"><label for="tp-cosecha">Fecha de cosecha</label><input id="tp-cosecha" type="date"></div>
+        <div class="field"><label for="tp-rend" id="tp-rend-l">Rendimiento (t/ha)</label><input id="tp-rend" inputmode="decimal" placeholder="3.2"></div>
+        <div class="field"><label for="tp-ha">Superficie (ha)</label><input id="tp-ha" inputmode="decimal"></div>
+        <div class="field"><label for="tp-anterior">Cultivo anterior</label><input id="tp-anterior" placeholder="trigo (o vacío: el motor lo deduce)"></div>
+        <div class="field"><label for="tp-variedad">Variedad / híbrido</label><input id="tp-variedad"></div>
+        <div class="field"><label for="tp-perdida">Pérdida (%)</label><input id="tp-perdida" inputmode="decimal"></div>
+        <div class="field"><label for="tp-causa">Causa de la pérdida</label><input id="tp-causa" placeholder="sequía, helada, granizo…"></div>
+      </div>
+      <div class="field"><label for="tp-notas">Notas</label><input id="tp-notas"></div>
+      <div class="row" style="gap:8px"><button class="btn acc" type="submit">Guardar campaña</button><button class="btn sec" type="button" id="tp-cancelar">Cancelar</button></div>
+      <p class="note">Una fila por campaña y cultivo (trigo y soja de segunda en la misma campaña son dos). En Argentina escriba el rendimiento en quintales: se guarda en t/ha. Si repite una campaña ya cargada, se actualiza.</p>
+    </form>
     <p class="note">Un campo solo tiene diez o veinte temporadas de memoria. Cien campos con el mismo registro, en la misma zona, son dos mil. Ahí es donde los patrones aparecen, y donde el pronóstico de cosecha deja de ser de la zona para ser suyo.</p>
   </div>
 
@@ -483,6 +502,10 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sec" id="pla-descargar">Descargar plantilla</button><label class="btn acc" for="pla-input" style="cursor:pointer">Subir planilla llena</label><input id="pla-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div>
     <p class="note" id="pla-nota"></p>
     <div id="pla-list"></div>
+    <h3 class="small" style="margin:16px 0 4px">Historial del campo: 20 años de un solo Excel</h3>
+    <p class="small">Muchos lotes y muchas campañas en una planilla (lote, campaña, cultivo, siembra, cosecha, rendimiento, cultivo anterior; opcional: labores y lotes nuevos con coordenadas). El motor la lee esa noche, crea los lotes que falten, convierte quintales o kg a t/ha y deduce el cultivo anterior. Repetirla no duplica. Si ya tiene su propio archivo, súbalo tal cual: lo que no entienda lo dice fila por fila.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sec" id="his-descargar">Descargar plantilla</button><label class="btn acc" for="his-input" style="cursor:pointer">Subir historial</label><input id="his-input" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden></div>
+    <div id="his-list"></div>
   </div>
 
   <div class="card" id="mas-pdf" hidden>
@@ -895,10 +918,23 @@ function renderLog(){
   $("#lastreg").innerHTML = last ? `Último registro: <b>${fmtD(last.f)}</b> · ${esc(last.txt)}` : "Todavía no hay registros de este lote.";
 }
 function fmtD(iso){ const [y,m,d] = iso.split("-"); const M=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return `${parseInt(d,10)} ${M[parseInt(m,10)-1]}`; }
+// v23: la memoria propia del campo sale de la tabla `temporadas` (cargada de a una aquí o de golpe con el Excel de historial)
+function memoriaDeTemporadas(f){
+  const ar = esAR(f); const mine = (TEMPORADAS||[]).filter(t=>t.lote_id===f.id).sort((a,b)=>(a.anio_cosecha||0)-(b.anio_cosecha||0) || String(a.fecha_siembra||"").localeCompare(String(b.fecha_siembra||"")));
+  return mine.map(t=>{ const r = t.rendimiento_t_ha!=null ? Number(t.rendimiento_t_ha) : null; const partes = [nombreCultivo(t.cultivo)];
+    if(t.variedad) partes.push(t.variedad); if(t.fecha_siembra) partes.push(`siembra ${fmtD(t.fecha_siembra)}`); if(t.cultivo_anterior) partes.push(`después de ${nombreCultivo(t.cultivo_anterior)}`);
+    if(t.perdida_pct!=null && Number(t.perdida_pct)>0) partes.push(`pérdida ${t.perdida_pct} %${t.causa_perdida?` (${t.causa_perdida})`:""}`); if(t.superficie_ha!=null) partes.push(`${t.superficie_ha} ha`);
+    return {y: t.campana, t: r, txt: partes.join(" · "), qq: ar && r!=null ? Math.round(r*100)/10 : null, id: t.id, cultivo: t.cultivo}; });
+}
 function renderMemoria(){
-  const l = LOTES[lotIdx]; $("#mem-h2").textContent = `${l.nombre}: ${l.memoria.length} ${l.memoria.length===1?"temporada":"temporadas"}`;
-  const max = 36;
-  $("#mem-tl").innerHTML = l.memoria.map(m=>`<div class="season"><span class="y">${esc(m.y)}</span><div><div class="small">${esc(m.txt)}</div>${m.t?`<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*m.t/max)}%"></i></div>`:""}</div><span class="t">${m.t?m.t+" t/ha":"—"}</span></div>`).join("");
+  const l = LOTES[lotIdx]; const n = l.memoria.length; $("#mem-h2").textContent = `${l.nombre}: ${n} ${n===1?"temporada":"temporadas"}`;
+  const max = Math.max(1, ...l.memoria.map(m=>m.t||0));
+  $("#mem-tl").innerHTML = l.memoria.map(m=>`<div class="season"><span class="y">${esc(m.y)}</span><div><div class="small">${esc(m.txt)}</div>${m.t?`<div class="bar" aria-hidden="true"><i style="width:${Math.round(100*m.t/max)}%"></i></div>`:""}</div><span class="t">${m.t!=null?`${m.t} t/ha${m.qq!=null?`<br><small>${m.qq} qq</small>`:""}`:"—"}</span></div>`).join("");
+  const ml = l.memLote; const box = $("#mem-resumen"); if(box){ box.hidden = !ml; if(ml){ const pc = ml.por_cultivo || {}; const filas = Object.keys(pc).filter(k=>pc[k].rend_media_t_ha!=null).map(k=>[nombreCultivo(k), `${pc[k].n} campaña${pc[k].n===1?"":"s"} · ${pc[k].rend_media_t_ha} t/ha${pc[k].rend_media_qq_ha!=null?` (${pc[k].rend_media_qq_ha} qq)`:""}${pc[k].vs_zona_media_pct!=null?` · ${pc[k].vs_zona_media_pct>=0?"+":""}${pc[k].vs_zona_media_pct} % vs zona`:""}`]);
+    if(ml.rotacion && ml.rotacion.secuencia) filas.push(["Rotación", ml.rotacion.secuencia.join(" → ")]);
+    if(ml.esperado_lote) filas.push(["Esperado del lote", `${ml.esperado_lote.rend_t_ha} t/ha${ml.esperado_lote.rend_qq_ha!=null?` (${ml.esperado_lote.rend_qq_ha} qq/ha)`:""} · orientativo (${ml.esperado_lote.n} campañas comparables)`]);
+    box.innerHTML = `<p class="small">${esc((ml.lectura||[]).join(" "))}</p>` + kv(filas) + (ml.por_antecesor ? `<p class="note">Según el antecesor (describe, no explica: pocos casos): ${esc(Object.keys(ml.por_antecesor).map(c=>`${nombreCultivo(c)}: `+Object.keys(ml.por_antecesor[c]).map(a=>`después de ${a} ${ml.por_antecesor[c][a].rend_media_t_ha} t/ha (n=${ml.por_antecesor[c][a].n})`).join("; ")).join(" · "))}</p>` : ""); } }
+  const btn = $("#mem-agregar"); if(btn) btn.hidden = !(MODO==="nube" && l.nube && !l.sin);
 }
 function renderTemporada(){
   const l = LOTES[lotIdx], pf = perfilDeLote(l);
@@ -1165,7 +1201,7 @@ async function subirArchivo(bucket, ruta, blob){
 }
 
 // --- lotes y reportes -> el modelo que ya usan las pantallas
-function temporadaLabel(fs){ if(!fs) return String(new Date().getFullYear()); const y = +fs.slice(0,4), m = +fs.slice(5,7); return m >= 9 ? `${y}-${String(y+1).slice(2)}` : String(y); }
+function temporadaLabel(fs){ if(!fs) return String(new Date().getFullYear()); const y = +fs.slice(0,4), m = +fs.slice(5,7); return m >= 9 ? `${y}/${String(y+1).slice(2)}` : String(y); }
 function loteVacio(){ return {id:"__sin__", sin:true, nube:true, nombre:"Sin lotes todavía", cultivo:"—", region:"", nivel:"sin", etapaTxt:"Cree su primer lote con \"+ Nuevo lote\", arriba.", sem:[], semVacio:"Cuando exista un lote, aquí va su semáforo.", nota:"", acciones:[{a:"Crear el primer lote", p:"Toque \"+ Nuevo lote\" en la barra de arriba. Después, en Lote, marque el punto y el borde.", c:"alta"}], memoria:[], memTxt:"La memoria empieza con el primer lote.", termina:{titulo:"Sin lotes", cuerpo:"Cuando haya un lote y seis semanas observadas, aquí aparece la tendencia de cosecha."}, dias:null, agg:null, fechaTxt: fechaLarga(hoyISO)}; }
 function lotDesdeNube(f, rep){
   const c = rep && rep.contenido, hoy = c && c.hoy, sem = c && c.semana;
@@ -1184,15 +1220,16 @@ function lotDesdeNube(f, rep){
       l.fuenteTxt = `Fuente: ensamble ${sem.fuente || ""} (${sem.n_miembros || "?"} escenarios) emitido el ${fmtD((c.fuentes && c.fuentes.emitido_ensamble) || rep.emitido)}. ${sem.calibrado ? "Probabilidades calibradas." : "Sin calibrar todavía: fracción de escenarios."} Lluvia 14 días: ${l.lluvia14[1]} mm (rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
     } else { l.semanaVacia = "El reporte de este lote no trae todavía el detalle por día (la zona sin pronóstico cargado); vuelve a intentarse cada noche."; }
     const m = c.memoria || {}; const nreg = m.registros || 0;
-    l.memoria = [{y: temporadaLabel(f.fecha_siembra), t:null, txt:`Temporada en curso · ${nreg} registro${nreg===1?"":"s"}${f.fecha_siembra ? ` · siembra ${fmtD(f.fecha_siembra)}` : ""}`}];
-    l.memTxt = `${m.temporadas||1} temporada${(m.temporadas||1)===1?"":"s"} con registro. Con tres, el reporte deja de hablar de la zona y empieza a hablar de este lote; con cinco, el pronóstico de cosecha pasa a ser del lote.`;
+    l.memoria = memoriaDeTemporadas(f).concat([{y: temporadaLabel(f.fecha_siembra), t:null, txt:`Temporada en curso · ${nreg} registro${nreg===1?"":"s"}${f.fecha_siembra ? ` · siembra ${fmtD(f.fecha_siembra)}` : ""}`, actual:true}]);
+    l.memLote = m.lote || null;
+    l.memTxt = m.lote && m.lote.lectura ? m.lote.lectura.join(" ") : `${m.temporadas||1} temporada${(m.temporadas||1)===1?"":"s"} con registro. Con tres, el reporte deja de hablar de la zona y empieza a hablar de este lote; con cinco, el pronóstico de cosecha pasa a ser del lote.`;
     l.termina = {titulo:"El pronóstico del lote llega con la semana 6", cuerpo:"El pronóstico de cosecha del lote necesita seis semanas observadas. Mientras tanto, la referencia es la memoria pública de la zona (arriba, cuando el cultivo ya tiene perfil) y la tendencia regional."};
   } else {
     l.nivel = "sin";
     l.etapaTxt = f.fecha_siembra ? `Siembra del ${fmtD(f.fecha_siembra)} · el reporte del lote llega con la próxima corrida nocturna.` : "Sin fecha de siembra: regístrela en Lote para que la etapa se calcule.";
     l.semVacio = "Todavía no hay reporte para este lote. El motor lo genera cada noche a partir de que el lote existe; mañana por la mañana aparece aquí."; l.nota = "";
     l.acciones = [{a:"Marcar el punto y el borde del lote", p:"En Lote: toque el mapa o use su ubicación, proponga el polígono y confírmelo. Con eso el motor toma la zona y el clima del punto.", c:"alta"}, {a:"Registrar lo que haga desde hoy", p:"Riegos, aplicaciones y lo que vea: la memoria del lote empieza con el primer registro.", c:"alta"}];
-    l.memoria = [{y: temporadaLabel(f.fecha_siembra), t:null, txt:"Temporada en curso · sin reporte todavía"}]; l.memTxt = "Este lote empieza hoy su memoria.";
+    l.memoria = memoriaDeTemporadas(f).concat([{y: temporadaLabel(f.fecha_siembra), t:null, txt:"Temporada en curso · sin reporte todavía", actual:true}]); l.memTxt = l.memoria.length > 1 ? `${l.memoria.length-1} campaña${l.memoria.length-1===1?"":"s"} anterior${l.memoria.length-1===1?"":"es"} cargada${l.memoria.length-1===1?"":"s"}; el motor las compara con la zona en la próxima corrida.` : "Este lote empieza hoy su memoria.";
     l.termina = {titulo:"Sin reporte del lote todavía", cuerpo:"Cuando haya reporte y seis semanas observadas, aquí aparece la tendencia de cosecha del lote."};
     l.semanaVacia = "Sin pronóstico para este lote todavía: aparece con la primera corrida nocturna después de crear el lote.";
   }
@@ -1206,10 +1243,10 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES, tems: TEMPORADAS})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam, tems] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1224,19 +1261,20 @@ async function cargarLotes(){
     db("GET","avisos",{select:"*", order:"enviado_en.desc", limit:"30"}).catch(()=>null),                                  // avisos que el RIG le mandó a esta persona
     db("GET","reportes_pdf",{select:"*", order:"emitido.desc", limit:"60"}).catch(()=>null),                                // el reporte de cada lote en PDF (cubeta reportes_pdf)
     db("GET","whatsapp_mensajes",{select:"wa_id,lote_id,tipo,recibido_en,estado,texto,respuesta,interpretado_en", order:"recibido_en.desc", limit:"30"}).catch(()=>null),   // lo que llegó por WhatsApp (los propios)
+    db("GET","temporadas",{select:"*", order:"anio_cosecha.asc,fecha_siembra.asc", limit:"2000"}).catch(()=>null),                   // la memoria propia del campo: campañas por lote (v23)
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
-  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || [];
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -1610,13 +1648,53 @@ async function renderPlanillas(){
   const l = LOTES[lotIdx], cul = claveCultivo(l.cultivo);
   $("#pla-h2").textContent = `Visitas por Excel · ${nombreCultivo(cul)}`;
   $("#pla-nota").textContent = MODO!=="nube" ? "Con sesión: aquí se descarga la plantilla del cultivo y se suben las planillas llenas." : `Plantilla de ${nombreCultivo(cul)} con la lista de sus lotes. Las planillas subidas se revisan en la corrida nocturna; abajo queda el informe fila por fila.`;
-  const mias = (PLANILLAS||[]).filter(pl=>!l.sin && pl.lote_id===l.uuid);
+  const mias = (PLANILLAS||[]).filter(pl=>!l.sin && pl.lote_id===l.uuid && (pl.tipo||"visitas")==="visitas");
+  const his = (PLANILLAS||[]).filter(pl=>pl.tipo==="historial"); const ESTH = {subida:"subido, el motor lo lee esta noche", ingerida:"leído: todo entró", con_errores:"leído: entró parte", error:"leído: no entró"};
+  $("#his-list").innerHTML = his.length ? his.map(pl=>`<div class="log-item"><span class="d">${esc(fmtD(String(pl.creado_en||"").slice(0,10)))}</span><span><b>${esc(pl.nombre||pl.archivo)}</b> · ${esc(ESTH[pl.estado]||pl.estado)}${pl.filas_ok!=null?` · ${pl.filas_ok} filas entraron${pl.filas_error?`, ${pl.filas_error} no`:""}`:""}${pl.informe&&pl.informe.length?`<details class="par"><summary>informe (${pl.informe.length} líneas)</summary>${pl.informe.slice(0,60).map(x=>`<div>${esc(x)}</div>`).join("")}${pl.informe.length>60?`<div>… ${pl.informe.length-60} líneas más</div>`:""}</details>`:""}</span></div>`).join("") : `<p class="note">Todavía no subió un historial.</p>`;
   const EST = {subida:"subida, pendiente de revisar", ingerida:"revisada: todo entró", con_errores:"revisada: entró parte", error:"revisada: no entró"};
   $("#pla-list").innerHTML = mias.length ? mias.map(pl=>`<div class="log-item"><span class="d">${esc(fmtD(String(pl.creado_en||"").slice(0,10)))}</span><span><b>${esc(pl.nombre||pl.archivo)}</b> · ${esc(EST[pl.estado]||pl.estado)}${pl.filas_ok!=null?` · ${pl.filas_ok} filas entraron${pl.filas_error?`, ${pl.filas_error} no`:""}`:""}${pl.informe&&pl.informe.length?`<div class="par">${pl.informe.slice(0,8).map(x=>`<div>${esc(x)}</div>`).join("")}${pl.informe.length>8?`<div>… ${pl.informe.length-8} líneas más</div>`:""}</div>`:""}</span></div>`).join("") : `<p class="note">${l.sin?"Cree un lote primero.":"Todavía no subió planillas para este lote."}</p>`;
 }
+$("#mem-agregar").addEventListener("click", ()=>{ const l = LOTES[lotIdx]; const f = $("#mem-form"); f.hidden = !f.hidden; if(!f.hidden){ $("#tp-cultivo").value = claveCultivo(l.cultivo) || "soja"; $("#tp-rend-l").textContent = esAR(l) ? "Rendimiento (qq/ha)" : "Rendimiento (t/ha)"; $("#tp-campana").focus(); } });
+$("#tp-cancelar").addEventListener("click", ()=>{ $("#mem-form").hidden = true; });
+$("#mem-form").addEventListener("submit", async e=>{
+  e.preventDefault(); const l = LOTES[lotIdx]; if(MODO!=="nube" || !l || l.sin || !l.nube){ toast("Con sesión y un lote elegido"); return; }
+  const campana = $("#tp-campana").value.trim(); if(!campana){ toast("Falta la campaña (p. ej. 2023/24)"); return; }
+  const num = id => { const v = $(id).value.trim().replace(",","."); return v==="" ? null : (isNaN(parseFloat(v)) ? null : parseFloat(v)); };
+  let rend = num("#tp-rend"); if(rend!=null && esAR(l)) rend = Math.round(rend*100)/1000;                  // quintales -> t/ha
+  const cultivo = $("#tp-cultivo").value; const gruesa = !["trigo","cebada"].includes(cultivo);
+  const m2 = campana.match(/(19|20)(\d{2})\s*[\/\-]\s*(\d{2,4})/), m1 = campana.match(/\b((?:19|20)\d{2})\b/); let camp = campana, anio = null;
+  if(m2){ const y1 = +(m2[1]+m2[2]); camp = esAR(l) ? `${y1}/${String((y1+1)%100).padStart(2,"0")}` : String(y1); anio = esAR(l) ? (gruesa ? y1+1 : y1) : y1; }
+  else if(m1){ const y = +m1[1]; if(esAR(l)){ camp = gruesa ? `${y-1}/${String(y%100).padStart(2,"0")}` : `${y}/${String((y+1)%100).padStart(2,"0")}`; anio = y; } else { camp = String(y); anio = y; } }
+  else { toast("Campaña: use el año, p. ej. 2023/24 o 2024"); return; }
+  const fila = {lote_id:l.uuid, usuario:sesion.user.id, campana:camp, anio_cosecha:anio, cultivo, variedad:$("#tp-variedad").value.trim()||null, fecha_siembra:$("#tp-siembra").value||null, fecha_cosecha:$("#tp-cosecha").value||null,
+    superficie_ha:num("#tp-ha"), rendimiento_t_ha:rend, cultivo_anterior:(claveCultivo($("#tp-anterior").value.trim())||null), perdida_pct:num("#tp-perdida"), causa_perdida:$("#tp-causa").value.trim()||null, notas:$("#tp-notas").value.trim()||null, fuente:"app", cliente_id:"app:"+(crypto.randomUUID ? crypto.randomUUID() : String(Date.now()))};
+  try{
+    const r = await db("POST","temporadas",{on_conflict:"lote_id,campana,cultivo"},fila,"resolution=merge-duplicates,return=representation");
+    const nueva = r && r[0] ? r[0] : fila; TEMPORADAS = (TEMPORADAS||[]).filter(t=>!(t.lote_id===nueva.lote_id && t.campana===nueva.campana && t.cultivo===nueva.cultivo)).concat([nueva]);
+    cacheGuardar(); const f = ultimoCache.filas ? ultimoCache.filas.find(x=>x.id===l.uuid) : null; if(f){ l.memoria = memoriaDeTemporadas(f).concat(l.memoria.filter(m=>m.actual)); }
+    $("#mem-form").hidden = true; ["#tp-campana","#tp-siembra","#tp-cosecha","#tp-rend","#tp-ha","#tp-anterior","#tp-variedad","#tp-perdida","#tp-causa","#tp-notas"].forEach(id=>{ $(id).value = ""; });
+    renderMemoria(); renderHoy(); toast(`Campaña ${camp} guardada${rend!=null?` · ${rend} t/ha`:""}; el motor la compara con la zona esta noche`);
+  }catch(err){ toast("No se pudo guardar: " + String(err && err.message || err).slice(0,120)); }
+});
 $("#pla-descargar").addEventListener("click", async ()=>{
   const l = LOTES[lotIdx], cul = claveCultivo(l.cultivo); if(MODO!=="nube"){ toast("Con sesión se descarga la plantilla"); return; }
   try{ const u = await urlFirmada(plantillaRuta(cul)); window.open(u, "_blank"); }catch(e){ toast("La plantilla no está en la nube todavía: el motor la sube en la próxima corrida nocturna"); }
+});
+$("#his-descargar").addEventListener("click", async ()=>{
+  if(MODO!=="nube"){ toast("Con sesión se descarga la plantilla"); return; }
+  try{ const u = await urlFirmada("plantillas/Historial_del_campo.xlsx"); window.open(u, "_blank"); }catch(e){ toast("La plantilla no está en la nube todavía: el motor la sube en la próxima corrida nocturna"); }
+});
+$("#his-input").addEventListener("change", async e=>{
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  if(MODO!=="nube" || !sesion){ toast("Con sesión se puede subir"); e.target.value = ""; return; }
+  if(!/\.(xlsx|csv)$/i.test(f.name)){ toast("Suba un .xlsx o un .csv"); e.target.value = ""; return; }
+  try{
+    const nombre = f.name.replace(/[^A-Za-z0-9._-]/g, "_"); const ruta = `historial/${sesion.user.id}/${Date.now()}_${nombre}`;
+    await subirArchivo("planillas", ruta, f);
+    const fila = await db("POST","planillas",null,{lote_id:null, usuario:sesion.user.id, archivo:`planillas/${ruta}`, nombre:f.name, tipo:"historial"},"return=representation");
+    PLANILLAS.unshift(fila[0]); cacheGuardar(); renderPlanillas(); toast("Historial subido: el motor lo lee esta noche y deja el informe aquí");
+  }catch(err){ toast("No se pudo subir: " + String(err && err.message || err).slice(0,120)); }
+  e.target.value = "";
 });
 $("#pla-input").addEventListener("change", async e=>{
   const f = e.target.files && e.target.files[0]; if(!f) return; const l = LOTES[lotIdx];
@@ -1646,7 +1724,7 @@ async function verParecidas(id, box){
 }
 document.addEventListener("click", e=>{ const b = e.target.closest("[data-par]"); if(!b) return; const box = b.parentElement.querySelector(`[data-par-de="${b.getAttribute("data-par")}"]`); if(box) verParecidas(b.getAttribute("data-par"), box); });
 let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
-let FORMULARIOS = {}, PLANILLAS = [];                             // formulario de visita por cultivo (lo sube el RIG desde config/visitas) y planillas Excel subidas
+let FORMULARIOS = {}, PLANILLAS = [], TEMPORADAS = [];   // formulario de visita por cultivo, planillas Excel subidas y temporadas (la memoria propia del campo, v23)
 let REVISIONES = [], PERFILES_RED = [], AVISOS = [], REPORTES_PDF = [], WA_MENSAJES = [];   // revisiones del agrónomo (conjunto reservado), perfiles de la red (solo equipo), avisos recibidos, PDF por lote, mensajes de WhatsApp
 function esEquipo(){ return !!(perfil && ["agronomo","socio","admin"].includes(perfil.rol)); }
 const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate", soja:"soja", girasol:"girasol", cebada:"cebada", sorgo:"sorgo"};
@@ -1701,7 +1779,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "22 · 28 oct 2026";
+const APP_VERSION = "23 · 29 oct 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
