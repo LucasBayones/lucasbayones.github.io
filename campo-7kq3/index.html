@@ -638,7 +638,9 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="kv" id="ss-razon-kv"></div>
     <div class="progress" id="ss-razon-prog" hidden><i></i></div>
     <p class="small muted" id="ss-razon-txt"></p>
-    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~350 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~1 GB)</button><button class="btn sec" data-razl="gemma1">Gemma 3 1B (~1 GB)</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button></div>
+    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~350 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~1 GB)</button><button class="btn sec" data-razl="gemma1">Gemma 3 1B (~1 GB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
+    <p class="small" id="ss-razon-prueba" hidden></p>
+    <p class="note">Descárguelo desde la app instalada en la pantalla de inicio (no desde el navegador: son memorias separadas). En iPhone use el 0.5B; el 1.5B y Gemma necesitan el procesador gráfico (Android). Después de descargar, toque <b>Probar</b>: si responde, ya funciona sin señal.</p>
     <p class="note">Un modelo de lenguaje chico que vive en el teléfono: entiende las notas de voz y de libreta en registros (mejor que las reglas), resume el recorrido de plagas y responde preguntas sobre el lote con lo que la app tiene guardado (Hoy → "Pregúntele al teléfono"). Dos compuertas siempre: ningún número que no esté en los datos y nunca productos ni dosis. Con señal, el motor vuelve a entender cada nota con el modelo grande y mide el acuerdo: así se sabe cuánto confiar en el teléfono. PRELIMINAR.</p>
     <h3 class="small" style="margin-top:6px">Mapa del lote para el campo</h3>
     <div class="kv" id="ss-mapa-kv"></div>
@@ -2136,7 +2138,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "32 · 3 nov 2026";
+const APP_VERSION = "32.1 · 3 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3266,7 +3268,8 @@ let vozl = { estado:"no", progreso:0, pipe:null, modelo:null, motor:null, error:
 let vozlPend = null;                                                                                   // la nota entendida en el teléfono, esperando el "Guardar"
 function vozlConf(){ try{ return JSON.parse(localStorage.getItem(VOZL_KEY)) || {}; }catch(e){ return {}; } }
 function vozlGuardarConf(c){ try{ localStorage.setItem(VOZL_KEY, JSON.stringify(c)); }catch(e){} }
-function vozlMotor(){ const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints > 1); return (navigator.gpu && !ios) ? "webgpu" : "wasm"; }
+function vozlMotor(){ const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints > 1); return (navigator.gpu && !ios && window.__gpuOK !== false) ? "webgpu" : "wasm"; }
+(async ()=>{ try{ window.__gpuOK = !!(navigator.gpu && await navigator.gpu.requestAdapter()); }catch(e){ window.__gpuOK = false; } })();   // v32.1: si el adaptador no existe, todo va por WASM
 async function vozlLib(){
   if(window.__tjs) return window.__tjs;
   if(window.ENGRAM_TJS_FAKE){ window.__tjs = window.ENGRAM_TJS_FAKE; return window.__tjs; }          // pruebas: transcriptor falso inyectado
@@ -3399,14 +3402,29 @@ function razlDisponible(){ return razl.estado==="listo" || !!razlConf().listo; }
 function razlNombre(){ const c = razlConf(); const m = RAZL_MODELOS[razl.modelo || c.modelo || "qwen05"]; return m ? m.txt.split(" · ")[0] : "modelo del teléfono"; }
 async function razlCargar(modelo){
   const m = RAZL_MODELOS[modelo] || RAZL_MODELOS.qwen05; razl.estado = "cargando"; razl.progreso = 0; razl.error = null; razl.modelo = modelo; razl.motor = vozlMotor(); renderSinSenal();
+  razl.diag = [`${new Date().toISOString().slice(0,19)} · ${m.id} · ${navigator.userAgent.slice(0,80)} · gpu:${window.__gpuOK}`];
   try{
-    const tjs = await vozlLib(); const dtype = razl.motor==="webgpu" ? "q4f16" : "q4";
+    const tjs = await vozlLib(); razl.diag.push(`biblioteca: ${vozl.lib || "?"}`);
     const prog = p => { if(p && p.status==="progress"){ razl.progreso = Math.round(p.progress || 0); razl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
-    razl.pipe = await tjs.pipeline("text-generation", m.id, {device: razl.motor, dtype, progress_callback: prog});
-    razl.estado = "listo"; razl.progreso = 100; razlGuardarConf({modelo, listo:true, motor: razl.motor, fecha: new Date().toISOString()});
-  }catch(e){ razl.estado = "error"; razl.error = (e && e.message ? e.message : String(e)).slice(0, 160); razl.pipe = null; }
+    const intentos = razl.motor==="webgpu" ? [["webgpu","q4f16"],["webgpu","q4"],["wasm","q4"]] : [["wasm","q4"],["wasm","q8"]];   // v32.1: si una variante no existe o el motor falla, se prueba la siguiente
+    let ok = false;
+    for(const [device, dtype] of intentos){
+      try{ razl.pipe = await tjs.pipeline("text-generation", m.id, {device, dtype, progress_callback: prog}); razl.motor = device; razl.dtype = dtype; ok = true; razl.diag.push(`cargado con ${device}/${dtype}`); break; }
+      catch(e){ razl.diag.push(`${device}/${dtype}: ${(e && e.message ? e.message : String(e)).slice(0, 200)}`); razl.pipe = null; }
+    }
+    if(!ok) throw new Error(razl.diag.slice(2).join(" | ").slice(0, 300));
+    razl.estado = "listo"; razl.progreso = 100; razlGuardarConf({modelo, listo:true, motor: razl.motor, dtype: razl.dtype, fecha: new Date().toISOString()});
+  }catch(e){ razl.estado = "error"; razl.error = (e && e.message ? e.message : String(e)).slice(0, 300); razl.pipe = null; }
   renderSinSenal(); renderRazonHoy(); return razl.estado==="listo";
 }
+async function razlProbar(){                                 // v32.1: "Probar": una respuesta cortita para ver que el modelo funciona de verdad en este teléfono
+  const el = $("#ss-razon-prueba"); el.hidden = false; el.textContent = "Probando el modelo…";
+  try{ const t0 = Date.now(); const r = await razlGenerar([{role:"user", content:"Responde solo con una palabra: hola"}], 8, m=>{ el.textContent = m; });
+    el.textContent = `Funciona: respondió «${r.slice(0,40)}» en ${Math.round((Date.now()-t0)/1000)} s (${razl.motor}/${razl.dtype||"?"}). Ya puede usarlo sin señal.`; }
+  catch(e){ el.textContent = "No funcionó: " + String(e.message||e).slice(0,200); }
+  renderSinSenal();
+}
+function razlDiagTexto(){ const c = razlConf(); return [`Engram Campo ${APP_VERSION}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · error: ${razl.error||"-"}`].concat(razl.diag || []).join("\n"); }
 async function razlAsegurar(){ if(razl.estado==="listo" && razl.pipe) return true; const c = razlConf(); if(!c.listo) return false; return razlCargar(c.modelo || "qwen05"); }
 async function razlGenerar(messages, max, avisar){
   if(!(await razlAsegurar())) throw new Error(razl.error || "modelo de razonamiento no disponible");
@@ -3530,7 +3548,7 @@ async function razlResumenRecorrido(hechos, avisar){
 function renderRazonHoy(){
   const card = $("#hoy-razon"); if(!card) return; const l = LOTES[lotIdx]; card.hidden = !!(l && l.sin) || MODO!=="nube"; if(card.hidden) return;
   const disp = razlDisponible(); $("#rz-q").disabled = !disp || razl.ocupado; $("#rz-ask").disabled = !disp || razl.ocupado;
-  $("#rz-estado").textContent = razl.estado==="cargando" ? `Cargando el modelo… ${razl.progreso} %` : disp ? `${razlNombre()} en este teléfono · sin internet · PRELIMINAR` : "Descargue el modelo de razonamiento en Más → Sin señal (una vez, con wifi).";
+  $("#rz-estado").textContent = razl.estado==="cargando" ? `Cargando el modelo… ${razl.progreso} %` : razl.estado==="error" ? "El modelo no cargó: " + (razl.error||"").slice(0,120) + " (Más → Sin señal → Copiar diagnóstico)" : razl.estado==="listo" ? `${razlNombre()} en este teléfono · sin internet · PRELIMINAR` : disp ? `${razlNombre()} descargado: la primera pregunta tarda unos segundos más mientras se carga en memoria.` : "Descargue el modelo de razonamiento en Más → Sin señal (una vez, con wifi).";
 }
 $("#rz-ask").addEventListener("click", async ()=>{
   const q = $("#rz-q").value.trim(); if(!q) return; const out = $("#rz-a"); out.hidden = false; out.innerHTML = `<p class="small muted" id="rz-hint">Pensando en el teléfono…</p>`;
@@ -3551,7 +3569,10 @@ function renderRazonSinSenal(){
   const pr = $("#ss-razon-prog"); pr.hidden = razl.estado!=="cargando"; pr.querySelector("i").style.width = razl.progreso + "%";
   $("#ss-razon-txt").textContent = razl.estado==="error" ? "No se pudo cargar: " + razl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : razl.estado==="listo" ? "Las notas se entienden y las preguntas se responden en este teléfono, sin internet." : c.listo ? "Listo para usarse sin señal." : "Con wifi, descargue un modelo una vez. En iPhone conviene el chico (0.5B); en Android con buen procesador gráfico, el de 1.5B o Gemma.";
   $$("#ss-razon-btns button[data-razl]").forEach(b=>{ b.disabled = razl.estado==="cargando"; }); $("#ss-razon-quitar").hidden = !c.listo;
+  $("#ss-razon-probar").hidden = !c.listo && razl.estado!=="listo"; $("#ss-razon-diag").hidden = !(razl.diag && razl.diag.length);
 }
+$("#ss-razon-probar").addEventListener("click", razlProbar);
+$("#ss-razon-diag").addEventListener("click", async ()=>{ const t = razlDiagTexto(); try{ await navigator.clipboard.writeText(t); toast("Diagnóstico copiado: péguelo en el chat"); }catch(e){ prompt("Copie este diagnóstico:", t); } });
 $$("#ss-razon-btns button[data-razl]").forEach(b=>b.addEventListener("click", ()=>razlCargar(b.dataset.razl)));
 window.__engramRazl = {hechos: razlHechos, compuerta: razlCompuerta, sinProductos: razlSinProductos, json: razlJSON};   // para depurar en el teléfono (consola)
 $("#ss-razon-quitar").addEventListener("click", async ()=>{ razlGuardarConf({}); razl = {estado:"no", progreso:0, pipe:null, modelo:null, motor:null, error:null, archivo:"", ocupado:false, ultimo:null}; renderSinSenal(); renderRazonHoy(); toast("Modelo de razonamiento quitado del teléfono (la caché de modelos se limpia al quitar el de voz)"); });
