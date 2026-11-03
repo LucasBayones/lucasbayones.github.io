@@ -628,6 +628,12 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="small muted" id="ss-foto-txt"></p>
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" id="ss-foto-cargar">Descargar modelo de fotos (~150 MB)</button><button class="btn sec" id="ss-foto-quitar" hidden>Quitar</button></div>
     <p class="note">Con él, al tomar una foto de plaga (Vi algo, punto de monitoreo) o un video, el teléfono da una sospecha al instante —"parece mosquita blanca (adultos), 62 %"— sin internet. Es PRELIMINAR (reconocimiento general, sin entrenar con sus fotos todavía): el motor lo lee con el modelo grande con señal y su agrónomo confirma; con lo confirmado el modelo mejora.</p>
+    <h3 class="small" style="margin-top:6px">Lector de libreta en el teléfono</h3>
+    <div class="kv" id="ss-ocr-kv"></div>
+    <div class="progress" id="ss-ocr-prog" hidden><i></i></div>
+    <p class="small muted" id="ss-ocr-txt"></p>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" id="ss-ocr-cargar">Descargar lector de libreta (~250 MB)</button><button class="btn sec" id="ss-ocr-quitar" hidden>Quitar</button></div>
+    <p class="note">Sin señal, la foto de la página se lee en el teléfono (Florence‑2) y propone los renglones; usted corrige y el modelo chico interpreta. Lee imprenta y letra clara; la cursiva apretada la lee mejor el lector del motor con señal, que además vuelve a leer la página y mide el acuerdo. PRELIMINAR.</p>
     <h3 class="small" style="margin-top:6px">Modelo de razonamiento en el teléfono</h3>
     <div class="kv" id="ss-razon-kv"></div>
     <div class="progress" id="ss-razon-prog" hidden><i></i></div>
@@ -995,6 +1001,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         <label class="photo" for="vid-input" id="vid-drop"><b>Filmar</b><span class="small muted">Abre la cámara en modo video. Recorra la planta o el daño despacio, 10 a 20 segundos, y diga en voz alta lo que ve.</span><input class="hiddeninput" id="vid-input" type="file" accept="video/*" capture="environment"></label>
         <div id="vid-preview" hidden></div>
         <p class="small" id="vid-reco" hidden style="color:var(--blue)"></p>
+        <p class="small" id="vid-voz" hidden style="color:var(--blue)"></p>
         <div class="card">
           <span class="eyebrow">¿Qué muestra?</span>
           <div class="chips" id="vid-tipo"><button class="chip" aria-pressed="true">daño en planta</button><button class="chip" aria-pressed="false">plaga</button><button class="chip" aria-pressed="false">el lote completo</button><button class="chip" aria-pressed="false">riego</button><button class="chip" aria-pressed="false">otro</button></div>
@@ -1638,6 +1645,9 @@ window.addEventListener("online", ()=>{ vaciarCola(); }); window.addEventListene
 // --- lectura de libreta: respaldo en la nube (foto, lo leído, lo corregido, lo confirmado)
 async function guardarLectura(fotoFile, lineasOrig, lineasCorr, propuestos, confirmados, modelo){
   if(MODO!=="nube") return; const l = LOTES[lotIdx]; if(!l.nube || l.sin) return;
+  if(!navigator.onLine){                                        // v32: sin señal, la lectura (y la foto) se encolan; con señal el motor la vuelve a leer y mide el acuerdo
+    encolarRegistro({cliente_id: uuid(), lote_id:l.uuid, usuario:sesion.user.id, foto:null, lineas:lineasOrig, lineas_corregidas:lineasCorr, registros_propuestos:propuestos, registros_confirmados:confirmados, modelo, _tabla:"lecturas_libreta", _campo_archivo:"foto"}, fotoFile ? {bucket:"fotos", ext:extDe(fotoFile), blob:fotoFile} : null); return;
+  }
   try{
     let foto = null; if(fotoFile){ try{ foto = await subirArchivo("fotos", `${l.uuid}/libreta-${uuid()}.${extDe(fotoFile)}`, fotoFile); }catch(e){} }
     await db("POST","lecturas_libreta",null,{lote_id:l.uuid, usuario:sesion.user.id, foto, lineas:lineasOrig, lineas_corregidas:lineasCorr, registros_propuestos:propuestos, registros_confirmados:confirmados, modelo},"return=minimal");
@@ -1649,7 +1659,7 @@ function mostrarLogin(on){ $("#login").hidden = !on; document.body.classList.tog
 function renderSesion(){
   const kv_ = $("#sesion-kv"); if(!kv_) return;
   const conf = NUBE.url && NUBE.anon;
-  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()],["Alertas", alertasError ? `no se pudieron leer: ${alertasError}` : `${ALERTAS.length} cargada${ALERTAS.length===1?"":"s"} (${ALERTAS.filter(a=>a.vigente).length} vigente${ALERTAS.filter(a=>a.vigente).length===1?"":"s"})`]].concat(estadoRig && estadoRig.detalle && estadoRig.detalle.evaluacion ? [["Acierto de las alertas", (ev=>`${ev.total} emitidas · ${ev.confirmadas} confirmadas por el agrónomo · ${ev.reportadas} reportadas por el productor · ${ev.sin_evidencia} sin evidencia · ${ev.pendientes} en curso`)(estadoRig.detalle.evaluacion)]] : []).concat(estadoRig && estadoRig.detalle && estadoRig.detalle.acuerdo_telefono ? [["Acuerdo teléfono‑motor", (ac=>Object.entries(ac).filter(([k,v])=>v && v.n).map(([k,v])=>`${({voz:"voz", interpretacion:"interpretación", foto:"fotos", razonamiento:"razonamiento"})[k]||k} ${Math.round((v.media||0)*100)} % (n=${v.n})`).join(" · ") || "sin comparaciones todavía")(estadoRig.detalle.acuerdo_telefono)]] : []) : []).concat([["Versión de la app", APP_VERSION]]));
+  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()],["Alertas", alertasError ? `no se pudieron leer: ${alertasError}` : `${ALERTAS.length} cargada${ALERTAS.length===1?"":"s"} (${ALERTAS.filter(a=>a.vigente).length} vigente${ALERTAS.filter(a=>a.vigente).length===1?"":"s"})`]].concat(estadoRig && estadoRig.detalle && estadoRig.detalle.evaluacion ? [["Acierto de las alertas", (ev=>`${ev.total} emitidas · ${ev.confirmadas} confirmadas por el agrónomo · ${ev.reportadas} reportadas por el productor · ${ev.sin_evidencia} sin evidencia · ${ev.pendientes} en curso`)(estadoRig.detalle.evaluacion)]] : []).concat(estadoRig && estadoRig.detalle && estadoRig.detalle.acuerdo_telefono ? [["Acuerdo teléfono‑motor", (ac=>Object.entries(ac).filter(([k,v])=>v && v.n).map(([k,v])=>`${({voz:"voz", interpretacion:"interpretación", foto:"fotos", razonamiento:"razonamiento", libreta:"libreta", video:"video"})[k]||k} ${Math.round((v.media||0)*100)} % (n=${v.n})`).join(" · ") || "sin comparaciones todavía")(estadoRig.detalle.acuerdo_telefono)]] : []) : []).concat([["Versión de la app", APP_VERSION]]));
   $("#sesion-salir").hidden = !(MODO==="nube"); $("#sesion-entrar").hidden = !(conf && MODO!=="nube");
   $("#nube-url").value = NUBE.url; $("#nube-anon").value = NUBE.anon;
 }
@@ -2126,7 +2136,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "31 · 3 nov 2026";
+const APP_VERSION = "32 · 3 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2393,7 +2403,7 @@ function addLog(t, txt, f, src, datos, archivo){
   const l = LOTES[lotIdx]; if(l.sin){ toast("Primero cree un lote (botón + arriba)"); return; }
   const cid = uuid(); const item = {lote: l.id, f: f || hoyISO, t, txt, cid}; if(src) item.src = src;
   if(MODO==="nube" && l.nube){ item.pendiente = true; encolarRegistro({cliente_id:cid, lote_id:l.uuid, usuario:sesion.user.id, fecha:item.f, tipo:t, texto:txt, datos:datos||{}, fuente:src||"app", archivo:null}, archivo||null); }
-  log.push(item); save(); flashNew.push(item); renderLog();
+  log.push(item); save(); flashNew.push(item); renderLog(); return item;
 }
 function archivoDe(input, bucket){ const f = input && input.files && input.files[0]; return f ? {bucket, ext:extDe(f), blob:f} : null; }
 $("#ap-save").addEventListener("click", ()=>{ const p=$("#ap-prod").value.trim(); if(!p){ toast("Escriba el producto o elija uno de los últimos"); $("#ap-prod").focus(); return; } const d=$("#ap-dosis").value.trim(); addLog("aplique", `${$("#ap-tipo").value}: ${p}${d?` · ${d} ${$("#ap-unidad").value}`:""}`, $("#ap-fecha").value||hoyISO, undefined, {producto:p, dosis:d, unidad:$("#ap-unidad").value, clase:$("#ap-tipo").value}, archivoDe($("#etq-input"), "fotos")); afterSave("Aplicación guardada en la bitácora"); });
@@ -2460,6 +2470,7 @@ async function libStart(file){
   if(!file) return; libFile = file;
   if(libURL) URL.revokeObjectURL(libURL); libURL = URL.createObjectURL(file); $("#lib-img").src = libURL; $("#lib-img2").src = libURL;
   libProps = []; libUnparsed = []; libEdited = false; $("#lib-bar").style.width = "0"; libShow("reading");
+  if((!LECTOR.url || !navigator.onLine) && typeof ocrlDisponible==="function" && ocrlDisponible()){ await libStartLocal(file); return; }   // v32: sin señal, el teléfono lee la página
   if(LECTOR.url){
     libProgress([[200,"Enviando la página al lector…",15],[1500,"Transcribiendo renglón por renglón…",45],[4500,"Interpretando los registros…",75]]);
     try{
@@ -2597,9 +2608,9 @@ $("#lib-interp").addEventListener("click", async ()=>{
   $("#lib-interp").disabled = true; $("#lib-interp").textContent = "Interpretando…";
   let r = null;
   if((LECTOR.url || libFuente==="voz") && !libEdited && libProps.length) r = {registros: libProps, sin: libUnparsed};
-  else if(LECTOR.url && navigator.onLine && libFuente!=="voz-local"){ try{ const res = await lectorInterpretar(lines); r = {registros: normRecs(res.registros), sin: normUnp(res.sin_interpretar)}; }catch(e){ r = null; } }
+  else if(LECTOR.url && navigator.onLine && libFuente!=="voz-local" && libFuente!=="video-local"){ try{ const res = await lectorInterpretar(lines); r = {registros: normRecs(res.registros), sin: normUnp(res.sin_interpretar)}; }catch(e){ r = null; } }
   libRazon = null;
-  if(!r && razlDisponible() && (libFuente==="voz-local" || !navigator.onLine || !LECTOR.url)){      // v31: el modelo chico del teléfono entiende antes que las reglas
+  if(!r && razlDisponible() && (libFuente==="voz-local" || libFuente==="video-local" || !navigator.onLine || !LECTOR.url)){      // v31: el modelo chico del teléfono entiende antes que las reglas
     try{ const l = LOTES[lotIdx]; const rr = await razlInterpretar(libLines, {cultivo: nombreCultivo(l.cultivo), lote: l.nombre}, m=>{ $("#lib-interp").textContent = m; });
       if(rr.registros.length || rr.sin.length){ r = rr; libRazon = {modelo: rr.modelo, segundos: rr.segundos, origen:"llm"}; } }
     catch(e){ libRazon = {error: String(e.message||e).slice(0,120)}; }
@@ -2636,7 +2647,7 @@ $("#lib-rows").addEventListener("change", e=>{ const c = e.target.closest(".prop
 $("#lib-add").addEventListener("click", ()=>{ libProps.push(withDefaults({tipo:"aplicacion", fecha:hoyISO, dudas:[], nota:""})); renderLibRows(); const cards = $$("#lib-rows .prop"); cards[cards.length-1].scrollIntoView({behavior:"smooth", block:"center"}); });
 $("#lib-save").addEventListener("click", ()=>{
   const n = libProps.length; if(!n) return;
-  const src = (libFuente==="voz" || libFuente==="voz-local") ? "voz" : "libreta"; const extra = libFuente==="voz" && libTrans ? {transcripcion: libTrans.id} : libFuente==="voz-local" ? {telefono:true, entendido_por: libRazon && libRazon.modelo ? libRazon.modelo + " (teléfono)" : "reglas (teléfono)"} : (libRazon && libRazon.modelo ? {entendido_por: libRazon.modelo + " (teléfono)"} : {});
+  const src = (libFuente==="voz" || libFuente==="voz-local") ? "voz" : libFuente==="video-local" ? "video" : "libreta"; const extra = libFuente==="voz" && libTrans ? {transcripcion: libTrans.id} : (libFuente==="voz-local" || libFuente==="video-local") ? {telefono:true, ...(libFuente==="video-local" && vidPendCid ? {video_cliente_id: vidPendCid} : {}), entendido_por: libRazon && libRazon.modelo ? libRazon.modelo + " (teléfono)" : "reglas (teléfono)"} : (libRazon && libRazon.modelo ? {entendido_por: libRazon.modelo + " (teléfono)"} : {});
   libProps.forEach(p=>{
     if(p.tipo==="aplicacion") addLog("aplique", `${p.clase||"otro"}: ${p.producto||"(sin nombre)"}${p.dosis?` · ${p.dosis} ${p.unidad||""}`:""}`, p.fecha||hoyISO, src, {producto:p.producto||"", dosis:p.dosis||"", unidad:p.unidad||"", clase:p.clase||"otro", leido:p.leido||"", ...extra});
     else if(p.tipo==="riego") addLog("regue", `Riego ${p.metodo||"aspersión"} · ${p.horas||"?"} h`, p.fecha||hoyISO, src, {horas:p.horas||"", metodo:p.metodo||"aspersión", leido:p.leido||"", ...extra});
@@ -2645,8 +2656,9 @@ $("#lib-save").addEventListener("click", ()=>{
   });
   if(libFuente==="voz" && libTrans){ marcarTranscripcion(libTrans.id, "revisada", {lineas_corregidas: libLines, registros_confirmados: libProps}); }
   else if(libFuente==="voz-local"){ vozlGuardarNota(); }
+  else if(libFuente==="video-local"){ const propuestos = libProps.map(p=>({linea:p.linea, tipo:p.tipo, fecha:p.fecha, horas:p.horas, producto:p.producto, dosis:p.dosis, unidad:p.unidad, que:p.que, donde:p.donde, sev:p.sev, rend:p.rend})); vidlActualizarCola(vidPendCid, {voz_confirmada:true, registros:n, propuestos, razonador: libRazon && libRazon.modelo ? {modelo: libRazon.modelo, origen:"llm", segundos: libRazon.segundos} : {modelo:"reglas locales", origen:"reglas"}}); vidPendCid = null; }
   else guardarLectura(libFile, libLinesOrig, libLines, libPropsOrig, libProps, (libSim ? "ejemplo+local" : (libModelo || "lector")) + (libRazon && libRazon.modelo ? ` + ${libRazon.modelo} (teléfono)` : ""));
-  afterSave(`${n} registro${n===1?"":"s"} ${libFuente==="voz" ? "de la nota de voz" : libFuente==="voz-local" ? "de la nota de voz (entendida en el teléfono)" : "de la libreta"} guardado${n===1?"":"s"} en la bitácora`);
+  afterSave(`${n} registro${n===1?"":"s"} ${libFuente==="voz" ? "de la nota de voz" : libFuente==="voz-local" ? "de la nota de voz (entendida en el teléfono)" : libFuente==="video-local" ? "de lo dicho en el video" : "de la libreta"} guardado${n===1?"":"s"} en la bitácora`);
 });
 
 // ---------------------------------------------------------------- nota de voz: grabadora propia (micrófono) con respaldo de archivo
@@ -3239,7 +3251,7 @@ $("#ss-foto-cargar").addEventListener("click", fotolCargar);
 $("#ss-foto-quitar").addEventListener("click", async ()=>{ try{ localStorage.removeItem(FOTOL_KEY); }catch(e){} fotol = {estado:"no", progreso:0, pipe:null, error:null, archivo:""}; renderSinSenal(); toast("Modelo de fotos quitado (la caché se limpia con el de voz)"); });
 // lo que el motor vio (reconocimientos de la nube) pegado a la bitácora
 function recoDe(cid){ return (RECONOCIMIENTOS||[]).filter(r=>r.registro_cliente_id && r.registro_cliente_id===cid); }
-function avisoVozTag(x){ if(x.t!=="voz" || !x.id) return ""; const a = (AVISOS_VOZ||[]).find(v=>v.registro_id===x.id); if(!a) return ""; return `<em class="tag" title="${esc(a.texto||"")}">motor: oyó distinto (acuerdo ${Math.round((a.acuerdo||0)*100)} %)</em><div class="small muted">${esc(a.aviso||"")}</div>`; }
+function avisoVozTag(x){ if((x.t!=="voz" && x.t!=="video") || !x.id) return ""; const a = (AVISOS_VOZ||[]).find(v=>v.registro_id===x.id); if(!a) return ""; return `<em class="tag" title="${esc(a.texto||"")}">motor: oyó distinto (acuerdo ${Math.round((a.acuerdo||0)*100)} %)</em><div class="small muted">${esc(a.aviso||"")}</div>`; }
 function recoTag(x){ const r = x.cid ? recoDe(x.cid)[0] : null; if(!r) return ""; if(r.estado==="error") return ""; const l = LOTES[lotIdx]; const nombre = r.plaga ? plNombre(l, r.plaga) : ({planta_sana:"planta sana", trampa:"trampa", no_se_distingue:"no se distingue", otro:"no es plaga"})[r.se_ve] || r.se_ve || "";
   const est = r.estado==="confirmado" ? " ✓ agrónomo" : r.estado==="corregido" ? ` · agrónomo: ${r.plaga_confirmada ? plNombre(l, r.plaga_confirmada) : "corregido"}` : r.estado==="descartado" ? " · agrónomo: no es plaga" : "";
   return `<div class="par"><b>El motor vio:</b> ${esc(nombre)}${r.estadio ? ` (${esc(r.estadio)})` : ""}${r.conteo!=null ? ` · ${r.conteo} ${esc(r.unidad||"")}` : ""} · ${Math.round((r.confianza||0)*100)} %${esc(est)}${r.evidencia ? `<br><span class="small muted">${esc(r.evidencia)}</span>` : ""}</div>`; }
@@ -3344,7 +3356,7 @@ function renderSinSenal(){
   const mc = mapaCacheInfo(); $("#ss-mapa-kv").innerHTML = kv([["Lote", LOTES[lotIdx] ? LOTES[lotIdx].nombre : "—"], ["Mapa guardado", mc.guardado ? `${mc.tiles} baldosas · ${fmtD(mc.fecha)}` : "no"]]);
   $("#ss-mapa-guardar").disabled = !navigator.onLine || mapaGuardando;
   $("#ss-mapa-guardar").textContent = mapaGuardando ? `Guardando… ${mapaProg}` : navigator.onLine ? "Guardar el mapa de este lote" : "Guardar el mapa (necesita señal)";
-  if(typeof renderRazonSinSenal==="function") renderRazonSinSenal();
+  if(typeof renderRazonSinSenal==="function") renderRazonSinSenal(); if(typeof renderOcrSinSenal==="function") renderOcrSinSenal();
 }
 $("#ss-voz-base").addEventListener("click", ()=>vozlCargar("base"));
 $("#ss-voz-small").addEventListener("click", ()=>vozlCargar("small"));
@@ -3463,6 +3475,7 @@ function razlValidarRegs(j, lineas){
   // líneas que el modelo no tocó: pasan por las reglas locales (nada se pierde en silencio)
   const tocadas = new Set(regs.map(r=>r.linea).concat(sin.map(s=>s.linea)).filter(Boolean));
   lineas.forEach((l,i)=>{ if(tocadas.has(i+1) || !l.texto.trim()) return; const r = interpretLines([l]); r.registros.forEach(x=>{ x.linea = i+1; x.nota = (x.nota ? x.nota + " · " : "") + "por reglas (el modelo no la interpretó)"; regs.push(x); }); r.sin.forEach(x=>{ x.linea = i+1; sin.push(x); }); });
+  regs.sort((a,b)=>(a.linea||999)-(b.linea||999)); sin.sort((a,b)=>(a.linea||999)-(b.linea||999));
   return {registros: normRecs(regs), sin: normUnp(sin)};
 }
 async function razlInterpretar(lineas, ctx, avisar){
@@ -3542,11 +3555,116 @@ function renderRazonSinSenal(){
 $$("#ss-razon-btns button[data-razl]").forEach(b=>b.addEventListener("click", ()=>razlCargar(b.dataset.razl)));
 window.__engramRazl = {hechos: razlHechos, compuerta: razlCompuerta, sinProductos: razlSinProductos, json: razlJSON};   // para depurar en el teléfono (consola)
 $("#ss-razon-quitar").addEventListener("click", async ()=>{ razlGuardarConf({}); razl = {estado:"no", progreso:0, pipe:null, modelo:null, motor:null, error:null, archivo:"", ocupado:false, ultimo:null}; renderSinSenal(); renderRazonHoy(); toast("Modelo de razonamiento quitado del teléfono (la caché de modelos se limpia al quitar el de voz)"); });
+// ---------------------------------------------------------------- sin señal v2 (3 nov 2026): el video se escucha y la libreta se lee en el teléfono · PRELIMINAR
+// (a) Video -> voz: al elegir un video, el teléfono saca la pista de audio, la pasa por Whisper (si el modelo está) y, al guardar, ofrece convertir lo
+//     dicho en registros (misma revisión que una nota de voz; el modelo chico interpreta). El video lleva datos.telefono.voz; el motor lo vuelve a oír con señal.
+// (b) Libreta sin señal: un modelo de visión chico (Florence-2 base, ~250 MB, misma biblioteca) lee la página y propone las líneas; usted corrige y el modelo
+//     chico interpreta. Lee bien imprenta y letra clara; con cursiva apretada falla: PRELIMINAR. La lectura (foto + líneas) se encola y, con señal, el motor
+//     la vuelve a leer con el modelo grande y mide el acuerdo (lecturas_libreta.acuerdo / aviso).
+const OCRL_KEY = "engram-campo-ocrlocal-v1", OCRL_MODELO = "onnx-community/Florence-2-base-ft";
+let ocrl = { estado:"no", progreso:0, model:null, processor:null, tokenizer:null, motor:null, error:null, archivo:"", ultimo:null };
+function ocrlConf(){ try{ return JSON.parse(localStorage.getItem(OCRL_KEY)) || {}; }catch(e){ return {}; } }
+function ocrlGuardarConf(c){ try{ localStorage.setItem(OCRL_KEY, JSON.stringify(c)); }catch(e){} }
+function ocrlDisponible(){ return ocrl.estado==="listo" || !!ocrlConf().listo; }
+async function ocrlCargar(){
+  ocrl.estado = "cargando"; ocrl.progreso = 0; ocrl.error = null; ocrl.motor = vozlMotor(); renderSinSenal();
+  try{
+    const tjs = await vozlLib();
+    const dtype = ocrl.motor==="webgpu" ? {embed_tokens:"fp16", vision_encoder:"fp16", encoder_model:"q4", decoder_model_merged:"q4"} : {embed_tokens:"q8", vision_encoder:"q8", encoder_model:"q8", decoder_model_merged:"q8"};
+    const prog = p => { if(p && p.status==="progress"){ ocrl.progreso = Math.round(p.progress || 0); ocrl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
+    ocrl.model = await tjs.Florence2ForConditionalGeneration.from_pretrained(OCRL_MODELO, {dtype, device: ocrl.motor, progress_callback: prog});
+    ocrl.processor = await tjs.AutoProcessor.from_pretrained(OCRL_MODELO, {progress_callback: prog});
+    ocrl.tokenizer = await tjs.AutoTokenizer.from_pretrained(OCRL_MODELO, {progress_callback: prog});
+    ocrl.estado = "listo"; ocrl.progreso = 100; ocrlGuardarConf({listo:true, motor: ocrl.motor, fecha: new Date().toISOString()});
+  }catch(e){ ocrl.estado = "error"; ocrl.error = (e && e.message ? e.message : String(e)).slice(0, 160); ocrl.model = null; }
+  renderSinSenal(); return ocrl.estado==="listo";
+}
+async function ocrlAsegurar(){ if(ocrl.estado==="listo" && ocrl.model) return true; if(!ocrlConf().listo) return false; return ocrlCargar(); }
+function ocrlLineas(boxes, labels){                         // cajas (x1,y1,…,x4,y4) + textos -> renglones: misma fila si el centro vertical cae dentro del renglón
+  const items = (labels||[]).map((t,i)=>{ const b = boxes[i] || []; const xs = [b[0],b[2],b[4],b[6]].filter(v=>v!=null), ys = [b[1],b[3],b[5],b[7]].filter(v=>v!=null);
+    return {t: String(t||"").replace(/<[^>]+>/g, "").trim(), yc: ys.length ? ys.reduce((a,v)=>a+v,0)/ys.length : i*20, h: ys.length ? Math.max(...ys)-Math.min(...ys) : 16, x: xs.length ? Math.min(...xs) : 0}; }).filter(o=>o.t);
+  if(!items.length) return [];
+  const hs = items.map(o=>o.h).sort((a,b)=>a-b); const hm = hs[Math.floor(hs.length/2)] || 16;
+  items.sort((a,b)=>a.yc-b.yc); const filas = [];
+  items.forEach(o=>{ const f = filas[filas.length-1]; if(f && Math.abs(o.yc - f.yc) < 0.6*Math.max(hm, o.h)) { f.items.push(o); f.yc = (f.yc*(f.items.length-1) + o.yc)/f.items.length; } else filas.push({yc:o.yc, items:[o]}); });
+  return filas.map(f=>({texto: f.items.sort((a,b)=>a.x-b.x).map(o=>o.t).join(" ").replace(/\s+/g," ").trim(), confianza: .75, dudas: []})).filter(l=>l.texto);
+}
+async function ocrlLeer(file, avisar){
+  avisar("Cargando el lector de libreta en el teléfono…"); if(!(await ocrlAsegurar())) throw new Error(ocrl.error || "lector de libreta no disponible");
+  const tjs = window.__tjs; const t0 = Date.now(); avisar("Leyendo la página en el teléfono…");
+  let image = await tjs.RawImage.fromBlob(file);
+  try{ const mx = Math.max(image.width||0, image.height||0); if(mx > 1280){ const s = 1280/mx; image = await image.resize(Math.round(image.width*s), Math.round(image.height*s)); } }catch(e){}
+  const tick = setInterval(()=>avisar(`Leyendo la página en el teléfono… ${Math.round((Date.now()-t0)/1000)} s`), 500);
+  try{
+    const vision = await ocrl.processor(image); const task = "<OCR_WITH_REGION>";
+    const prompts = ocrl.processor.construct_prompts(task); const text = ocrl.tokenizer(prompts);
+    const ids = await ocrl.model.generate(Object.assign({}, text, vision, {max_new_tokens: 512}));
+    const gen = ocrl.tokenizer.batch_decode(ids, {skip_special_tokens:false})[0];
+    const res = ocrl.processor.post_process_generation(gen, task, image.size || [image.width, image.height]);
+    const r = (res && res[task]) || {}; let lineas = ocrlLineas(r.quad_boxes || [], r.labels || []);
+    if(!lineas.length && typeof gen === "string"){ const plano = gen.replace(/<[^>]+>/g, "\n"); lineas = plano.split(/\n+/).map(s=>s.trim()).filter(s=>s.length>1).map(s=>({texto:s, confianza:.6, dudas:[]})); }
+    ocrl.ultimo = {segundos: Math.round((Date.now()-t0)/1000), lineas: lineas.length}; return {lineas, segundos: ocrl.ultimo.segundos, modelo: `florence-2-base · teléfono (${ocrl.motor})`};
+  } finally { clearInterval(tick); }
+}
+async function libStartLocal(file){                         // la foto de la libreta sin lector (sin señal o sin lector configurado): el teléfono lee
+  const hint = m => { $("#lib-banner").textContent = m; };
+  libProps = []; libUnparsed = []; libEdited = false; $("#lib-bar").style.width = "0"; libShow("reading"); libProgress([[200,"Leyendo la página en el teléfono…",20],[3000,"Armando los renglones…",60]]);
+  try{
+    const r = await ocrlLeer(file, hint); libTimers.forEach(clearTimeout); $("#lib-bar").style.width = "100%";
+    libSim = false; libFuente = "libreta"; libModelo = r.modelo; libLines = r.lineas.length ? normLines(r.lineas) : [{texto:"", confianza:1, dudas:[]}]; libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = [];
+    $("#lib-banner").textContent = r.lineas.length ? `Leído en el teléfono, sin señal (${r.segundos} s, PRELIMINAR): ${r.lineas.length} renglón${r.lineas.length===1?"":"es"}. Compare con la página y corrija lo que no coincida; con señal el motor la vuelve a leer.` : "El teléfono no encontró renglones legibles (letra muy apretada o poca luz). Escriba las líneas tal como están en la página.";
+  }catch(e){ libTimers.forEach(clearTimeout); libSim = true; libLines = [{texto:"", confianza:1, dudas:[]}]; $("#lib-banner").textContent = "No se pudo leer en el teléfono (" + String(e.message||e).slice(0,80) + "). Escriba las líneas tal como están en la página; la interpretación se hace aquí."; }
+  $("#lib-leido-eyebrow").textContent = "Lo que leí (en el teléfono)"; renderLibLines(); libShow("trans");
+}
+// --- (a) video -> voz
+let vidVoz = null;
+async function vozlEnVideo(f){
+  vidVoz = null; const box = $("#vid-voz"); if(!box) return; box.hidden = true; if(!f || !vozlDisponible()) return;
+  box.hidden = false; box.textContent = "Escuchando el video en el teléfono…";
+  try{ const r = await vozlTranscribir(f, m=>{ box.textContent = m; });
+    if(!r.lineas.length){ box.textContent = "No se oyó nada reconocible en el video (si habló, el motor lo vuelve a oír con señal)."; return; }
+    vidVoz = {texto: r.texto, lineas: r.lineas, segundos: r.segundos, modelo: `whisper-${vozl.modelo||"base"} · teléfono (${vozl.motor}, video)`};
+    box.textContent = `Lo que dijo en el video (oído en el teléfono, ${r.segundos} s): «${r.texto.slice(0,160)}${r.texto.length>160?"…":""}». Al guardar, podrá convertirlo en registros.`;
+  }catch(e){ box.textContent = "No se pudo escuchar el video en el teléfono (" + String(e.message||e).slice(0,70) + "); el motor lo oye con señal."; }
+}
+let vidPendCid = null;
+function vidlRevisar(cid, voz){                              // después de guardar el video: lo dicho -> revisión -> registros (fuente video)
+  const v = voz || vidVoz; if(!v || !v.lineas.length) return; vidVoz = null; vidPendCid = cid || null;
+  openFlow("libreta", null); libReset();
+  libFuente = "video-local"; libTrans = null; libFile = null; libSim = false; libEdited = false; libModelo = v.modelo;
+  libLines = normLines(v.lineas); libProps = []; libUnparsed = []; libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = [];
+  $("#sheet-title").textContent = "Lo que dijo en el video"; $("#lib-banner").textContent = `Oído en el teléfono, sin señal (${v.segundos} s). Corrija lo que no coincida con lo que dijo y luego "Interpretar": cada cosa hecha o vista entra a la bitácora.`;
+  $("#lib-fuente-sum").textContent = "Video guardado"; $("#lib-img2").hidden = true; $("#lib-audio").hidden = true;
+  $("#lib-leido-eyebrow").textContent = "Lo que oí (en el teléfono)"; $("#lib-leido-ayuda").textContent = "Transcripción del audio del video hecha en este teléfono, sin internet.";
+  renderLibLines(); libShow("trans");
+}
+function vidlActualizarCola(cid, patch){                     // si el video sigue en la cola (sin señal), le agrega lo que el teléfono entendió para que el motor mida el acuerdo
+  if(!cid) return false; let hecho = false;
+  const cola = colaCargar().map(q=>{ if(q.cliente_id!==cid) return q; const d = q.datos || {}; d.telefono = Object.assign({}, d.telefono || {}, patch); q.datos = d; hecho = true; return q; });
+  if(hecho) colaGuardar(cola); return hecho;
+}
+// --- pantalla Más -> Sin señal: tarjeta del lector de libreta
+function renderOcrSinSenal(){
+  const kvEl = $("#ss-ocr-kv"); if(!kvEl) return; const c = ocrlConf();
+  const est = ocrl.estado==="listo" ? `listo (${ocrl.motor})` : ocrl.estado==="cargando" ? `descargando… ${ocrl.progreso} %${ocrl.archivo ? " · " + ocrl.archivo : ""}` : ocrl.estado==="error" ? "error" : c.listo ? "descargado; se carga al usarlo" : "no descargado";
+  const filas = [["Lector de libreta", est]]; if(c.fecha) filas.push(["Descargado el", fmtD(c.fecha.slice(0,10))]); if(ocrl.ultimo) filas.push(["Última página", `${ocrl.ultimo.lineas} renglones · ${ocrl.ultimo.segundos} s`]);
+  kvEl.innerHTML = kv(filas);
+  const pr = $("#ss-ocr-prog"); pr.hidden = ocrl.estado!=="cargando"; pr.querySelector("i").style.width = ocrl.progreso + "%";
+  $("#ss-ocr-txt").textContent = ocrl.estado==="error" ? "No se pudo cargar: " + ocrl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : ocrl.estado==="listo" ? "La foto de la libreta se lee en este teléfono cuando no hay señal (o no hay lector configurado)." : c.listo ? "Listo para usarse sin señal." : "Con wifi, descargue el lector una vez. Lee imprenta y letra clara; la cursiva apretada la lee mejor el motor con señal.";
+  $("#ss-ocr-cargar").disabled = ocrl.estado==="cargando"; $("#ss-ocr-quitar").hidden = !c.listo;
+}
+$("#ss-ocr-cargar").addEventListener("click", ocrlCargar);
+$("#ss-ocr-quitar").addEventListener("click", ()=>{ ocrlGuardarConf({}); ocrl = {estado:"no", progreso:0, model:null, processor:null, tokenizer:null, motor:null, error:null, archivo:"", ultimo:null}; renderSinSenal(); toast("Lector de libreta quitado del teléfono"); });
+window.__engramOcr = {lineas: ocrlLineas};
 // ---------------------------------------------------------------- video
 let vidFile = null, vidURL = null;
-$("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; fotolEnVideo(f); if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
-function vidReset(){ vidFile = null; if(vidURL){ URL.revokeObjectURL(vidURL); vidURL = null; } $("#vid-preview").hidden = true; $("#vid-preview").innerHTML = ""; $("#vid-input").value = ""; $("#vid-save").disabled = true; $("#vid-drop").querySelector("b").textContent = "Filmar"; }
-$("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent; addLog("video", `Video · ${t} · ${(vidFile.size/1048576).toFixed(1)} MB${vidReco && vidReco.plaga ? ` · teléfono: ${plNombre(LOTES[lotIdx], vidReco.plaga)} ${Math.round(vidReco.confianza*100)} %` : " · el motor lo mira con señal"}`, hoyISO, "video", {muestra:t, mb:+(vidFile.size/1048576).toFixed(1), ...(vidReco ? {telefono:{reconocimiento:vidReco}} : {})}, {bucket:"videos", ext: extDe(vidFile), blob: vidFile}); vidReco = null; afterSave("Video guardado en la bitácora"); });
+$("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; fotolEnVideo(f); if(typeof vozlEnVideo==="function") vozlEnVideo(f); if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
+function vidReset(){ vidFile = null; vidVoz = null; { const b = $("#vid-voz"); if(b){ b.hidden = true; b.textContent = ""; } } if(vidURL){ URL.revokeObjectURL(vidURL); vidURL = null; } $("#vid-preview").hidden = true; $("#vid-preview").innerHTML = ""; $("#vid-input").value = ""; $("#vid-save").disabled = true; $("#vid-drop").querySelector("b").textContent = "Filmar"; }
+$("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent;
+  const tel = Object.assign({}, vidReco ? {reconocimiento: vidReco} : {}, vidVoz ? {voz: {texto: vidVoz.texto, lineas: vidVoz.lineas, modelo: vidVoz.modelo, segundos: vidVoz.segundos}} : {});
+  const item = addLog("video", `Video · ${t} · ${(vidFile.size/1048576).toFixed(1)} MB${vidReco && vidReco.plaga ? ` · teléfono: ${plNombre(LOTES[lotIdx], vidReco.plaga)} ${Math.round(vidReco.confianza*100)} %` : " · el motor lo mira con señal"}${vidVoz ? " · con lo dicho" : ""}`, hoyISO, "video", {muestra:t, mb:+(vidFile.size/1048576).toFixed(1), ...(Object.keys(tel).length ? {telefono: tel} : {})}, {bucket:"videos", ext: extDe(vidFile), blob: vidFile}); vidReco = null;
+  const voz = vidVoz && vidVoz.lineas.length ? vidVoz : null; afterSave(voz ? "Video guardado; ahora lo que dijo" : "Video guardado en la bitácora");
+  if(voz) setTimeout(()=>vidlRevisar(item && item.cid, voz), 450); });
 
 // ---------------------------------------------------------------- toast y arranque
 let toastT = null;
