@@ -270,6 +270,8 @@ body.noscroll{overflow:hidden}
 .parc input{font:inherit;border:0;border-bottom:1px dashed var(--line);background:none;padding:2px 0;width:100%;min-width:0;color:var(--fg)} .parc .ha{font-weight:700;color:var(--blue);white-space:nowrap}
 textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%;resize:vertical}
 .maphint{line-height:1.4}
+.plpt{width:22px;height:22px;border-radius:50%;background:#fff;color:#0F1E2E;border:2px solid #0F1E2E;display:grid;place-items:center;font-size:11px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.plpt-n0{background:#9AA5B1;color:#fff} .plpt-n1{background:#17955A;color:#fff;border-color:#fff} .plpt-n2{background:#F2B04E;border-color:#fff} .plpt-n3{background:#D63B2F;color:#fff;border-color:#fff} .plpt-sel{box-shadow:0 0 0 4px rgba(37,99,235,.5)}
 /* Fichas de cifra (dos por fila): número grande con su etiqueta, para "hoy en tu lote" y resúmenes */
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat{background:var(--surface-2);border-radius:12px;padding:12px;display:grid;gap:2px;min-width:0}
@@ -309,6 +311,12 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p id="hoy-etapa" class="muted"></p>
     <div class="sem" id="hoy-sem"></div>
     <p class="note" id="hoy-nota"></p>
+  </div>
+  <div class="card" id="hoy-plagas" hidden>
+    <div class="row between"><span class="eyebrow">Plagas · monitoreo por puntos</span><span class="small muted">preliminar</span></div>
+    <div class="sem" id="hoy-plagas-list"></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-flow="plagas">Monitorear ahora</button><button class="btn sec" data-go="mas-plagas">Ver el mapa</button></div>
+    <p class="note">El teléfono propone los puntos, cuenta con usted y compara su nivel con el del motor; el mapa de presión dice hacia dónde puede moverse. Funciona sin señal.</p>
   </div>
   <div class="card">
     <span class="eyebrow" id="hoy-acciones-eyebrow">Qué hacer esta semana</span>
@@ -369,6 +377,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <button class="optrow" data-flow="libreta"><span class="oi"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg></span><span><b>Escanear la libreta</b><span class="s">Foto de la página → registros que usted revisa y confirma</span></span><span class="chev">›</span></button>
     <button class="optrow" data-flow="voz"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota de voz</b><span class="s">Grabe aquí mismo lo que hizo y lo que vio</span></span><span class="chev">›</span></button>
     <button class="optrow" data-flow="video"><span class="oi"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></span><span><b>Video</b><span class="s">Filme la planta o el daño, con fecha y lugar</span></span><span class="chev">›</span></button>
+    <button class="optrow" data-flow="plagas"><span class="oi"><svg viewBox="0 0 24 24"><path d="M12 3v3M8 7a4 4 0 0 1 8 0v7a4 4 0 0 1-8 0z"/><path d="M4 10h4M16 10h4M4 16h4M16 16h4M6 5l2 2M18 5l-2 2"/></svg></span><span><b>Monitoreo de plagas</b><span class="s">Puntos que cubren el lote, conteo por punto, su nivel frente al del motor</span></span><span class="chev">›</span></button>
     <button class="optrow" data-flow="visita"><span class="oi"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Visita técnica</b><span class="s">El formulario completo del cultivo (visitador o agrónomo); también por Excel en Más</span></span><span class="chev">›</span></button>
     <div class="lastreg" id="lastreg"></div>
     <p class="note">Todo lo demás se infiere: ubicación, clima, pronóstico, etapa del cultivo y tendencia de la zona. Usted solo cuenta lo que hizo y lo que vio.</p>
@@ -467,6 +476,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="list">
       <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
+      <button data-go="mas-plagas">Plagas <span>puntos de muestreo, presión hoy y a 7 días, recorridos</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
       <button data-go="mas-pdf">Reporte en PDF <span id="btn-pdf-sub">el reporte completo del lote, para guardar o compartir</span></button>
       <button data-go="mas-whatsapp">WhatsApp <span id="btn-wa-sub">reportes y alertas al chat; notas, fotos y planillas desde el chat</span></button>
@@ -525,6 +535,20 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div id="hrev-hojas"></div>
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:12px 0"><button class="btn acc" id="hrev-confirmar">Confirmar y cargar</button><button class="btn sec" id="hrev-otra">Que lo mire de nuevo</button><button class="btn sec" id="hrev-rechazar">Rechazar</button></div>
     <p class="note">Nada entra a la memoria del campo hasta que confirme. Corrija aquí lo que el motor entendió mal (qué es cada columna, la unidad, el cultivo o la campaña fijos) y confirme: la carga corre en minutos y deja el informe fila por fila. Lo confirmado se recuerda: la próxima planilla igual entra sola.</p>
+  </div>
+  <div class="card" id="mas-plagas" hidden>
+    <div class="row between"><span class="eyebrow">Plagas</span><button class="inline-link" data-back>Volver</button></div>
+    <h2>Dónde mirar y hacia dónde se mueve</h2>
+    <div class="chips" id="mp-plagas"></div>
+    <p class="small muted" id="mp-donde"></p>
+    <div class="row between"><div class="seg2" id="mp-vista" role="group"><button aria-pressed="true" data-vista="hoy">Hoy</button><button aria-pressed="false" data-vista="proy">En 7 días</button></div><button class="btn acc sm" id="mp-monitorear">Monitorear</button></div>
+    <div id="mp-map" class="lmap" style="height:300px" hidden></div>
+    <p class="small muted" id="mp-map-nota"></p>
+    <p class="small" id="mp-resumen"></p>
+    <div class="kv" id="mp-kv"></div>
+    <p class="note">Números en el mapa: el recorrido propuesto (más puntos en orillas, manchones y donde ya hubo detecciones). Celdas verdes/ámbar/rojas: presión baja/media/alta. Círculos azules: dónde mirar la próxima vez. Puntos pequeños: lo contado en recorridos anteriores. PRELIMINAR: umbrales de guías públicas; el agrónomo y sus "no aplica" los calibran. Nunca productos ni dosis.</p>
+    <span class="eyebrow">Recorridos</span>
+    <div class="log" id="mp-lista"></div>
   </div>
   <div class="card" id="mas-sinsenal" hidden>
     <div class="row between"><span class="eyebrow">Sin señal</span><button class="inline-link" data-back>Volver</button></div>
@@ -604,7 +628,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="row between"><span class="eyebrow">Panel del agrónomo</span><button class="inline-link" data-back>Volver</button></div>
     <h2 id="pan-h2">La red</h2>
     <p class="small" id="pan-resumen"></p>
-    <div class="chips" id="pan-tabs"><button class="chip" aria-pressed="true" data-ptab="cola">Por revisar</button><button class="chip" aria-pressed="false" data-ptab="red">Lotes de la red</button><button class="chip" aria-pressed="false" data-ptab="criterios">Criterios preliminares</button><button class="chip" aria-pressed="false" data-ptab="hechas">Revisiones hechas</button></div>
+    <div class="chips" id="pan-tabs"><button class="chip" aria-pressed="true" data-ptab="cola">Por revisar</button><button class="chip" aria-pressed="false" data-ptab="red">Lotes de la red</button><button class="chip" aria-pressed="false" data-ptab="plagas">Plagas</button><button class="chip" aria-pressed="false" data-ptab="criterios">Criterios preliminares</button><button class="chip" aria-pressed="false" data-ptab="hechas">Revisiones hechas</button></div>
     <div id="pan-body"></div>
     <p class="note">Lo que el agrónomo confirma, corrige o descarta queda en una tabla aparte: es el conjunto reservado con el que el motor mide si avisó a tiempo. Nunca se usa para entrenar. Las respuestas del productor ("no aplica") son señal para ajustar umbrales, no la verdad de campo: la verdad la fija usted aquí.</p>
   </div>
@@ -761,6 +785,50 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         <p class="note" id="voz-local-nota">La nota se transcribe y se convierte en registros que usted revisa antes de guardar, igual que la libreta (etapa 1).</p>
       </div>
 
+      <div class="flow" id="flow-plagas" hidden>
+        <div id="pl-ruta">
+          <div class="card">
+            <span class="eyebrow">Plaga</span>
+            <div class="chips" id="pl-plagas"></div>
+            <p class="small muted" id="pl-donde"></p>
+          </div>
+          <div class="card">
+            <span class="eyebrow">El recorrido</span>
+            <p class="small" id="pl-ruta-txt"></p>
+            <div id="pl-map" class="lmap" style="height:280px" hidden></div>
+            <div class="chips" id="pl-puntos"></div>
+            <div class="row"><button class="btn sec" id="pl-terminar">Terminar el recorrido</button></div>
+            <p class="note">Toque un punto (en el mapa o en la lista) para contar ahí. Con GPS, la app le dice cuál es el más cercano. No hace falta hacerlos todos: cada punto guardado suma.</p>
+          </div>
+        </div>
+        <div id="pl-punto" hidden>
+          <div class="card">
+            <div class="row between"><h2 id="pl-punto-h" style="font-size:18px"></h2><button class="inline-link" id="pl-volver">‹ Ruta</button></div>
+            <p class="small muted" id="pl-punto-sub"></p>
+            <div class="flow" id="pl-medidas"></div>
+          </div>
+          <div class="card">
+            <span class="eyebrow">Su nivel</span>
+            <div class="seg" id="pl-nivel" style="grid-template-columns:repeat(4,1fr)"><button data-n="0" aria-pressed="false">Nada</button><button data-n="1" aria-pressed="false">Bajo</button><button data-n="2" aria-pressed="false">Medio</button><button data-n="3" aria-pressed="false">Alto</button></div>
+            <div id="pl-motor"></div>
+          </div>
+          <label class="photo" for="pl-foto-input"><b>Foto (opcional)</b><span class="small muted">De la hoja, la trampa o el daño: el motor la lee con señal y su agrónomo la confirma.</span><input class="hiddeninput" id="pl-foto-input" type="file" accept="image/*" capture="environment"></label>
+          <div id="pl-foto-prev" hidden></div>
+        </div>
+        <div id="pl-fin" hidden>
+          <div class="card">
+            <h2 id="pl-fin-h" style="font-size:18px"></h2>
+            <div class="sem" id="pl-fin-tabla"></div>
+            <div id="pl-fin-sect"></div>
+            <span class="eyebrow">Mapa de presión</span>
+            <p class="small" id="pl-fin-mapa"></p>
+            <div id="pl-fin-prox"></div>
+            <p class="note" id="pl-fin-nota"></p>
+            <div class="row"><button class="btn sec" id="pl-otro">‹ Seguir con otro punto</button></div>
+          </div>
+        </div>
+      </div>
+
       <div class="flow" id="flow-nuevolote" hidden>
         <div class="card">
           <div class="field"><label for="nl-nombre">Nombre del lote</label><input id="nl-nombre" placeholder="p. ej. Parcela 7, El Potrero norte"></div>
@@ -806,6 +874,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button class="btn acc" id="voz-save" hidden disabled>Guardar la nota de voz</button>
       <button class="btn acc" id="vid-save" hidden disabled>Guardar el video</button>
       <button class="btn acc" id="nl-save" hidden>Crear el lote</button>
+      <button class="btn acc" id="pl-save" hidden>Revisar el punto</button>
     </div>
   </div>
 </div>
@@ -1299,10 +1368,10 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES, tems: TEMPORADAS})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES, tems: TEMPORADAS, mons: MONITOREOS, pest: PLAGAS_ESTADO})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam, tems] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam, tems, mons, pest] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1318,19 +1387,21 @@ async function cargarLotes(){
     db("GET","reportes_pdf",{select:"*", order:"emitido.desc", limit:"60"}).catch(()=>null),                                // el reporte de cada lote en PDF (cubeta reportes_pdf)
     db("GET","whatsapp_mensajes",{select:"wa_id,lote_id,tipo,recibido_en,estado,texto,respuesta,interpretado_en", order:"recibido_en.desc", limit:"30"}).catch(()=>null),   // lo que llegó por WhatsApp (los propios)
     db("GET","temporadas",{select:"*", order:"anio_cosecha.asc,fecha_siembra.asc", limit:"2000"}).catch(()=>null),                   // la memoria propia del campo: campañas por lote (v23)
+    db("GET","monitoreos",{select:"*", fecha:"gte."+localISO(new Date(Date.now() - 60*86400000)), order:"fecha.desc,creado_en.desc", limit:"2000"}).catch(()=>null),   // recorridos de plagas (v27)
+    db("GET","plagas_estado",{select:"*", order:"fecha.desc", limit:"200"}).catch(()=>null),                                      // lo que el motor calculó por lote y plaga (v27)
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
-  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || []; MONITOREOS = (mons || []).filter(m=>!monsLocal.some(x=>x.cliente_id===m.cliente_id)).concat(monsLocal); PLAGAS_ESTADO = pest || [];
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -1392,9 +1463,9 @@ async function vaciarCola(){
       const pendientes = colaCargar().filter(q=>!fallidos.has(q.cliente_id)); if(!pendientes.length) break;
       for(const item of pendientes){
         try{
-          if(item.archivo_pendiente){ const a = await idb.get(item.cliente_id); if(a){ item.archivo = await subirArchivo(a.bucket, `${item.lote_id}/${item.cliente_id}.${a.ext}`, a.blob); await idb.del(item.cliente_id); } delete item.archivo_pendiente; colaGuardar(colaCargar().map(q=>q.cliente_id===item.cliente_id ? item : q)); }
-          const fila = {...item}; delete fila.archivo_pendiente;
-          try{ await db("POST","registros",null,fila,"return=minimal"); }
+          if(item.archivo_pendiente){ const a = await idb.get(item.cliente_id); if(a){ item[item._campo_archivo || "archivo"] = await subirArchivo(a.bucket, `${item.lote_id}/${item.cliente_id}.${a.ext}`, a.blob); await idb.del(item.cliente_id); } delete item.archivo_pendiente; colaGuardar(colaCargar().map(q=>q.cliente_id===item.cliente_id ? item : q)); }
+          const fila = {...item}; delete fila.archivo_pendiente; const tabla = fila._tabla || "registros"; delete fila._tabla; delete fila._campo_archivo;
+          try{ await db("POST",tabla,null,fila,"return=minimal"); }
           catch(e){ if(e.status !== 409) throw e; }               // 409 = ya estaba (reintento): se da por subido
           colaGuardar(colaCargar().filter(q=>q.cliente_id!==item.cliente_id));
           const le = log.find(x=>x.cid===item.cliente_id); if(le) delete le.pendiente;
@@ -1605,6 +1676,14 @@ function renderPanel(){
         <input data-nota placeholder="nota (opcional): qué vio, qué recomienda mirar">
         <div class="acts" style="margin-top:8px">${acts}</div></div>`;
     }).join("") : `<p class="note">Nada por revisar: todas las sospechas, visitas con sanidad y alertas respondidas ya tienen veredicto.</p>`;
+  } else if(panTab==="plagas"){
+    const mons = (MONITOREOS||[]).filter(m=>m.acuerdo===false || (m.nivel_final||0) >= 2).slice(0,60);
+    body.innerHTML = mons.length ? mons.map(m=>{ const l = LOTES.find(x=>(x.uuid||x.id)===m.lote_id); const n = m.nivel_final!=null ? m.nivel_final : (m.nivel_motor||0);
+      return `<div class="rev"><div class="meta">${esc(fmtD(m.fecha||""))} · <b>${esc(l ? l.nombre : "lote")}</b> · ${esc(l ? plNombre(l, m.plaga) : m.plaga)} · ${esc(m.punto_id||"")}${m.usuario ? ` · ${esc(nombreUsuario(m.usuario))}` : ""}</div>
+        <div class="txt">${esc(Object.entries(m.conteos||{}).filter(([k,v])=>v!=null && v!=="" && !["recorrido"].includes(k)).map(([k,v])=>`${plMedTxt(k)}: ${v}`).join(" · ") || "sin conteos")}<br><span class="small muted">productor: ${NIVEL_TXT[m.nivel_productor ?? 0]}${m.nivel_productor==null ? " (no marcó)" : ""} · motor: ${NIVEL_TXT[m.nivel_motor||0]} · queda: <b>${NIVEL_TXT[n]}</b>${m.acuerdo===false ? " · DESACUERDO" : ""}${m.nivel_agronomo!=null ? ` · agrónomo: ${NIVEL_TXT[m.nivel_agronomo]}` : ""}</span><br><span class="small muted">${esc(m.motivo_motor||"")}</span></div>
+        ${m.foto ? `<button class="inline-link" data-foto="${esc(m.foto)}">ver foto</button><div class="foto-box"></div>` : ""}
+        <div class="acts" style="margin-top:8px">${[0,1,2,3].map(k=>`<button class="btn sec" data-mrev="${esc(m.id)}" data-n="${k}"${m.nivel_agronomo===k ? ' style="background:var(--ink);color:var(--on-fg)"' : ""}>${NIVEL_TXT[k]}</button>`).join("")}</div></div>`; }).join("")
+      : `<p class="note">Sin monitoreos con desacuerdo ni niveles medio/alto en los últimos 60 días.</p>`;
   } else if(panTab==="red"){
     body.innerHTML = LOTES.filter(l=>!l.sin).map((l,i)=>{ const vig = alertasDe(l).filter(a=>a.vigente).length; const ult = log.filter(x=>x.lote===l.id).sort((a,b)=>b.f.localeCompare(a.f))[0];
       return `<button class="red-item" data-goto-lote="${i}"><span><b>${esc(l.nombre)}</b><span class="m">${esc(nombreCultivo(l.cultivo))}${l.condicion && l.condicion!=="campo abierto" ? ` · ${esc(l.condicion)}` : ""} · ${esc(l.region||"zona por definir")} · ${esc(nombreUsuario(l.fila ? l.fila.propietario : null))}</span></span><span class="m" style="text-align:right">${l.nivel==="sin" ? "sin reporte" : `riesgo ${esc(l.nivel)}`}${vig ? ` · ${vig} alerta${vig===1?"":"s"}` : ""}<br>${ult ? `último registro ${esc(fmtD(ult.f))}` : "sin registros"}</span></button>`; }).join("") || `<p class="note">Sin lotes en la red todavía.</p>`;
@@ -1831,7 +1910,7 @@ async function verParecidas(id, box){
 document.addEventListener("click", e=>{ const l = e.target.closest("[data-leer]"); if(l){ const c = l.closest(".plegable"); if(c){ c.classList.toggle("abierto"); l.textContent = c.classList.contains("abierto") ? "Leer menos" : "Leer más"; } return; } });
 document.addEventListener("click", e=>{ const b = e.target.closest("[data-par]"); if(!b) return; const box = b.parentElement.querySelector(`[data-par-de="${b.getAttribute("data-par")}"]`); if(box) verParecidas(b.getAttribute("data-par"), box); });
 let PERFILES_CULTIVO = [];                                       // perfiles por cultivo y región con datos públicos (SIAP + clima típico); los sube el RIG
-let FORMULARIOS = {}, PLANILLAS = [], TEMPORADAS = [];   // formulario de visita por cultivo, planillas Excel subidas y temporadas (la memoria propia del campo, v23)
+let FORMULARIOS = {}, PLANILLAS = [], TEMPORADAS = [], MONITOREOS = [], PLAGAS_ESTADO = [], monsLocal = [];   // formulario de visita por cultivo, planillas Excel subidas y temporadas (la memoria propia del campo, v23)
 let REVISIONES = [], PERFILES_RED = [], AVISOS = [], REPORTES_PDF = [], WA_MENSAJES = [];   // revisiones del agrónomo (conjunto reservado), perfiles de la red (solo equipo), avisos recibidos, PDF por lote, mensajes de WhatsApp
 function esEquipo(){ return !!(perfil && ["agronomo","socio","admin"].includes(perfil.rol)); }
 const CULTIVO_NOMBRE = {papa:"papa", maiz:"maíz", tomate:"tomate", trigo:"trigo", aguacate:"aguacate", soja:"soja", girasol:"girasol", cebada:"cebada", sorgo:"sorgo"};
@@ -1886,7 +1965,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "26 · 3 nov 2026";
+const APP_VERSION = "27 · 3 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2006,7 +2085,7 @@ function go(name){
   if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
-function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); if(id==="mas-avisos") renderAvisos(); if(id==="mas-pdf") renderPdf(); if(id==="mas-whatsapp") renderWhatsapp(); if(id==="mas-sinsenal") renderSinSenal(); }
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); if(id==="mas-avisos") renderAvisos(); if(id==="mas-pdf") renderPdf(); if(id==="mas-whatsapp") renderWhatsapp(); if(id==="mas-sinsenal") renderSinSenal(); if(id==="mas-plagas") renderPlagasMas(); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const pdfb = ev.target.closest("[data-pdf]"); if(pdfb){ abrirPdf(pdfb.dataset.pdf); return; }
@@ -2014,6 +2093,7 @@ document.addEventListener("click", ev => {
   const lot = ev.target.closest("[data-lot]"); if(lot){ lotIdx = parseInt(lot.dataset.lot,10); renderAll(); return; }
   const ar = ev.target.closest("[data-aresp]"); if(ar){ responderAlerta(ar.dataset.aresp, ar.dataset.r || null); return; }
   const tr = ev.target.closest("[data-trans]"); if(tr){ abrirTranscripcion(tr.dataset.trans); return; }
+  const mr = ev.target.closest("[data-mrev]"); if(mr){ const id = mr.dataset.mrev, n = +mr.dataset.n; const m = (MONITOREOS||[]).find(x=>x.id===id); if(m){ m.nivel_agronomo = n; } if(MODO==="nube" && sesion && !String(id).startsWith("local-")){ db("PATCH","monitoreos",{id:"eq."+id},{nivel_agronomo:n, revisado_por:sesion.user.id, revisado_en:new Date().toISOString()},"return=minimal").then(()=>toast(`Nivel del agrónomo: ${NIVEL_TXT[n]}`)).catch(e=>toast("No se pudo guardar: " + String(e.message||e).slice(0,60))); } renderPanel(); return; }
   const td = ev.target.closest("[data-tdesc]"); if(td){ marcarTranscripcion(td.dataset.tdesc, "descartada"); toast("Nota quitada de la lista"); return; }
   const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow, flow); return; }
   const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeSheet(false); return; }
@@ -2025,7 +2105,7 @@ document.addEventListener("click", ev => {
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
-function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); }
+function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); }
 // ---------------------------------------------------------------- verdor (Sentinel-2 dentro del polígono; lo calcula el RIG cada noche)
 function sparkline(serie){
   const pts = (serie||[]).slice(-12); if(pts.length < 2) return "";
@@ -2079,8 +2159,8 @@ $("#verdor-btn").addEventListener("click", ()=>toggleVerdor());
 
 // ---------------------------------------------------------------- registrar: flujos
 const ULTIMOS = [{p:"Fungicida preventivo", d:"2", u:"kg/ha", t:"fungicida"},{p:"Fertilizante foliar", d:"3", u:"L/ha", t:"fertilizante"},{p:"Insecticida (paratrioza)", d:"0.5", u:"L/ha", t:"insecticida"}];
-const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:"Escanear la libreta", voz:"Nota de voz", video:"Video", visita:"Visita técnica", nuevolote:"Nuevo lote"};
-const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save", visita:"vis-save", nuevolote:"nl-save"};
+const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:"Escanear la libreta", voz:"Nota de voz", video:"Video", visita:"Visita técnica", nuevolote:"Nuevo lote", plagas:"Monitoreo de plagas"};
+const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save", visita:"vis-save", nuevolote:"nl-save", plagas:"pl-save"};
 const FLOWS = Object.keys(TITULOS);
 let sheetOpen = null, ignorePop = false, sheetTimer = null;
 function openFlow(name, btn){
@@ -2100,6 +2180,7 @@ function openFlow(name, btn){
   if(name==="regue"){ $("#rg-fecha").value = hoyISO; }
   if(name==="libreta"){ libShow("step1"); }                              // los botones de interpretar/guardar aparecen por etapa
   if(name==="visita"){ visRender(); }
+  if(name==="plagas"){ plIniciar(); }
   if(name==="voz"){ const nn = $("#voz-local-nota"); if(nn) nn.textContent = vozlDisponible() ? "Con el modelo de voz en el teléfono, la nota se entiende aquí mismo, sin señal; el motor la vuelve a oír cuando haya señal. Revise lo que oyó antes de guardar." : (navigator.onLine ? "La nota se transcribe en el motor en minutos y vuelve aquí para que la revise. Para entenderla sin señal: Más → Sin señal → descargar el modelo de voz." : "Sin señal: la nota se guarda en el teléfono y el motor la transcribe cuando vuelva la señal. Para entenderla aquí mismo otra vez: Más → Sin señal → descargar el modelo de voz (con wifi)."); }
   const sh = $("#sheet"); clearTimeout(sheetTimer); sh.hidden = false; $("#sheet-body").scrollTop = 0;
   requestAnimationFrame(()=>requestAnimationFrame(()=>sh.classList.add("open")));
@@ -2119,6 +2200,7 @@ window.addEventListener("popstate", ()=>{
   const h = (location.hash||"").replace("#","").split("/")[0]; if(SCREENS.includes(h)) go(h);
 });
 function resetFlows(){
+  plGeoParar(); pl = null;
   $("#etq-preview").hidden = true; $("#etq-preview").innerHTML=""; $("#vi-preview").hidden = true; $("#vi-preview").innerHTML=""; $("#ap-prod").value=""; $("#ap-dosis").value="";
   libReset(); vozReset(); vidReset();
 }
@@ -2425,6 +2507,230 @@ $("#voz-file").addEventListener("change", e=>{ const f = e.target.files && e.tar
 $("#voz-play").addEventListener("loadedmetadata", e=>{ if(!recDur && isFinite(e.target.duration)) { recDur = e.target.duration; $("#voz-time").textContent = fmtT(recDur); } });
 function vozReset(){ if(rec && rec.state==="recording"){ rec.onstop = null; try{ rec.stop(); }catch(e){} } if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream = null; } rec = null; clearInterval(recTimer); stopMeter(); $("#voz-time").textContent = "0:00"; const a = $("#voz-play"); a.hidden = true; a.removeAttribute("src"); $("#voz-rec").classList.remove("on"); $("#voz-rec").disabled = false; $("#voz-hint").textContent = VOZ_HINT; $("#voz-save").disabled = true; $("#voz-fallback").hidden = true; $("#voz-file").value = ""; recBlob = null; }
 $("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"}${MODO==="nube" ? " · se transcribe en minutos: revísela aquí en Registrar" : " · en la versión conectada se transcribe en el motor"}`, hoyISO, "voz", {duracion_s: Math.round(recDur||0), kb: Math.round(recBlob.size/1024)}, {bucket:"audios", ext: extDe(recBlob) === "bin" ? "webm" : extDe(recBlob), blob: recBlob}); afterSave(MODO==="nube" ? "Nota guardada: la transcripción aparece aquí en unos minutos" : "Nota de voz guardada en la bitácora"); });
+
+// ---------------------------------------------------------------- plagas v1 (3 nov 2026) · PRELIMINAR · todo esto corre en el teléfono, sin señal
+// Catálogo (config/plagas.json del RIG, incrustado al construir), puntos de muestreo que cubren el lote, conteo por punto con el nivel del productor
+// frente al nivel del motor (compuerta), y el mapa de presión hoy y a 7 días. Nunca productos ni dosis: dónde mirar, cuánto hay frente al umbral y hacia dónde se mueve.
+const PLAGAS = /*PLAGAS_JSON*/{"version":"1.0 · 3 nov 2026","niveles":{"0":"nada","1":"bajo","2":"medio","3":"alto"},"medidas":{"adultos_hoja":{"txt":"adultos por hoja","unidad":"por hoja","como":"revise hojas del tercio superior de 10 plantas por punto; cuente los adultos del envés al voltear la hoja despacio"},"ninfas_hoja":{"txt":"ninfas por hoja","unidad":"por hoja","como":"hojas del tercio medio; ninfas pegadas al envés (lupa de 10x ayuda)"},"huevos_hoja":{"txt":"huevos por hoja","unidad":"por hoja","como":"envés de hojas jóvenes; los huevos son informativos: anuncian ninfas en 5 a 10 días"},"larvas_planta":{"txt":"larvas por planta","unidad":"por planta","como":"revise 10 plantas por punto: cogollo, envés, brotes y frutos"},"minas_planta":{"txt":"minas (galerías) por planta","unidad":"por planta","como":"galerías frescas en hojas y daño en frutos; una larva en fruto cuenta como alto"},"adultos_flor":{"txt":"adultos por flor","unidad":"por flor","como":"golpee 5 flores por planta sobre una hoja blanca y cuente; 10 plantas por punto"},"pct_plantas":{"txt":"% de plantas con la plaga o con daño fresco","unidad":"%","como":"de 20 plantas seguidas en el punto, cuántas tienen la plaga o daño fresco"},"pct_hojas":{"txt":"% de hojas con la plaga","unidad":"%","como":"de 20 hojas tomadas del tercio indicado, cuántas tienen la plaga"},"trampa_semana":{"txt":"adultos por trampa por semana","unidad":"por trampa","como":"trampa amarilla (o azul para trips) revisada y cambiada cada semana"},"trampa_dia":{"txt":"adultos por trampa por día","unidad":"por trampa","como":"trampa de feromona: capturas desde la última revisión entre los días transcurridos"},"masas_planta":{"txt":"masas de huevos por planta","unidad":"por planta","como":"informativo: anuncian larvas en 2 a 4 días"},"pct_flores_marca":{"txt":"% de flores con marca de abejorro","unidad":"%","como":"flores abiertas de 2 a 3 días; la marca es el moretón café en el cono de anteras; 20 flores por punto"}},"cultivos":{"tomate":{"nombre":"tomate","plagas":{"mosquita_blanca":{"nombre":"mosquita blanca","cientifico":"Bemisia tabaci / Trialeurodes vaporariorum","tipo":"insecto","estadios":["huevo","ninfa","adulto"],"donde":"envés de hojas; adultos arriba, ninfas en el tercio medio","orillas":true,"viento":true,"medidas":{"adultos_hoja":{"umbrales":[1,3,6]},"ninfas_hoja":{"umbrales":[1,4,11]},"huevos_hoja":{"umbrales":[2,6,15],"informativa":true},"trampa_semana":{"umbrales":[5,20,50]}},"desarrollo":{"base_c":10.5,"gd_generacion":316,"tope_c":35,"r_generacion":6},"clima":{"lluvia_mm_baja":15,"lluvia_factor":0.8,"calor_c":36,"calor_factor":0.9},"agravantes":[{"cuando":"dias_desde_siembra<45","factor":1.3,"txt":"planta joven: el riesgo de virus (amarillamiento) pesa más que el daño directo"}]},"trips":{"nombre":"trips","cientifico":"Frankliniella occidentalis","tipo":"insecto","estadios":["larva","adulto"],"donde":"flores y brotes; trampa azul","orillas":true,"viento":true,"medidas":{"adultos_flor":{"umbrales":[1,3,6]},"trampa_semana":{"umbrales":[10,30,80]},"pct_plantas":{"umbrales":[5,20,40]}},"desarrollo":{"base_c":9.4,"gd_generacion":260,"tope_c":35,"r_generacion":5},"clima":{"lluvia_mm_baja":20,"lluvia_factor":0.7,"calor_c":37,"calor_factor":0.9},"agravantes":[{"cuando":"etapa in floracion,cuajado","factor":1.3,"txt":"en floración el daño va al fruto y a la transmisión de virus (marchitez manchada)"}]},"tuta":{"nombre":"Tuta absoluta (palomilla del tomate)","cientifico":"Phthorimaea absoluta","tipo":"insecto","estadios":["huevo","larva","pupa","adulto"],"donde":"galerías en hojas, brotes y frutos; trampa de feromona","orillas":false,"viento":false,"medidas":{"minas_planta":{"umbrales":[1,3,6]},"trampa_dia":{"umbrales":[1,3,10]},"pct_plantas":{"umbrales":[5,15,30]}},"desarrollo":{"base_c":8.0,"gd_generacion":460,"tope_c":34,"r_generacion":8},"clima":{"lluvia_mm_baja":999,"lluvia_factor":1.0,"calor_c":38,"calor_factor":0.9},"agravantes":[{"cuando":"etapa in cuajado,llenado,maduracion","factor":1.4,"txt":"con fruto, cualquier larva en fruto es pérdida directa"}]},"arana_roja":{"nombre":"araña roja","cientifico":"Tetranychus urticae","tipo":"ácaro","estadios":["huevo","ninfa","adulto"],"donde":"envés de hojas bajas y medias; telarañas finas; calor y sequía la disparan","orillas":true,"viento":false,"medidas":{"pct_hojas":{"umbrales":[5,15,30]},"pct_plantas":{"umbrales":[10,25,50]}},"desarrollo":{"base_c":11.0,"gd_generacion":150,"tope_c":38,"r_generacion":6},"clima":{"lluvia_mm_baja":10,"lluvia_factor":0.6,"calor_c":40,"calor_factor":1.0,"seco_factor":1.2}},"pulgon":{"nombre":"pulgón","cientifico":"Myzus persicae / Macrosiphum euphorbiae","tipo":"insecto","estadios":["ninfa","adulto"],"donde":"brotes y envés de hojas jóvenes; colonias","orillas":true,"viento":true,"medidas":{"pct_plantas":{"umbrales":[5,15,30]},"pct_hojas":{"umbrales":[5,15,30]}},"desarrollo":{"base_c":4.0,"gd_generacion":120,"tope_c":30,"r_generacion":8},"clima":{"lluvia_mm_baja":15,"lluvia_factor":0.8,"calor_c":32,"calor_factor":0.7}},"minador":{"nombre":"minador de la hoja","cientifico":"Liriomyza spp.","tipo":"insecto","estadios":["larva","adulto"],"donde":"galerías serpenteantes en hojas; adultos en trampa amarilla","orillas":true,"viento":false,"medidas":{"minas_planta":{"umbrales":[2,6,15]},"trampa_semana":{"umbrales":[10,30,80]}},"desarrollo":{"base_c":9.0,"gd_generacion":280,"tope_c":35,"r_generacion":5}}},"polinizacion":{"nombre":"polinización con abejorros","medida":"pct_flores_marca","umbrales_ok":[60,80],"txt":"≥ 80 % de flores con marca: polinización buena; 60–80 %: revisar colmenas y temperatura; < 60 %: falta polinización","fuente":"práctica de invernadero (Koppert/Biobest guías de marca de abejorro); PRELIMINAR"}},"brocoli":{"nombre":"brócoli (y otras crucíferas)","plagas":{"palomilla_dorso_diamante":{"nombre":"palomilla dorso de diamante","cientifico":"Plutella xylostella","tipo":"insecto","estadios":["huevo","larva","pupa","adulto"],"donde":"larvas pequeñas en envés y corazón de la planta; trampa de feromona","orillas":true,"viento":true,"medidas":{"larvas_planta":{"umbrales":[0.3,1,3]},"pct_plantas":{"umbrales":[10,30,60]},"trampa_dia":{"umbrales":[2,8,20]}},"desarrollo":{"base_c":7.3,"gd_generacion":283,"tope_c":33,"r_generacion":6},"clima":{"lluvia_mm_baja":15,"lluvia_factor":0.7,"calor_c":35,"calor_factor":0.9},"agravantes":[{"cuando":"etapa in formacion_cabeza,cabeza","factor":1.5,"txt":"con cabeza formándose, el daño es directo a lo que se vende"}]},"pulgon":{"nombre":"pulgón de la col","cientifico":"Brevicoryne brassicae / Myzus persicae","tipo":"insecto","estadios":["ninfa","adulto"],"donde":"colonias cerosas en hojas internas y cabeza","orillas":true,"viento":true,"medidas":{"pct_plantas":{"umbrales":[5,20,40]}},"desarrollo":{"base_c":4.0,"gd_generacion":130,"tope_c":30,"r_generacion":8},"clima":{"lluvia_mm_baja":15,"lluvia_factor":0.8,"calor_c":32,"calor_factor":0.7},"agravantes":[{"cuando":"etapa in formacion_cabeza,cabeza","factor":1.5,"txt":"pulgón dentro de la cabeza: rechazo en empaque"}]},"falso_medidor":{"nombre":"gusano falso medidor y gusano de la col","cientifico":"Trichoplusia ni / Pieris rapae","tipo":"insecto","estadios":["huevo","larva","adulto"],"donde":"larvas en hojas (agujeros grandes) y excremento en el corazón","orillas":true,"viento":true,"medidas":{"larvas_planta":{"umbrales":[0.3,1,3]},"pct_plantas":{"umbrales":[10,30,60]}},"desarrollo":{"base_c":10.0,"gd_generacion":400,"tope_c":35,"r_generacion":5}},"mosquita_blanca":{"nombre":"mosquita blanca","cientifico":"Bemisia tabaci","tipo":"insecto","estadios":["huevo","ninfa","adulto"],"donde":"envés de hojas","orillas":true,"viento":true,"medidas":{"adultos_hoja":{"umbrales":[1,4,11]},"trampa_semana":{"umbrales":[5,20,50]}},"desarrollo":{"base_c":10.5,"gd_generacion":316,"tope_c":35,"r_generacion":6}}}},"maiz":{"nombre":"maíz","plagas":{"gusano_cogollero":{"nombre":"gusano cogollero","cientifico":"Spodoptera frugiperda","tipo":"insecto","estadios":["huevo","larva","pupa","adulto"],"donde":"cogollo (daño fresco: raspado y excremento húmedo); masas de huevos en hojas; trampa de feromona","orillas":true,"viento":true,"medidas":{"pct_plantas":{"umbrales":[10,20,40]},"masas_planta":{"umbrales":[0.05,0.15,0.4],"informativa":true},"trampa_dia":{"umbrales":[2,6,15]}},"desarrollo":{"base_c":10.9,"gd_generacion":560,"tope_c":35,"r_generacion":5},"clima":{"lluvia_mm_baja":25,"lluvia_factor":0.8,"calor_c":38,"calor_factor":0.9},"agravantes":[{"cuando":"dias_desde_siembra<35","factor":1.3,"txt":"en V1–V6 el daño al cogollo frena la planta; el umbral común es 20 % de plantas con daño fresco"},{"cuando":"dias_desde_siembra>=35","factor":0.8,"txt":"de V7 en adelante la planta tolera más (umbral 40 %), salvo en espiga/elote"}]},"arana_roja":{"nombre":"araña roja","cientifico":"Oligonychus / Tetranychus","tipo":"ácaro","estadios":["huevo","ninfa","adulto"],"donde":"envés de hojas bajas; sube con calor y sequía","orillas":true,"viento":false,"medidas":{"pct_hojas":{"umbrales":[10,20,35]}},"desarrollo":{"base_c":11.0,"gd_generacion":150,"tope_c":38,"r_generacion":6},"clima":{"lluvia_mm_baja":10,"lluvia_factor":0.6,"calor_c":40,"calor_factor":1.0,"seco_factor":1.2}},"pulgon":{"nombre":"pulgón del cogollo","cientifico":"Rhopalosiphum maidis","tipo":"insecto","estadios":["ninfa","adulto"],"donde":"cogollo, espiga y hojas superiores; colonias","orillas":true,"viento":true,"medidas":{"pct_plantas":{"umbrales":[10,25,50]}},"desarrollo":{"base_c":5.0,"gd_generacion":140,"tope_c":32,"r_generacion":8},"agravantes":[{"cuando":"etapa in espigamiento,floracion","factor":1.3,"txt":"colonias en la espiga reducen la polinización"}]},"gusano_elotero":{"nombre":"gusano elotero","cientifico":"Helicoverpa zea","tipo":"insecto","estadios":["huevo","larva","adulto"],"donde":"huevos en estigmas (pelos del elote) frescos; larvas en la punta del elote","orillas":false,"viento":true,"medidas":{"pct_plantas":{"umbrales":[5,15,30]},"trampa_dia":{"umbrales":[2,5,12]}},"desarrollo":{"base_c":12.5,"gd_generacion":450,"tope_c":35,"r_generacion":4}}}},"papa":{"nombre":"papa","plagas":{"paratrioza":{"nombre":"paratrioza (psílido de la papa)","cientifico":"Bactericera cockerelli","tipo":"insecto","estadios":["huevo","ninfa","adulto"],"donde":"ninfas en envés de hojas del tercio medio e inferior; adultos en trampa amarilla; orillas y malezas (hierba mora, chile silvestre)","orillas":true,"viento":true,"medidas":{"ninfas_hoja":{"umbrales":[0.1,0.5,2]},"adultos_hoja":{"umbrales":[0.1,0.3,1]},"trampa_semana":{"umbrales":[1,6,16]}},"desarrollo":{"base_c":7.0,"gd_generacion":360,"tope_c":32,"r_generacion":6},"clima":{"lluvia_mm_baja":20,"lluvia_factor":0.8,"calor_c":33,"calor_factor":0.7},"agravantes":[{"cuando":"dias_desde_siembra<60","factor":1.4,"txt":"transmite la bacteria del zebra chip y del permanente del tomate: en planta joven cualquier ninfa pesa"}]},"pulgon":{"nombre":"pulgón","cientifico":"Myzus persicae","tipo":"insecto","estadios":["ninfa","adulto"],"donde":"envés de hojas del tercio inferior y brotes; vector de virus (PVY, PLRV)","orillas":true,"viento":true,"medidas":{"pct_hojas":{"umbrales":[5,10,30]},"pct_plantas":{"umbrales":[5,15,30]}},"desarrollo":{"base_c":4.0,"gd_generacion":120,"tope_c":30,"r_generacion":8},"agravantes":[{"cuando":"semilla","factor":1.5,"txt":"en papa para semilla la tolerancia es casi cero (virus)"}]},"tizon_tardio":{"nombre":"tizón tardío","cientifico":"Phytophthora infestans","tipo":"enfermedad","estadios":["lesión","esporulación"],"donde":"manchas café con borde pálido y moho blanco en el envés con humedad; focos en bajos y orillas sombreadas","orillas":true,"viento":true,"medidas":{"pct_plantas":{"umbrales":[1,5,25]}},"desarrollo":{"base_c":10.0,"gd_generacion":70,"tope_c":27,"r_generacion":10},"clima":{"humedo_factor":1.5,"seco_factor":0.6},"agravantes":[{"cuando":"hutton","factor":1.5,"txt":"con periodos Hutton recientes el foco se multiplica en días"}]},"palomilla_papa":{"nombre":"palomilla de la papa (gusano alfiler)","cientifico":"Phthorimaea operculella","tipo":"insecto","estadios":["huevo","larva","pupa","adulto"],"donde":"minas en hojas y tallos; galerías en tubérculos expuestos; trampa de feromona","orillas":true,"viento":false,"medidas":{"minas_planta":{"umbrales":[1,3,6]},"trampa_semana":{"umbrales":[10,30,80]}},"desarrollo":{"base_c":10.0,"gd_generacion":390,"tope_c":35,"r_generacion":6},"agravantes":[{"cuando":"etapa in tuberizacion,madurez","factor":1.4,"txt":"con tubérculos cerca de la superficie el daño va al producto"}]}}},"soja":{"nombre":"soja","plagas":{"chinche_verde":{"nombre":"chinches","cientifico":"Nezara viridula / Piezodorus guildinii","tipo":"insecto","estadios":["huevo","ninfa","adulto"],"donde":"vainas; paño vertical de 1 m","orillas":true,"viento":true,"medidas":{"larvas_planta":{"umbrales":[0.3,1,2],"txt":"chinches por metro de surco (paño)"}},"desarrollo":{"base_c":12.0,"gd_generacion":450,"tope_c":35,"r_generacion":4}},"oruga_defoliadora":{"nombre":"orugas defoliadoras","cientifico":"Anticarsia gemmatalis / Rachiplusia nu","tipo":"insecto","estadios":["huevo","larva","adulto"],"donde":"hojas (defoliación); paño","orillas":true,"viento":true,"medidas":{"larvas_planta":{"umbrales":[5,10,20],"txt":"orugas grandes por metro (paño)"},"pct_plantas":{"umbrales":[10,20,30],"txt":"% de defoliación"}},"desarrollo":{"base_c":10.0,"gd_generacion":420,"tope_c":35,"r_generacion":5}}}}}}/*FIN_PLAGAS_JSON*/;
+const NIVEL_TXT = ["nada", "bajo", "medio", "alto"], NIVEL_CLS = ["sin", "bajo", "medio", "alto"];
+function plMedTxt(k){ return ((PLAGAS.medidas||{})[k]||{}).txt || ({hojas_o_plantas:"hojas o plantas revisadas", estadio:"estadio", recorrido:"recorrido"})[k] || k; }
+function plCultivoClave(l){ const c = String(l && l.cultivo || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); return (PLAGAS.cultivos || {})[c] ? c : null; }
+function plLista(l){ const c = plCultivoClave(l); return c ? Object.entries(PLAGAS.cultivos[c].plagas).map(([k,v])=>({clave:k, ...v})) : []; }
+function plCfg(l, clave){ const c = plCultivoClave(l); return c ? PLAGAS.cultivos[c].plagas[clave] : null; }
+function plNombre(l, clave){ const c = plCfg(l, clave); return c ? c.nombre : clave; }
+// --- geometría local (metros)
+function plMetros(poly){ const lat0 = poly.reduce((a,p)=>a+p[0],0)/poly.length, lon0 = poly.reduce((a,p)=>a+p[1],0)/poly.length; const my = 111320, mx = 111320*Math.cos(lat0*Math.PI/180); return {pts: poly.map(p=>[(p[1]-lon0)*mx, (p[0]-lat0)*my]), lat0, lon0, mx, my}; }
+function plDentro(pts, x, y){ let d = false; for(let i=0, j=pts.length-1; i<pts.length; j=i++){ const [xi,yi] = pts[i], [xj,yj] = pts[j]; if((yi>y)!==(yj>y) && x < (xj-xi)*(y-yi)/((yj-yi)||1e-12)+xi) d = !d; } return d; }
+function plArea(pts){ let s = 0; for(let i=0;i<pts.length;i++){ const [x1,y1] = pts[i], [x2,y2] = pts[(i+1)%pts.length]; s += x1*y2 - x2*y1; } return Math.abs(s)/2; }
+function plOrient(pts, x, y){ const cx = pts.reduce((a,p)=>a+p[0],0)/pts.length, cy = pts.reduce((a,p)=>a+p[1],0)/pts.length; const dx = x-cx, dy = y-cy; return Math.abs(dx) > Math.abs(dy) ? (dx>0 ? "este" : "oeste") : (dy>0 ? "norte" : "sur"); }
+function plRand(seed){ let s = seed>>>0 || 7; return ()=>{ s = (s*1664525 + 1013904223)>>>0; return s/4294967296; }; }
+// --- 1. puntos de muestreo (mismo criterio que src/plagas.py del RIG)
+function plPuntos(poly, opts){
+  opts = opts || {}; if(!poly || poly.length < 3) return [];
+  const {pts, lat0, lon0, mx, my} = plMetros(poly); const A = plArea(pts), ha = A/1e4; const n = opts.n || Math.max(5, Math.min(30, Math.round(ha)));
+  const rnd = plRand(opts.semilla || 7); const xs = pts.map(p=>p[0]), ys = pts.map(p=>p[1]); const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const orillas = opts.plaga ? opts.plaga.orillas !== false : true; const nB = Math.max(2, Math.round(n*(orillas ? .3 : .15))), nM = Math.max(3, n - nB); const s = Math.sqrt(A/nM); const sal = [];
+  for(let gy = y0 + s/2, fila = 0; gy < y1; gy += s*.87, fila++){ for(let gx = x0 + s/2 + (fila%2 ? s/2 : 0); gx < x1; gx += s){ const jx = gx + (rnd()*.4-.2)*s, jy = gy + (rnd()*.4-.2)*s; if(plDentro(pts, jx, jy)) sal.push({x:jx, y:jy, motivo:"malla que cubre el lote", clase:"malla"}); } }
+  for(let t=0; sal.filter(p=>p.clase==="malla").length < nM && t < 2000; t++){ const jx = x0 + rnd()*(x1-x0), jy = y0 + rnd()*(y1-y0); if(plDentro(pts, jx, jy) && sal.every(p=>Math.hypot(jx-p.x, jy-p.y) > s*.5)) sal.push({x:jx, y:jy, motivo:"malla que cubre el lote", clase:"malla"}); }
+  const per = pts.reduce((a,p,i)=>{ const q = pts[(i+1)%pts.length]; return a + Math.hypot(q[0]-p[0], q[1]-p[1]); }, 0); const paso = per/nB; let acum = 0, obj = paso/2, k = 0;
+  for(let i=0;i<pts.length;i++){ const [xa,ya] = pts[i], [xb,yb] = pts[(i+1)%pts.length]; const L = Math.hypot(xb-xa, yb-ya) || 1e-9;
+    while(obj <= acum + L && k < nB){ const t = (obj-acum)/L, bx = xa + t*(xb-xa), by = ya + t*(yb-ya), nx = -(yb-ya)/L, ny = (xb-xa)/L; for(const sg of [1,-1]){ const px = bx + sg*12*nx, py = by + sg*12*ny; if(plDentro(pts, px, py)){ sal.push({x:px, y:py, motivo:"orilla " + plOrient(pts, px, py), clase:"orilla"}); break; } } k++; obj += paso; } acum += L; }
+  (opts.verdor||[]).slice(0,4).forEach(v=>{ const vx = (v.lon-lon0)*mx, vy = (v.lat-lat0)*my; if(plDentro(pts, vx, vy)) sal.push({x:vx, y:vy, motivo:`manchón de bajo verdor (NDVI ${(v.ndvi||0).toFixed(2)})`, clase:"verdor"}); });
+  (opts.detecciones||[]).forEach(d=>{ if((d.nivel||0) < 1) return; const dx = (d.lon-lon0)*mx, dy = (d.lat-lat0)*my; if(!plDentro(pts, dx, dy)) return; sal.push({x:dx, y:dy, motivo:`donde se vio nivel ${d.nivel} el ${fmtD(d.fecha||"")}`, clase:"deteccion"});
+    if(opts.vientoDir != null && (!opts.plaga || opts.plaga.viento !== false)){ const ang = (opts.vientoDir+180)%360*Math.PI/180, wx = dx + 60*Math.sin(ang), wy = dy + 60*Math.cos(ang); if(plDentro(pts, wx, wy)) sal.push({x:wx, y:wy, motivo:"a favor del viento desde la detección", clase:"viento"}); } });
+  const pri = {deteccion:0, viento:1, verdor:2, orilla:3, malla:4}; sal.sort((a,b)=>pri[a.clase]-pri[b.clase]); const sep = Math.max(8, Math.min(25, s*.3)); const fin = [];
+  sal.forEach(p=>{ if(fin.every(q=>Math.hypot(p.x-q.x, p.y-q.y) > sep)) fin.push(p); });
+  for(let t=0; fin.length < n && t < 3000; t++){ const jx = x0 + rnd()*(x1-x0), jy = y0 + rnd()*(y1-y0); if(plDentro(pts, jx, jy) && fin.every(q=>Math.hypot(jx-q.x, jy-q.y) > Math.max(sep,15))) fin.push({x:jx, y:jy, motivo:"malla que cubre el lote", clase:"malla"}); }
+  let cx, cy; if(opts.entrada){ cx = (opts.entrada[1]-lon0)*mx; cy = (opts.entrada[0]-lat0)*my; } else { const e = pts.reduce((a,p)=>(p[0]+p[1] < a[0]+a[1] ? p : a), pts[0]); cx = e[0]; cy = e[1]; }
+  const ruta = [], rest = fin.slice(); while(rest.length){ let bi = 0, bd = Infinity; rest.forEach((p,i)=>{ const d = Math.hypot(p.x-cx, p.y-cy); if(d < bd){ bd = d; bi = i; } }); const nx = rest.splice(bi,1)[0]; ruta.push(nx); cx = nx.x; cy = nx.y; }
+  return ruta.map((p,i)=>({id:`P${i+1}`, orden:i+1, lat:+(lat0 + p.y/my).toFixed(6), lon:+(lon0 + p.x/mx).toFixed(6), motivo:p.motivo, clase:p.clase}));
+}
+// --- 2. índice y compuerta
+function plNivelDe(v, um){ if(v==null || v==="" || isNaN(+v)) return 0; let n = 0; um.forEach((u,i)=>{ if(+v >= u) n = i+1; }); return n; }
+function plAgravante(cond, ctx){ cond = String(cond||"").trim(); if(cond.startsWith("dias_desde_siembra")){ const d = ctx.dias_desde_siembra; if(d==null) return false; if(cond.includes(">=")) return d >= +cond.split(">=")[1]; if(cond.includes("<")) return d < +cond.split("<")[1]; } if(cond.startsWith("etapa in")){ const et = String(ctx.etapa||"").toLowerCase().replace(/ /g,"_"); return cond.split("in")[1].split(",").some(x=>et.startsWith(x.trim())); } if(cond==="hutton"||cond==="semilla") return !!ctx[cond]; return false; }
+function plIndice(cfg, conteos, ctx){
+  ctx = ctx || {}; let factor = 1, agr = []; (cfg.agravantes||[]).forEach(a=>{ if(plAgravante(a.cuando, ctx)){ factor *= +(a.factor||1); agr.push(a.txt||""); } });
+  let nivel = 0, crudo = 0, puntaje = 0, principal = null; const razones = [], info = [];
+  Object.entries(conteos||{}).forEach(([med, val])=>{ const m = (cfg.medidas||{})[med]; if(!m || val==null || val==="" || isNaN(+val)) return; const v = +val; const um = m.umbrales, ua = um.map(u=>u/factor); const nv0 = plNivelDe(v, um), nv = plNivelDe(v, ua), sc = v/ua[2]; const txt = ((PLAGAS.medidas||{})[med]||{}).txt || med;
+    if(m.informativa){ info.push(`${txt}: ${v} (${NIVEL_TXT[nv0]}; anuncia lo que viene)`); return; }
+    razones.push(`${txt}: ${v} frente a ${+ua[0].toFixed(2)} / ${+ua[1].toFixed(2)} / ${+ua[2].toFixed(2)} (bajo / medio / alto${factor>1 ? "; umbrales bajados por agravante" : factor<1 ? "; umbrales subidos" : ""}) → ${NIVEL_TXT[nv]}`);
+    if(nv > nivel || (nv===nivel && sc > puntaje)){ nivel = nv; principal = med; } crudo = Math.max(crudo, nv0); puntaje = Math.max(puntaje, sc); });
+  return {nivel, nivel_sin_agravantes: crudo, puntaje: +puntaje.toFixed(3), factor_agravantes: +factor.toFixed(2), medida_principal: principal, razones, informativas: info, agravantes: agr, preliminar: true};
+}
+function plCompuerta(np, idx){
+  const nm = idx.nivel||0; if(np==null) return {acuerdo:true, nivel_final:nm, mensaje:`Nivel del motor: ${NIVEL_TXT[nm]} (por los conteos).`, revisar: nm>=2};
+  np = +np; if(np===nm) return {acuerdo:true, nivel_final:nm, mensaje:`Coinciden: ${NIVEL_TXT[nm]}.`, revisar: nm>=2};
+  if(np < nm){ const por = (idx.razones||[]).join("; ").slice(0,300), ag = (idx.agravantes||[]).length ? "; " + idx.agravantes.join("; ") : ""; return {acuerdo:false, nivel_final:nm, mensaje:`Usted marcó ${NIVEL_TXT[np]}; con lo contado el motor ve ${NIVEL_TXT[nm]}: ${por}${ag}. Se guarda lo contado y queda para su agrónomo; si en este lote no aplica, márquelo y el umbral se ajusta.`, revisar:true}; }
+  return {acuerdo:false, nivel_final:np, mensaje:`Usted marcó ${NIVEL_TXT[np]} y los conteos dan ${NIVEL_TXT[nm]}: se respeta su ojo (puede haber algo que los conteos no miden) y queda para su agrónomo.`, revisar:true};
+}
+// --- 3. mapa de presión hoy y a 7 días (versión del teléfono: celdas de ≥ 20 m, máximo 40 x 40)
+function plGradosDia(tmin, tmax, base, tope){ if(tope!=null){ tmax = Math.min(tmax, tope); tmin = Math.min(tmin, tope); } return Math.max(0, (tmin+tmax)/2 - base); }
+function plFactorDia(d, cfg){ const dev = cfg.desarrollo||{}, cl = cfg.clima||{}; const gd = plGradosDia(+(d.tmin??15), +(d.tmax??25), +(dev.base_c??10), dev.tope_c); const r = Math.log(+(dev.r_generacion||5))/+(dev.gd_generacion||300); let g = Math.exp(r*gd*.5);
+  if(+(d.lluvia||0) >= +(cl.lluvia_mm_baja??999)) g *= +(cl.lluvia_factor??1); if(+(d.tmax??25) >= +(cl.calor_c??99)) g *= +(cl.calor_factor??1); if(cl.humedo_factor && +(d.hr||0) >= 85) g *= +cl.humedo_factor; if(cl.seco_factor && +(d.hr??100) <= 40 && +(d.lluvia||0)===0) g *= +cl.seco_factor; return g; }
+function plMapa(poly, obs, clima, cfg, hoy, dias, vientoDir){
+  dias = dias || 7; if(!poly || poly.length < 3) return null; const {pts, lat0, lon0, mx, my} = plMetros(poly); const xs = pts.map(p=>p[0]), ys = pts.map(p=>p[1]); const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const celda = Math.max(20, Math.max(x1-x0, y1-y0)/40); const nx = Math.max(2, Math.ceil((x1-x0)/celda)), ny = Math.max(2, Math.ceil((y1-y0)/celda)); const cx = (x1-x0)/nx, cy = (y1-y0)/ny;
+  const cen = [], ad = []; for(let j=0;j<ny;j++){ cen.push([]); ad.push([]); for(let i=0;i<nx;i++){ const X = x0+(i+.5)*cx, Y = y0+(j+.5)*cy; cen[j].push([X,Y]); ad[j].push(plDentro(pts, X, Y)); } }
+  const dHoy = new Date(hoy+"T12:00:00"); const porF = {}; (clima||[]).forEach(d=>{ porF[String(d.fecha||"").slice(0,10)] = d; }); const ult = (clima||[]).filter(d=>String(d.fecha||"").slice(0,10) <= hoy).slice(-7);
+  const medio = ult.length ? {tmin: ult.reduce((a,d)=>a+(+(d.tmin??15)),0)/ult.length, tmax: ult.reduce((a,d)=>a+(+(d.tmax??25)),0)/ult.length, lluvia:0, hr: ult.reduce((a,d)=>a+(+(d.hr??60)),0)/ult.length} : {tmin:15, tmax:25, lluvia:0, hr:60};
+  const climaDe = f => porF[localISO(f)] || medio; const addDias = (f, k) => new Date(f.getTime() + k*86400000);
+  let P = ad.map(r=>r.map(()=>0)); const o = (obs||[]).filter(x=>x.nivel!=null && x.lat!=null && x.lon!=null); const s0 = 30;
+  o.forEach(ob=>{ let f = new Date(String(ob.fecha||hoy).slice(0,10)+"T12:00:00"); if(isNaN(f)) f = dHoy; let g = 1; for(let d = f; d < dHoy; d = addDias(d,1)){ g = Math.min(4, g*plFactorDia(climaDe(d), cfg)); } const ox = (ob.lon-lon0)*mx, oy = (ob.lat-lat0)*my; const v = +ob.nivel > 0 ? Math.min(1, (+ob.nivel/3)*g) : 0; const ant = Math.max(0, Math.round((dHoy-f)/86400000)), peso = Math.exp(-ant/21);
+    for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){ if(!ad[j][i]) continue; const dx = cen[j][i][0]-ox, dy = cen[j][i][1]-oy; const kk = Math.exp(-(dx*dx+dy*dy)/(2*s0*s0*(1+.1*ant))); if(v>0) P[j][i] = Math.max(P[j][i], v*kk*Math.max(peso,.35)); else P[j][i] *= (1-.6*kk*peso); } });
+  const disp = (G, alpha)=>{ let sx = 0, sy = 0; if(vientoDir!=null && cfg.viento!==false){ const ang = (vientoDir+180)%360*Math.PI/180; sx = .7*Math.sin(ang); sy = .7*Math.cos(ang); } return G.map((row,j)=>row.map((v,i)=>{ if(!ad[j][i]) return 0; let tot = 0, w = 0; for(let dj=-1;dj<=1;dj++) for(let di=-1;di<=1;di++){ const jj = j+dj, ii = i+di; if(jj>=0&&jj<ny&&ii>=0&&ii<nx&&ad[jj][ii]){ const ww = Math.max(.1, 1 + (sx*(-di) + sy*(-dj))); tot += G[jj][ii]*ww; w += ww; } } return (1-alpha)*v + alpha*(w ? tot/w : 0); })); };
+  const H = disp(P, .1); let F = H.map(r=>r.slice()); for(let k=1;k<=dias;k++){ const g = plFactorDia(climaDe(addDias(dHoy,k)), cfg); F = disp(F.map((row,j)=>row.map((v,i)=>ad[j][i] ? Math.min(1, v*g) : 0)), .18); }
+  const nivG = G => { let m = 0; G.forEach((r,j)=>r.forEach((v,i)=>{ if(ad[j][i]) m = Math.max(m, v); })); return [m >= .67 ? 3 : m >= .34 ? 2 : m >= .08 ? 1 : 0, m]; };
+  const [nH, mH] = nivG(H), [nF, mF] = nivG(F); const cand = []; for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){ if(!ad[j][i]) continue; const dmin = o.length ? Math.min(...o.map(ob=>Math.hypot(cen[j][i][0]-(ob.lon-lon0)*mx, cen[j][i][1]-(ob.lat-lat0)*my))) : 9999; cand.push({p:F[j][i], dmin, i, j}); }
+  const ll = (i,j)=>[+(lat0 + cen[j][i][1]/my).toFixed(6), +(lon0 + cen[j][i][0]/mx).toFixed(6)]; const prox = [];
+  cand.slice().sort((a,b)=>b.p-a.p).slice(0,3).forEach(c=>{ if(c.p >= .08){ const [la,lo] = ll(c.i,c.j); prox.push({lat:la, lon:lo, motivo:`presión proyectada ${c.p.toFixed(2)}`, presion:+c.p.toFixed(2)}); } });
+  cand.slice().sort((a,b)=>b.dmin-a.dmin).slice(0,2).forEach(c=>{ if(c.dmin > 40){ const [la,lo] = ll(c.i,c.j); prox.push({lat:la, lon:lo, motivo:`sin revisar (a ${Math.round(c.dmin)} m de la observación más cercana)`, presion:+c.p.toFixed(2)}); } });
+  const nAd = ad.flat().filter(Boolean).length || 1; const frac = G => G.flat().filter((v,k)=>ad.flat()[k] && v >= .34).length/nAd; const fH = frac(H), fF = frac(F);
+  const dev = cfg.desarrollo||{}; let gd7 = 0; for(let k=1;k<=dias;k++){ const d = climaDe(addDias(dHoy,k)); gd7 += plGradosDia(+(d.tmin??15), +(d.tmax??25), +(dev.base_c??10), dev.tope_c); } const gen = gd7/+(dev.gd_generacion||300);
+  const T = ["nada","baja","media","alta"]; const resumen = `Presión ${T[nH]} hoy (${Math.round(fH*100)} % del lote con presión media o más) y ${T[nF]} en ${dias} días (${Math.round(fF*100)} %); el clima de la semana suma ${Math.round(gd7)} grados-día, ${gen.toFixed(2)} generaciones de la plaga.${o.length ? "" : " Sin observaciones todavía: el mapa parte de cero."} PRELIMINAR.`;
+  const r2 = G => G.map((r,j)=>r.map((v,i)=>ad[j][i] ? +v.toFixed(2) : null));
+  return {bbox:{s: lat0+y0/my, n: lat0+y1/my, w: lon0+x0/mx, e: lon0+x1/mx}, nx, ny, celda_m:+Math.max(cx,cy).toFixed(1), hoy:r2(H), proyeccion:r2(F), dias, nivel_hoy:nH, nivel_proy:nF, maximo_hoy:+mH.toFixed(2), maximo_proy:+mF.toFixed(2), frac_hoy:+fH.toFixed(2), frac_proy:+fF.toFixed(2), gd_semana:+gd7.toFixed(1), generaciones_semana:+gen.toFixed(2), puntos_proximos:prox, n_observaciones:o.length, resumen, preliminar:true};
+}
+// --- clima para el mapa: los días del pronóstico de la app (tm = máxima; la mínima se estima) y, si no hay, un clima medio
+function plClima(l){ const out = []; const hoy = new Date(hoyISO+"T12:00:00"); (l.dias||[]).forEach((d,i)=>{ const tmax = d.tm!=null ? +d.tm : 26; out.push({fecha: localISO(new Date(hoy.getTime()+(i+1)*86400000)), tmin: Math.max(0, tmax-12), tmax, lluvia: (d.ll||0) >= 50 ? 10 : 0, hr: 60}); }); return out; }
+function plPoly(l){ const g = (typeof G==="function" && LOTES[lotIdx]===l) ? G() : (geo && geo[l.id]); if(g && g.poly && g.poly.length >= 3) return g.poly; const lat = g && g.pin ? g.pin.lat : l.lat, lon = g && g.pin ? g.pin.lon : l.lon; if(lat==null || lon==null) return null; const d = 0.0012; return [[lat-d, lon-d],[lat-d, lon+d],[lat+d, lon+d],[lat+d, lon-d]]; }
+function plDiasSiembra(l){ if(!l.siembra) return null; return Math.round((new Date(hoyISO+"T12:00:00") - new Date(l.siembra+"T12:00:00"))/86400000); }
+function plEtapa(l){ const m = String(l.etapaTxt||"").match(/etapa:\s*([a-záéíóúñ_ ]+)/i); return m ? m[1].trim() : ""; }
+function plMonitoreosLote(l, plaga){ return (MONITOREOS||[]).filter(m=>m.lote_id===(l.uuid||l.id) && (!plaga || m.plaga===plaga)); }
+function plEstadoLote(l, plaga){ const lid = l.uuid||l.id; return (PLAGAS_ESTADO||[]).filter(e=>e.lote_id===lid && e.plaga===plaga).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)))[0] || null; }
+function plEstadoLocal(l, plaga){ const cfg = plCfg(l, plaga); const poly = plPoly(l); if(!cfg || !poly) return null; const mons = plMonitoreosLote(l, plaga); const obs = mons.map(m=>({lat:m.lat, lon:m.lon, nivel: m.nivel_final!=null ? m.nivel_final : m.nivel_motor, fecha:m.fecha})); const mapa = plMapa(poly, obs, plClima(l), cfg, hoyISO, 7); if(!mapa) return null;
+  const ult = mons.length ? mons.reduce((a,m)=>String(m.fecha) > a ? String(m.fecha) : a, "") : null; const ultM = mons.filter(m=>m.fecha===ult); const niv = ultM.length ? Math.max(...ultM.map(m=>m.nivel_final!=null ? m.nivel_final : (m.nivel_motor||0))) : 0;
+  return {local:true, lote_id:l.uuid||l.id, plaga, fecha:hoyISO, nivel:niv, nivel_proy:mapa.nivel_proy, ultimo_recorrido:ult, puntos_revisados:ultM.length, resumen:(ult ? `Último recorrido ${fmtD(ult)}: ${ultM.length} punto${ultM.length===1?"":"s"}, nivel ${NIVEL_TXT[niv]}. ` : "") + mapa.resumen, mapa, puntos_proximos:mapa.puntos_proximos, puntos_muestreo: plPuntos(poly, {plaga:cfg, detecciones: mons.filter(m=>(m.nivel_final||m.nivel_motor||0) >= 2).slice(0,6).map(m=>({lat:m.lat, lon:m.lon, nivel:m.nivel_final||m.nivel_motor, fecha:m.fecha}))})}; }
+function plEstado(l, plaga){ const nube = plEstadoLote(l, plaga); const mons = plMonitoreosLote(l, plaga); const ultLocal = mons.length ? mons.reduce((a,m)=>String(m.fecha) > a ? String(m.fecha) : a, "") : ""; if(nube && (!ultLocal || String(nube.fecha) >= ultLocal)) return nube; return plEstadoLocal(l, plaga) || nube; }
+// --- Hoy: tarjeta de plagas del lote
+function renderPlagasHoy(){
+  const card = $("#hoy-plagas"); if(!card) return; const l = LOTES[lotIdx]; const lista = plLista(l); card.hidden = !lista.length || !!l.sin; if(card.hidden) return;
+  const conEstado = lista.map(p=>({p, e: plEstado(l, p.clave)})).filter(x=>x.e && (x.e.puntos_revisados || x.e.n_observaciones));
+  $("#hoy-plagas-list").innerHTML = conEstado.length ? conEstado.map(({p,e})=>`<div class="sem-item" style="grid-template-columns:1fr auto"><div><b>${esc(p.nombre)}</b><span>${esc((e.resumen||"").split(". ")[0])}${e.ultimo_recorrido ? ` · ${e.puntos_revisados||0} punto${(e.puntos_revisados||0)===1?"":"s"}` : ""}${e.local ? " · calculado en el teléfono" : ""}</span></div><div style="display:grid;gap:4px;justify-items:end"><span class="lvl ${NIVEL_CLS[e.nivel||0]}">${NIVEL_TXT[e.nivel||0]}</span><span class="small muted">7 días: ${NIVEL_TXT[e.nivel_proy||0]}</span></div></div>`).join("")
+    : `<p class="note">Sin recorridos todavía. ${lista.length} plaga${lista.length===1?"":"s"} en el catálogo de ${esc(nombreCultivo(l.cultivo))}: ${esc(lista.map(x=>x.nombre).join(", "))}.</p>`;
+}
+// --- Más -> Plagas: mapa de presión, puntos y recorridos
+let mpMap = null, mpCapas = [], mpPlaga = null, mpVista = "hoy";
+function renderPlagasMas(){
+  const card = $("#mas-plagas"); if(!card || card.hidden) return; const l = LOTES[lotIdx]; const lista = plLista(l);
+  if(!lista.length){ $("#mp-plagas").innerHTML = `<p class="note">El catálogo de plagas todavía no tiene a ${esc(nombreCultivo(l.cultivo))}. Cultivos con catálogo: ${esc(Object.values(PLAGAS.cultivos||{}).map(c=>c.nombre).join(", "))}.</p>`; $("#mp-resumen").textContent = ""; $("#mp-kv").innerHTML = ""; $("#mp-lista").innerHTML = ""; return; }
+  if(!mpPlaga || !lista.some(p=>p.clave===mpPlaga)) mpPlaga = lista[0].clave;
+  $("#mp-plagas").innerHTML = lista.map(p=>`<button class="chip" aria-pressed="${p.clave===mpPlaga}" data-mpl="${esc(p.clave)}">${esc(p.nombre)}</button>`).join("");
+  const cfg = plCfg(l, mpPlaga); const e = plEstado(l, mpPlaga); const poly = plPoly(l);
+  $("#mp-donde").textContent = cfg ? `${cfg.cientifico} · dónde mirar: ${cfg.donde}` : "";
+  $("#mp-resumen").textContent = e ? e.resumen : "Sin recorridos de esta plaga todavía: haga el primero desde Registrar → Monitoreo de plagas.";
+  const mapa = e && e.mapa; $("#mp-kv").innerHTML = mapa ? kv([["Nivel hoy", NIVEL_TXT[e.nivel||0]], ["Nivel en 7 días", NIVEL_TXT[e.nivel_proy||mapa.nivel_proy||0]], ["Lote con presión media o más", `${Math.round((mapa.frac_hoy||0)*100)} % → ${Math.round((mapa.frac_proy||0)*100)} %`], ["Grados-día de la semana", `${mapa.gd_semana} (${mapa.generaciones_semana} generaciones)`], ["Calculado", e.local ? "en el teléfono (el motor lo afina con señal)" : `por el motor el ${fmtD(e.fecha)}`]]) : "";
+  $$("#mp-vista button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.vista===mpVista)));
+  if(!poly){ $("#mp-map").hidden = true; $("#mp-map-nota").textContent = "Marque el lote en el mapa (Lote) para ver los puntos y la presión."; }
+  else { $("#mp-map").hidden = false; $("#mp-map-nota").textContent = ""; try{ mpDibujar(poly, e, mapa); }catch(err){ $("#mp-map-nota").textContent = "No se pudo dibujar el mapa: " + String(err.message||err).slice(0,80); } }
+  const mons = plMonitoreosLote(l, mpPlaga); const porFecha = {}; mons.forEach(m=>{ (porFecha[m.fecha] = porFecha[m.fecha] || []).push(m); });
+  $("#mp-lista").innerHTML = Object.keys(porFecha).sort().reverse().slice(0,10).map(f=>{ const ms = porFecha[f]; const mx = Math.max(...ms.map(m=>m.nivel_final!=null ? m.nivel_final : (m.nivel_motor||0))); const des = ms.filter(m=>m.acuerdo===false).length; return `<div class="log-item"><span class="d">${fmtD(f)}</span><span>${ms.length} punto${ms.length===1?"":"s"} · nivel ${NIVEL_TXT[mx]}${des ? ` · ${des} con desacuerdo productor/motor` : ""}${ms.some(m=>m.nivel_agronomo!=null) ? " · revisado por el agrónomo" : ""} <span class="lvl ${NIVEL_CLS[mx]}" style="margin-left:6px">${NIVEL_TXT[mx]}</span></span></div>`; }).join("") || `<p class="note">Sin recorridos guardados.</p>`;
+}
+function mpDibujar(poly, e, mapa){
+  if(!mpMap){ mpMap = L.map("mp-map", {zoomControl:true, attributionControl:true}); L.tileLayer(TILE.sat, {maxZoom:20, maxNativeZoom:19, attribution:"Imagen: Esri, Maxar"}).addTo(mpMap); }
+  mpCapas.forEach(c=>mpMap.removeLayer(c)); mpCapas = [];
+  const pg = L.polygon(poly, {color:"#F0B848", weight:2, fill:false}).addTo(mpMap); mpCapas.push(pg);
+  if(mapa && mapa.hoy){ const G = mpVista==="proy" ? mapa.proyeccion : mapa.hoy; const b = mapa.bbox; const dlat = (b.n-b.s)/mapa.ny, dlon = (b.e-b.w)/mapa.nx;
+    G.forEach((row,j)=>row.forEach((v,i)=>{ if(v==null || v < .08) return; const col = v >= .67 ? "#D63B2F" : v >= .34 ? "#F2B04E" : "#8BD17C"; const r = L.rectangle([[b.s+j*dlat, b.w+i*dlon],[b.s+(j+1)*dlat, b.w+(i+1)*dlon]], {stroke:false, fillColor:col, fillOpacity:.45 + .3*v}).addTo(mpMap); mpCapas.push(r); })); }
+  const pts = (e && e.puntos_muestreo) || plPuntos(poly, {plaga: plCfg(LOTES[lotIdx], mpPlaga)});
+  pts.forEach(p=>{ const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt" title="${esc(p.motivo)}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(mpMap); m.bindPopup(`<b>${p.id}</b> · ${esc(p.motivo)}`); mpCapas.push(m); });
+  ((e && e.puntos_proximos) || []).forEach(p=>{ const c = L.circleMarker([p.lat, p.lon], {radius:9, color:"#2563EB", weight:3, fill:false}).addTo(mpMap); c.bindPopup(`Próxima revisión: ${esc(p.motivo)}`); mpCapas.push(c); });
+  (plMonitoreosLote(LOTES[lotIdx], mpPlaga)||[]).slice(0,40).forEach(m=>{ if(m.lat==null) return; const n = m.nivel_final!=null ? m.nivel_final : (m.nivel_motor||0); const c = L.circleMarker([m.lat, m.lon], {radius:5, color:"#fff", weight:1.5, fillColor: ["#9AA5B1","#8BD17C","#F2B04E","#D63B2F"][n], fillOpacity:.95}).addTo(mpMap); c.bindPopup(`${fmtD(m.fecha)} · ${m.punto_id||""} · ${NIVEL_TXT[n]}${m.acuerdo===false ? " (desacuerdo)" : ""}`); mpCapas.push(c); });
+  mpMap.fitBounds(pg.getBounds(), {padding:[12,12]}); setTimeout(()=>{ mpMap.invalidateSize(); mpMap.fitBounds(pg.getBounds(), {padding:[12,12]}); }, 250);
+}
+$("#mp-plagas").addEventListener("click", e=>{ const b = e.target.closest("[data-mpl]"); if(!b) return; mpPlaga = b.dataset.mpl; renderPlagasMas(); });
+$("#mp-vista").addEventListener("click", e=>{ const b = e.target.closest("[data-vista]"); if(!b) return; mpVista = b.dataset.vista; renderPlagasMas(); });
+$("#mp-monitorear").addEventListener("click", ()=>{ plPre = mpPlaga; openFlow("plagas", null); });
+// --- el recorrido (Registrar -> Monitoreo de plagas)
+let pl = null, plPre = null, plMap = null, plCapas = [], plGeoWatch = null, plPos = null;
+function plIniciar(){
+  const l = LOTES[lotIdx]; const lista = plLista(l);
+  pl = {plaga: plPre && lista.some(p=>p.clave===plPre) ? plPre : (lista[0] ? lista[0].clave : null), puntos: [], hechos: [], actual: null, foto: null}; plPre = null;
+  $("#pl-plagas").innerHTML = lista.length ? lista.map(p=>`<button class="chip" aria-pressed="${p.clave===pl.plaga}" data-plp="${esc(p.clave)}">${esc(p.nombre)}</button>`).join("") : `<p class="note">El catálogo todavía no tiene a ${esc(nombreCultivo(l.cultivo))}.</p>`;
+  plPuntosArmar(); plPaso("ruta"); plGeoIniciar();
+}
+function plPuntosArmar(){ const l = LOTES[lotIdx]; const poly = plPoly(l); const cfg = plCfg(l, pl.plaga); const mons = plMonitoreosLote(l, pl.plaga).filter(m=>(m.nivel_final||m.nivel_motor||0) >= 2).slice(0,6); const e = plEstado(l, pl.plaga);
+  pl.puntos = poly ? ((e && !e.local && e.puntos_muestreo && e.puntos_muestreo.length) ? e.puntos_muestreo : plPuntos(poly, {plaga:cfg, detecciones: mons.map(m=>({lat:m.lat, lon:m.lon, nivel:m.nivel_final||m.nivel_motor, fecha:m.fecha}))})) : []; pl.hechos = []; pl.actual = null; }
+function plPaso(paso){ pl.paso = paso; ["ruta","punto","fin"].forEach(s=>{ $("#pl-"+s).hidden = s!==paso; }); const b = $("#pl-save");
+  if(paso==="ruta"){ plRutaRender(); const pend = plPendientes(); b.textContent = pend.length ? `Revisar el punto ${pend[0].id}` : (pl.hechos.length ? "Terminar el recorrido" : "No hay puntos"); b.disabled = !pend.length && !pl.hechos.length; }
+  if(paso==="punto"){ plPuntoRender(); b.textContent = "Guardar el punto"; b.disabled = false; }
+  if(paso==="fin"){ plFinRender(); b.textContent = `Guardar el recorrido (${pl.hechos.length} punto${pl.hechos.length===1?"":"s"})`; b.disabled = !pl.hechos.length; }
+  $("#sheet-body").scrollTop = 0; }
+function plPendientes(){ const hechos = new Set(pl.hechos.map(h=>h.punto_id)); let pend = pl.puntos.filter(p=>!hechos.has(p.id)); if(plPos){ pend = pend.slice().sort((a,b)=>plDist(plPos, a)-plDist(plPos, b)); } return pend; }
+function plDist(pos, p){ const mx = 111320*Math.cos(pos.lat*Math.PI/180); return Math.hypot((p.lon-pos.lon)*mx, (p.lat-pos.lat)*111320); }
+function plRumbo(pos, p){ const mx = 111320*Math.cos(pos.lat*Math.PI/180); const dx = (p.lon-pos.lon)*mx, dy = (p.lat-pos.lat)*111320; const a = (Math.atan2(dx, dy)*180/Math.PI + 360)%360; return ["norte","noreste","este","sureste","sur","suroeste","oeste","noroeste"][Math.round(a/45)%8]; }
+function plRutaRender(){
+  const l = LOTES[lotIdx]; const cfg = plCfg(l, pl.plaga); const poly = plPoly(l);
+  $("#pl-donde").textContent = cfg ? `Dónde mirar: ${cfg.donde}.` : "";
+  const pend = plPendientes(); const hechos = new Set(pl.hechos.map(h=>h.punto_id));
+  $("#pl-ruta-txt").textContent = !poly ? "Marque el lote en el mapa (Lote) para proponer los puntos." : pl.puntos.length ? `${pl.puntos.length} puntos para cubrir el lote (${pl.puntos.filter(p=>p.clase==="orilla").length} en orillas${pl.puntos.some(p=>p.clase==="deteccion") ? ", más los de detecciones anteriores" : ""}). ${pl.hechos.length} revisado${pl.hechos.length===1?"":"s"}.` + (plPos && pend.length ? ` El más cercano: ${pend[0].id}, a ${Math.round(plDist(plPos, pend[0]))} m al ${plRumbo(plPos, pend[0])}.` : plGeoWatch ? " Esperando el GPS…" : "") : "";
+  $("#pl-puntos").innerHTML = pl.puntos.map(p=>`<button class="chip" aria-pressed="${pl.actual && pl.actual.id===p.id}" data-plpt="${p.id}" style="${hechos.has(p.id) ? "background:var(--ok-bg);color:var(--ok);border-color:transparent" : ""}">${p.id}${hechos.has(p.id) ? " ✓" : ""}${plPos ? ` · ${Math.round(plDist(plPos, p))} m` : ""}</button>`).join("");
+  if(poly){ $("#pl-map").hidden = false; try{ plDibujar(poly); }catch(e){} } else $("#pl-map").hidden = true;
+}
+function plDibujar(poly){
+  if(!plMap){ plMap = L.map("pl-map", {zoomControl:true, attributionControl:false}); L.tileLayer(TILE.sat, {maxZoom:20, maxNativeZoom:19}).addTo(plMap); }
+  plCapas.forEach(c=>plMap.removeLayer(c)); plCapas = []; const hechos = {}; pl.hechos.forEach(h=>{ hechos[h.punto_id] = h; });
+  const pg = L.polygon(poly, {color:"#F0B848", weight:2, fill:false}).addTo(plMap); plCapas.push(pg);
+  pl.puntos.forEach(p=>{ const h = hechos[p.id]; const cls = h ? ` plpt-n${h.nivel_final}` : ""; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt${cls}${pl.actual && pl.actual.id===p.id ? " plpt-sel" : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(plMap); m.on("click", ()=>{ pl.actual = p; plPaso("punto"); }); plCapas.push(m); });
+  if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(plMap); plCapas.push(me); }
+  plMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ plMap.invalidateSize(); plMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380);
+}
+function plGeoIniciar(){ plGeoParar(); if(!navigator.geolocation) return; try{ plGeoWatch = navigator.geolocation.watchPosition(pos=>{ plPos = {lat:pos.coords.latitude, lon:pos.coords.longitude, acc:pos.coords.accuracy}; if(pl && pl.paso==="ruta") plPaso("ruta"); }, ()=>{ plGeoWatch = null; }, {enableHighAccuracy:true, maximumAge:5000, timeout:15000}); }catch(e){ plGeoWatch = null; } }
+function plGeoParar(){ if(plGeoWatch!=null && navigator.geolocation){ try{ navigator.geolocation.clearWatch(plGeoWatch); }catch(e){} } plGeoWatch = null; }
+function plPuntoRender(){
+  const l = LOTES[lotIdx]; const cfg = plCfg(l, pl.plaga); const p = pl.actual; if(!cfg || !p) return;
+  $("#pl-punto-h").textContent = `${p.id} · ${p.motivo}`; $("#pl-punto-sub").textContent = `${cfg.nombre} · ${cfg.donde}`;
+  const meds = Object.entries(cfg.medidas||{}).sort((a,b)=>(a[1].informativa?1:0)-(b[1].informativa?1:0));
+  $("#pl-medidas").innerHTML = meds.map(([k,m])=>{ const mt = (PLAGAS.medidas||{})[k] || {}; return `<div class="field"><label>${esc(mt.txt||k)}${m.informativa ? " <span class='tag'>informativo</span>" : ""} <span class="small muted">· bajo ≥ ${m.umbrales[0]}, medio ≥ ${m.umbrales[1]}, alto ≥ ${m.umbrales[2]}</span></label><div class="row" style="flex-wrap:nowrap"><button class="btn sec sm" data-plm="${k}" data-d="-1">−</button><input data-plk="${k}" inputmode="decimal" placeholder="0" style="text-align:center;font-weight:700;font-size:18px"><button class="btn sec sm" data-plm="${k}" data-d="1">+</button></div><div class="note">${esc(mt.como||"")}</div></div>`; }).join("")
+    + `<div class="grid2"><div class="field"><label>Hojas o plantas revisadas</label><input data-plk="_n" inputmode="numeric" value="10"></div><div class="field"><label>Estadio que más vio</label><select data-plk="_estadio">${(cfg.estadios||[]).map(e=>`<option>${esc(e)}</option>`).join("")}<option>ninguno</option></select></div></div>`;
+  $$("#pl-nivel button").forEach(b=>b.setAttribute("aria-pressed","false")); pl.foto = null; $("#pl-foto-prev").hidden = true; $("#pl-foto-prev").innerHTML = ""; $("#pl-foto-input").value = "";
+  plMotorRender();
+}
+function plConteos(){ const c = {}; $$("#pl-medidas [data-plk]").forEach(i=>{ const k = i.dataset.plk; if(k.startsWith("_")){ c[k] = i.value; return; } const v = String(i.value||"").replace(",","."); if(v!=="" && !isNaN(+v)) c[k] = +v; }); return c; }
+function plNivelProductor(){ const b = $$("#pl-nivel button").find(x=>x.getAttribute("aria-pressed")==="true"); return b ? +b.dataset.n : null; }
+function plMotorRender(){
+  const l = LOTES[lotIdx]; const cfg = plCfg(l, pl.plaga); if(!cfg) return; const c = plConteos(); const conteos = Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith("_")));
+  const idx = plIndice(cfg, conteos, {dias_desde_siembra: plDiasSiembra(l), etapa: plEtapa(l)}); const np = plNivelProductor(); const g = plCompuerta(np, idx);
+  pl.idx = idx; pl.gate = g; const hay = Object.keys(conteos).length;
+  $("#pl-motor").innerHTML = hay ? `<div class="row between"><span class="eyebrow">El motor ve</span><span class="lvl ${NIVEL_CLS[idx.nivel]}">${NIVEL_TXT[idx.nivel]}</span></div><div class="small">${esc(idx.razones.join(" · ") || "sin conteos que comparar")}</div>${idx.informativas.length ? `<div class="small muted">${esc(idx.informativas.join(" · "))}</div>` : ""}${idx.agravantes.length ? `<div class="small" style="color:var(--warn)">Agravante: ${esc(idx.agravantes.join("; "))}</div>` : ""}<div class="small ${g.acuerdo ? "muted" : ""}" style="${g.acuerdo ? "" : "color:var(--warn);font-weight:600"}">${esc(g.mensaje)}</div>` : `<p class="note">Anote los conteos: el motor calcula su nivel con los umbrales del catálogo (PRELIMINAR) y lo compara con el suyo.</p>`;
+}
+$("#pl-medidas").addEventListener("input", plMotorRender);
+$("#pl-medidas").addEventListener("click", e=>{ const b = e.target.closest("[data-plm]"); if(!b) return; const inp = $(`#pl-medidas input[data-plk="${b.dataset.plm}"]`); const v = +(String(inp.value||"0").replace(",",".")) || 0; inp.value = Math.max(0, v + (+b.dataset.d)); plMotorRender(); });
+$("#pl-nivel").addEventListener("click", e=>{ const b = e.target.closest("button[data-n]"); if(!b) return; $$("#pl-nivel button").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); plMotorRender(); });
+$("#pl-plagas").addEventListener("click", e=>{ const b = e.target.closest("[data-plp]"); if(!b) return; pl.plaga = b.dataset.plp; $$("#pl-plagas .chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); plPuntosArmar(); plPaso("ruta"); });
+$("#pl-puntos").addEventListener("click", e=>{ const b = e.target.closest("[data-plpt]"); if(!b) return; pl.actual = pl.puntos.find(p=>p.id===b.dataset.plpt); plPaso("punto"); });
+$("#pl-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; pl.foto = f; const u = URL.createObjectURL(f); $("#pl-foto-prev").hidden = false; $("#pl-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; });
+$("#pl-volver").addEventListener("click", ()=>plPaso("ruta"));
+$("#pl-terminar").addEventListener("click", ()=>plPaso("fin"));
+$("#pl-otro").addEventListener("click", ()=>plPaso("ruta"));
+function plGuardarPunto(){
+  const p = pl.actual; const c = plConteos(); const conteos = Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith("_"))); const np = plNivelProductor();
+  if(!Object.keys(conteos).length && np==null){ toast("Anote al menos un conteo o marque el nivel"); return; }
+  plMotorRender(); const idx = pl.idx, g = pl.gate; const pos = plPos && plDist(plPos, p) <= 30 ? plPos : null;
+  pl.hechos = pl.hechos.filter(h=>h.punto_id!==p.id); pl.hechos.push({punto_id:p.id, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, conteos:{...conteos, hojas_o_plantas: +c._n || null, estadio: c._estadio || null}, nivel_productor: np, nivel_motor: idx.nivel, nivel_final: g.nivel_final, acuerdo: g.acuerdo, motivo_motor: (idx.razones.concat(idx.agravantes.map(a=>"agravante: "+a)).join(" · ")).slice(0,400), foto: pl.foto, motivo: p.motivo});
+  toast(`${p.id} guardado: ${NIVEL_TXT[g.nivel_final]}`); pl.actual = null; plPaso("ruta");
+}
+function plFinRender(){
+  const l = LOTES[lotIdx]; const cfg = plCfg(l, pl.plaga); const poly = plPoly(l); const hs = pl.hechos; const mx = hs.length ? Math.max(...hs.map(h=>h.nivel_final)) : 0;
+  const sect = {}; const g = (typeof G==="function") ? G() : null; (g && g.parcelas || []).forEach(pc=>{ if(!pc.poly || pc.poly.length < 3) return; const {pts, lat0, lon0, mx: MX, my} = plMetros(pc.poly); const dentroP = hs.filter(h=>plDentro(pts, (h.lon-lon0)*MX, (h.lat-lat0)*my)); if(dentroP.length) sect[pc.nombre||"parcela"] = Math.max(...dentroP.map(h=>h.nivel_final)); });
+  const obs = plMonitoreosLote(l, pl.plaga).map(m=>({lat:m.lat, lon:m.lon, nivel: m.nivel_final!=null ? m.nivel_final : m.nivel_motor, fecha:m.fecha})).concat(hs.map(h=>({lat:h.lat, lon:h.lon, nivel:h.nivel_final, fecha:hoyISO})));
+  const mapa = (poly && cfg) ? plMapa(poly, obs, plClima(l), cfg, hoyISO, 7) : null; pl.mapa = mapa;
+  $("#pl-fin-h").innerHTML = `${esc(cfg ? cfg.nombre : pl.plaga)} · nivel del lote <span class="lvl ${NIVEL_CLS[mx]}">${NIVEL_TXT[mx]}</span>`;
+  $("#pl-fin-tabla").innerHTML = hs.map(h=>`<div class="sem-item" style="grid-template-columns:1fr auto"><div><b>${h.punto_id} · ${esc(h.motivo||"")}</b><span>${esc(Object.entries(h.conteos).filter(([k,v])=>v!=null && v!=="" && !["hojas_o_plantas","estadio"].includes(k)).map(([k,v])=>`${plMedTxt(k)}: ${v}`).join(" · ") || "sin conteos")}${h.acuerdo===false ? " · usted: " + NIVEL_TXT[h.nivel_productor] + " / motor: " + NIVEL_TXT[h.nivel_motor] : ""}${h.foto ? " · con foto" : ""}</span></div><span class="lvl ${NIVEL_CLS[h.nivel_final]}">${NIVEL_TXT[h.nivel_final]}</span></div>`).join("");
+  $("#pl-fin-sect").innerHTML = Object.keys(sect).length ? `<span class="eyebrow">Por parcela</span><div class="chips">${Object.entries(sect).map(([n,v])=>`<span class="chip" style="background:var(--${["surface-2","ok-bg","warn-bg","bad-bg"][v]});border-color:transparent;color:var(--${["muted","ok","warn","bad"][v]})">${esc(n)}: ${NIVEL_TXT[v]}</span>`).join("")}</div>` : "";
+  $("#pl-fin-mapa").textContent = mapa ? mapa.resumen : "Sin polígono: marque el lote para el mapa de presión.";
+  $("#pl-fin-prox").innerHTML = mapa && mapa.puntos_proximos.length ? `<span class="eyebrow">La próxima vez, mire primero</span>` + mapa.puntos_proximos.map(p=>`<div class="small">· ${esc(p.motivo)} (${p.lat.toFixed(5)}, ${p.lon.toFixed(5)})</div>`).join("") : "";
+  const des = hs.filter(h=>h.acuerdo===false).length; $("#pl-fin-nota").textContent = `${des ? `${des} punto${des===1?"":"s"} con desacuerdo entre su nivel y el del motor: quedan para su agrónomo y sirven para ajustar los umbrales de este lote. ` : ""}Nada de esto recomienda productos ni dosis; qué hacer lo decide usted con su agrónomo. PRELIMINAR: umbrales de guías públicas, sin calibrar en su zona.`;
+}
+function plGuardarRecorrido(){
+  const l = LOTES[lotIdx]; if(!pl.hechos.length) return; const cfg = plCfg(l, pl.plaga); const mx = Math.max(...pl.hechos.map(h=>h.nivel_final)); const des = pl.hechos.filter(h=>h.acuerdo===false).length;
+  const uid = sesion && sesion.user ? sesion.user.id : null; const lid = l.uuid || l.id; const grupo = uuid();
+  pl.hechos.forEach(h=>{ const cid = uuid(); const fila = {_tabla:"monitoreos", cliente_id: cid, lote_id: lid, usuario: uid, fecha: hoyISO, plaga: pl.plaga, punto_id: h.punto_id, lat: h.lat, lon: h.lon, conteos: {...h.conteos, recorrido: grupo}, nivel_productor: h.nivel_productor, nivel_motor: h.nivel_motor, nivel_final: h.nivel_final, acuerdo: h.acuerdo, motivo_motor: h.motivo_motor, fuente: "app"};
+    const local = {...fila, id: "local-" + cid}; delete local._tabla; monsLocal.push(local); MONITOREOS.unshift(local);
+    if(MODO==="nube" && l.nube){ const arch = h.foto ? {bucket:"fotos", ext: extDe(h.foto), blob: h.foto} : null; if(arch) fila._campo_archivo = "foto"; encolarRegistro(fila, arch); } });
+  addLog("monitoreo", `Monitoreo de ${cfg ? cfg.nombre : pl.plaga} · ${pl.hechos.length} punto${pl.hechos.length===1?"":"s"} · nivel ${NIVEL_TXT[mx]}${des ? ` · ${des} con desacuerdo` : ""}`, hoyISO, undefined, {plaga: pl.plaga, puntos: pl.hechos.length, nivel: mx, desacuerdos: des, recorrido: grupo, resumen_mapa: pl.mapa ? pl.mapa.resumen : null});
+  cacheGuardar(); renderPlagasHoy(); plGeoParar(); afterSave(`Recorrido guardado: ${pl.hechos.length} punto${pl.hechos.length===1?"":"s"}, nivel ${NIVEL_TXT[mx]}${des ? "; " + des + " para el agrónomo" : ""}`);
+}
+$("#pl-save").addEventListener("click", ()=>{ if(!pl) return; if(pl.paso==="ruta"){ const pend = plPendientes(); if(pend.length){ pl.actual = pend[0]; plPaso("punto"); } else if(pl.hechos.length) plPaso("fin"); } else if(pl.paso==="punto") plGuardarPunto(); else plGuardarRecorrido(); });
 
 // ---------------------------------------------------------------- sin señal: voz entendida en el teléfono (Whisper en el navegador) y mapa guardado
 // El teléfono entiende primero; el motor confirma después. La biblioteca (transformers.js) se carga de ./lib/ (sin señal) o del CDN; el modelo se baja
