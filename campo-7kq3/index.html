@@ -270,6 +270,9 @@ body.noscroll{overflow:hidden}
 .parc input{font:inherit;border:0;border-bottom:1px dashed var(--line);background:none;padding:2px 0;width:100%;min-width:0;color:var(--fg)} .parc .ha{font-weight:700;color:var(--blue);white-space:nowrap}
 textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);width:100%;resize:vertical}
 .maphint{line-height:1.4}
+.vents{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.vent{border:1px solid var(--line);border-radius:10px;padding:6px 2px;display:grid;justify-items:center;gap:2px;font-size:11px;background:var(--surface)} .vent b{font-size:12px} .vent span{font-size:10px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+.vent.bajo{background:var(--ok-bg);color:var(--ok);border-color:transparent} .vent.medio{background:var(--warn-bg);color:var(--warn);border-color:transparent} .vent.alto{background:var(--bad-bg);color:var(--bad);border-color:transparent} .vent.sin{color:var(--muted)} .vent[aria-pressed="true"]{outline:2px solid var(--ink)}
 .plpt{width:22px;height:22px;border-radius:50%;background:#fff;color:#0F1E2E;border:2px solid #0F1E2E;display:grid;place-items:center;font-size:11px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .plpt-n0{background:#9AA5B1;color:#fff} .plpt-n1{background:#17955A;color:#fff;border-color:#fff} .plpt-n2{background:#F2B04E;border-color:#fff} .plpt-n3{background:#D63B2F;color:#fff;border-color:#fff} .plpt-sel{box-shadow:0 0 0 4px rgba(37,99,235,.5)}
 /* Fichas de cifra (dos por fila): número grande con su etiqueta, para "hoy en tu lote" y resúmenes */
@@ -312,6 +315,10 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="sem" id="hoy-sem"></div>
     <p class="note" id="hoy-nota"></p>
   </div>
+  <div class="card" id="hoy-receta" hidden>
+    <div id="hoy-receta-body"></div>
+    <p class="note">Receta firmada por su agrónomo: productos y dosis dentro de etiqueta. Al marcarla como aplicada, entra a la bitácora como aplicación.</p>
+  </div>
   <div class="card" id="hoy-sensores" hidden>
     <div class="row between"><span class="eyebrow">Sensores y riego</span><button class="inline-link" data-go="mas-sensores">Ver todos</button></div>
     <div class="sem" id="hoy-sensores-list"></div>
@@ -353,6 +360,12 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 
 <!-- ============================ SEMANA ============================ -->
 <section class="screen" id="s-semana" hidden aria-labelledby="h-sem">
+  <div class="card" id="sem-ventana">
+    <div class="row between"><span class="eyebrow">Ventana de aplicación · si va a aplicar algo</span><span class="small muted">preliminar</span></div>
+    <div class="vents" id="sem-ventana-dias"></div>
+    <p class="small" id="sem-ventana-txt"></p>
+    <p class="note">Solo el clima: viento (deriva), lluvia (lavado), calor y aire seco (evaporación) con el ensamble del pronóstico. Qué aplicar lo decide usted con su agrónomo; aquí nunca hay productos ni dosis.</p>
+  </div>
   <div class="card">
     <span class="eyebrow">Días 1–7 · probabilidad por día</span>
     <h2 id="h-sem">La semana que viene</h2>
@@ -667,7 +680,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="row between"><span class="eyebrow">Panel del agrónomo</span><button class="inline-link" data-back>Volver</button></div>
     <h2 id="pan-h2">La red</h2>
     <p class="small" id="pan-resumen"></p>
-    <div class="chips" id="pan-tabs"><button class="chip" aria-pressed="true" data-ptab="cola">Por revisar</button><button class="chip" aria-pressed="false" data-ptab="red">Lotes de la red</button><button class="chip" aria-pressed="false" data-ptab="plagas">Plagas</button><button class="chip" aria-pressed="false" data-ptab="criterios">Criterios preliminares</button><button class="chip" aria-pressed="false" data-ptab="hechas">Revisiones hechas</button></div>
+    <div class="chips" id="pan-tabs"><button class="chip" aria-pressed="true" data-ptab="cola">Por revisar</button><button class="chip" aria-pressed="false" data-ptab="red">Lotes de la red</button><button class="chip" aria-pressed="false" data-ptab="plagas">Plagas</button><button class="chip" aria-pressed="false" data-ptab="recetas">Recetas</button><button class="chip" aria-pressed="false" data-ptab="criterios">Criterios preliminares</button><button class="chip" aria-pressed="false" data-ptab="hechas">Revisiones hechas</button></div>
     <div id="pan-body"></div>
     <p class="note">Lo que el agrónomo confirma, corrige o descarta queda en una tabla aparte: es el conjunto reservado con el que el motor mide si avisó a tiempo. Nunca se usa para entrenar. Las respuestas del productor ("no aplica") son señal para ajustar umbrales, no la verdad de campo: la verdad la fija usted aquí.</p>
   </div>
@@ -1482,10 +1495,10 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES, tems: TEMPORADAS, mons: MONITOREOS, pest: PLAGAS_ESTADO, recos: RECONOCIMIENTOS, sens: SENSORES, lects: LECTURAS, polin: POLINIZACION})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES, tems: TEMPORADAS, mons: MONITOREOS, pest: PLAGAS_ESTADO, recos: RECONOCIMIENTOS, sens: SENSORES, lects: LECTURAS, polin: POLINIZACION, vents: VENTANAS, recs: RECETAS, prods: PRODUCTOS})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
-  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam, tems, mons, pest, recos, sens, lects, polin] = await Promise.all([
+  const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam, tems, mons, pest, recos, sens, lects, polin, vents, recs, prods] = await Promise.all([
     db("GET","lotes",{select:"*", activo:"eq.true", order:"creado_en.asc"}),
     db("GET","ultimo_reporte",{select:"lote_id,emitido,nivel,contenido"}),
     db("GET","perfiles",{select:"*", id:"eq."+sesion.user.id}),
@@ -1507,19 +1520,22 @@ async function cargarLotes(){
     db("GET","sensores",{select:"*", order:"creado_en.asc"}).catch(()=>null),                                                      // sensores ubicados (v29)
     db("GET","lecturas_sensor",{select:"*", fecha:"gte."+new Date(Date.now()-30*86400000).toISOString(), order:"fecha.desc", limit:"3000"}).catch(()=>null),   // lecturas (30 días)
     db("GET","polinizacion",{select:"*", fecha:"gte."+localISO(new Date(Date.now()-90*86400000)), order:"fecha.desc", limit:"2000"}).catch(()=>null),          // recorridos de polinización
+    db("GET","ventanas_aplicacion",{select:"*", emitida:"gte."+localISO(new Date(Date.now()-3*86400000)), order:"emitida.desc", limit:"300"}).catch(()=>null),   // ventana de aplicación (v30)
+    db("GET","recetas",{select:"*", fecha:"gte."+localISO(new Date(Date.now()-60*86400000)), order:"creado_en.desc", limit:"200"}).catch(()=>null),            // recetas (el productor solo ve firmadas)
+    db("GET","productos_curados",{select:"*", order:"nombre_comercial.asc"}).catch(()=>null),                                         // lista curada (solo equipo)
   ]);
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
   TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
-  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || []; MONITOREOS = (mons || []).filter(m=>!monsLocal.some(x=>x.cliente_id===m.cliente_id)).concat(monsLocal); PLAGAS_ESTADO = pest || []; RECONOCIMIENTOS = recos || []; SENSORES = (sens || []).filter(x=>!sensLocal.some(y=>y.cliente_id===x.cliente_id)).concat(sensLocal); LECTURAS = lects || []; POLINIZACION = polin || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || []; MONITOREOS = (mons || []).filter(m=>!monsLocal.some(x=>x.cliente_id===m.cliente_id)).concat(monsLocal); PLAGAS_ESTADO = pest || []; RECONOCIMIENTOS = recos || []; SENSORES = (sens || []).filter(x=>!sensLocal.some(y=>y.cliente_id===x.cliente_id)).concat(sensLocal); LECTURAS = lects || []; POLINIZACION = polin || []; VENTANAS = vents || []; RECETAS = recs || []; PRODUCTOS = prods || [];
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; RECONOCIMIENTOS = c.recos || []; SENSORES = c.sens || []; LECTURAS = c.lects || []; POLINIZACION = c.polin || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; RECONOCIMIENTOS = c.recos || []; SENSORES = c.sens || []; LECTURAS = c.lects || []; POLINIZACION = c.polin || []; VENTANAS = c.vents || []; RECETAS = c.recs || []; PRODUCTOS = c.prods || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -1794,6 +1810,8 @@ function renderPanel(){
         <input data-nota placeholder="nota (opcional): qué vio, qué recomienda mirar">
         <div class="acts" style="margin-top:8px">${acts}</div></div>`;
     }).join("") : `<p class="note">Nada por revisar: todas las sospechas, visitas con sanidad y alertas respondidas ya tienen veredicto.</p>`;
+  } else if(panTab==="recetas"){
+    renderRecetasPanel(body);
   } else if(panTab==="plagas"){
     const recos = (RECONOCIMIENTOS||[]).filter(r=>r.estado!=="error").slice(0,40);
     const recosHTML = recos.length ? `<span class="eyebrow">Fotos y videos leídos por el motor</span>` + recos.map(r=>{ const l = LOTES.find(x=>(x.uuid||x.id)===r.lote_id); const lista = l ? plLista(l) : []; const nombre = r.plaga ? plNombre(l||{}, r.plaga) : ({planta_sana:"planta sana", trampa:"trampa", no_se_distingue:"no se distingue", otro:"no es plaga"})[r.se_ve] || r.se_ve || "";
@@ -2092,7 +2110,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "29 · 3 nov 2026";
+const APP_VERSION = "30 · 3 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2240,7 +2258,7 @@ document.addEventListener("click", ev => {
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
-function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); renderSensoresHoy(); renderPolinHoy(); { const o = $("#opt-polin"); if(o) o.hidden = !poCfg(LOTES[lotIdx]); } }
+function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); renderSensoresHoy(); renderPolinHoy(); renderRecetasHoy(); renderVentana(); { const o = $("#opt-polin"); if(o) o.hidden = !poCfg(LOTES[lotIdx]); } }
 // ---------------------------------------------------------------- verdor (Sentinel-2 dentro del polígono; lo calcula el RIG cada noche)
 function sparkline(serie){
   const pts = (serie||[]).slice(-12); if(pts.length < 2) return "";
@@ -3017,6 +3035,97 @@ function poSectorDibujar(poly, u, ps){ if(!poSectorMap){ poSectorMap = L.map("po
   const ult = u ? ps.filter(p=>p.fecha===u.fecha) : []; ult.forEach(p=>{ if(p.lat==null) return; const col = p.nivel ? {bueno:"#17955A", regular:"#F2B04E", bajo:"#D63B2F"}[p.nivel] : "#9AA5B1"; const c = L.circleMarker([p.lat, p.lon], {radius:7, color:"#fff", weight:1.5, fillColor:col, fillOpacity:.95}).addTo(poSectorMap); c.bindPopup(`${p.punto_id||""} · ${p.pct_marca!=null ? p.pct_marca + " %" : "foto"}`); poSectorCapas.push(c); });
   poSectorMap.fitBounds(pg.getBounds(), {padding:[12,12]}); setTimeout(()=>{ poSectorMap.invalidateSize(); poSectorMap.fitBounds(pg.getBounds(), {padding:[12,12]}); }, 250); }
 $("#po-recorrer").addEventListener("click", ()=>openFlow("polin", null));
+
+// ---------------------------------------------------------------- ventana de aplicación y recetas v1 (3 nov 2026) · PRELIMINAR
+// Ventana (para el productor, sin productos): apto / regular / no por día con motivos (viento, lluvia, calor, aire seco), la calcula el motor con
+// el ensamble. Receta: el motor arma un BORRADOR (plaga en nivel medio/alto + lista de productos curados del agrónomo, dosis de etiqueta); solo el
+// equipo lo ve; el agrónomo lo edita y FIRMA; el productor ve la receta firmada y marca cuándo la aplicó (entra a la bitácora como aplicación).
+let VENTANAS = [], RECETAS = [], PRODUCTOS = [];
+const VENT_CLS = {apto:"bajo", regular:"medio", no:"alto", sin_dato:"sin"}, VENT_TXT = {apto:"apto", regular:"regular", no:"no", sin_dato:"sin dato"};
+function ventanaDe(l){ const lid = l.uuid||l.id; return (VENTANAS||[]).filter(v=>v.lote_id===lid).sort((a,b)=>String(b.emitida).localeCompare(String(a.emitida)))[0] || null; }
+function renderVentana(){
+  const card = $("#sem-ventana"); if(!card) return; const l = LOTES[lotIdx]; const v = ventanaDe(l); card.hidden = !!l.sin;
+  if(!v){ $("#sem-ventana-dias").innerHTML = ""; $("#sem-ventana-txt").textContent = "El motor calcula la ventana cada noche con el pronóstico del ensamble; aparece aquí a partir de la siguiente corrida."; return; }
+  const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+  $("#sem-ventana-dias").innerHTML = (v.dias||[]).map((d,i)=>{ const f = new Date(d.fecha+"T12:00:00"); return `<button class="vent ${VENT_CLS[d.nivel]||"sin"}" data-vent="${i}" aria-pressed="${i===0}"><b>${DIAS[f.getDay()]} ${f.getDate()}</b><span>${VENT_TXT[d.nivel]||d.nivel}</span></button>`; }).join("");
+  ventanaDetalle(0);
+}
+function ventanaDetalle(i){ const l = LOTES[lotIdx]; const v = ventanaDe(l); const d = v && v.dias && v.dias[i]; $$("#sem-ventana-dias .vent").forEach((b,k)=>b.setAttribute("aria-pressed", String(k===i))); if(!d){ $("#sem-ventana-txt").textContent = ""; return; }
+  const datos = [d.viento_kmh!=null ? `viento máx. ${d.viento_kmh} km/h` : null, d.p_lluvia!=null ? `lluvia ${Math.round(d.p_lluvia*100)} % (${d.lluvia_mm} mm)` : null, d.tmax!=null ? `máx. ${d.tmax} °C` : null, d.hr!=null ? `HR ${d.hr} %` : null].filter(Boolean).join(" · ");
+  $("#sem-ventana-txt").innerHTML = `<b>${esc(fmtD(d.fecha))}: ${esc(VENT_TXT[d.nivel]||d.nivel)}${d.mejor_hora ? ` · mejor ${esc(d.mejor_hora)}` : ""}</b><br>${esc((d.motivos||[]).join(" · "))}${datos ? `<br><span class="small muted">${esc(datos)} · ensamble ${esc(String(v.emitida||""))}</span>` : ""}`; }
+$("#sem-ventana-dias").addEventListener("click", e=>{ const b = e.target.closest("[data-vent]"); if(b) ventanaDetalle(+b.dataset.vent); });
+// --- receta firmada (productor) y marcar aplicada
+function recetasDe(l){ const lid = l.uuid||l.id; return (RECETAS||[]).filter(r=>r.lote_id===lid).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))); }
+function recetaHTML(r, l, conAcciones){
+  const lineas = (r.lineas||[]).map(x=>`<div class="sem-item" style="grid-template-columns:1fr"><div><b>${esc(x.nombre||"producto")}</b>${x.ingrediente ? ` <span class="small muted">(${esc(x.ingrediente)})</span>` : ""}<span>${x.dosis!=null ? `${x.dosis} ${esc(x.unidad||"")}` : "dosis por definir"}${x.agua_l_ha ? ` en ${x.agua_l_ha} L/ha de agua` : ""}${x.intervalo_seguridad_d!=null ? ` · ${x.intervalo_seguridad_d} d a cosecha` : ""}${x.reentrada_h!=null ? ` · reentrada ${x.reentrada_h} h` : ""}${x.observaciones ? `<br>${esc(x.observaciones)}` : ""}</span></div></div>`).join("");
+  const vent = r.ventana && r.ventana.fecha ? `Ventana: ${fmtD(r.ventana.fecha)} (${VENT_TXT[r.ventana.nivel]||r.ventana.nivel}${r.ventana.mejor_hora ? `, ${r.ventana.mejor_hora}` : ""})` : r.ventana ? "Ventana: ninguno de los próximos días es apto; esperar" : "";
+  return `<div class="row between"><span class="eyebrow">${r.estado==="aplicada" ? "Receta aplicada" : "Receta firmada"}</span><span class="small muted">${esc(fmtD(r.fecha))}${r.plaga ? ` · ${esc(plNombre(l, r.plaga))}` : ""}${r.nivel!=null ? ` · nivel ${NIVEL_TXT[r.nivel]}` : ""}</span></div>
+    ${r.motivo ? `<p class="small muted">${esc(r.motivo)}</p>` : ""}<div class="sem">${lineas || `<p class="note">Sin líneas.</p>`}</div>${vent ? `<p class="small">${esc(vent)}</p>` : ""}${r.condiciones ? `<p class="note">${esc(r.condiciones)}</p>` : ""}
+    <p class="small"><b>Firmada por ${esc(r.firma||"el agrónomo")}</b>${r.firmada_en ? ` · ${esc(fmtDT(r.firmada_en))}` : ""}${r.aplicada_en ? ` · aplicada el ${esc(fmtDT(r.aplicada_en))}` : ""}</p>
+    ${conAcciones && r.estado==="firmada" ? `<div class="row" style="gap:8px"><button class="btn acc" data-rapl="${esc(r.id)}">La apliqué hoy</button></div>` : ""}`;
+}
+function renderRecetasHoy(){ const card = $("#hoy-receta"); if(!card) return; const l = LOTES[lotIdx]; const rs = recetasDe(l).filter(r=>r.estado==="firmada" || (r.estado==="aplicada" && String(r.aplicada_en||"").slice(0,10) >= localISO(new Date(Date.now()-7*86400000)))); card.hidden = !rs.length; if(card.hidden) return;
+  $("#hoy-receta-body").innerHTML = rs.slice(0,2).map(r=>`<div class="card" style="box-shadow:none;border:1px solid var(--line);padding:12px">${recetaHTML(r, l, true)}</div>`).join(""); }
+document.addEventListener("click", e=>{ const b = e.target.closest("[data-rapl]"); if(!b) return; const r = (RECETAS||[]).find(x=>x.id===b.dataset.rapl); if(!r) return; const l = LOTES[lotIdx];
+  (r.lineas||[]).forEach(x=>{ addLog("aplique", `${x.clase||"aplicación"}: ${x.nombre||"producto"}${x.dosis!=null ? ` · ${x.dosis} ${x.unidad||""}` : ""} · según receta firmada por ${r.firma||"el agrónomo"}`, hoyISO, undefined, {producto:x.nombre||"", dosis:x.dosis!=null ? String(x.dosis) : "", unidad:x.unidad||"", clase:x.clase||"otro", receta:r.id}); });
+  r.estado = "aplicada"; r.aplicada_en = new Date().toISOString();
+  if(MODO==="nube" && sesion) db("PATCH","recetas",{id:"eq."+r.id},{estado:"aplicada", aplicada_en:r.aplicada_en, actualizado_en:r.aplicada_en},"return=minimal").catch(err=>toast("No se pudo marcar en la nube: " + String(err.message||err).slice(0,60)));
+  cacheGuardar(); renderRecetasHoy(); renderLog(); toast("Aplicación registrada en la bitácora con la receta"); });
+// --- panel del agrónomo: borradores, firma y lista de productos
+let recTab = "borradores", recForm = null;
+function renderRecetasPanel(body){
+  const l0 = LOTES[lotIdx];
+  const tabs = `<div class="chips" style="margin-bottom:8px"><button class="chip" aria-pressed="${recTab==="borradores"}" data-rtab="borradores">Borradores y firmadas</button><button class="chip" aria-pressed="${recTab==="productos"}" data-rtab="productos">Productos curados (${(PRODUCTOS||[]).length})</button></div>`;
+  if(recTab==="productos"){
+    const lista = (PRODUCTOS||[]).filter(p=>p.activo!==false).map(p=>`<div class="rev"><div class="meta">${esc(p.cultivo||"cualquier cultivo")} · ${esc(p.plaga ? plNombre({cultivo:p.cultivo||""}, p.plaga) : "cualquier plaga")}${p.clase ? ` · ${esc(p.clase)}` : ""}</div><div class="txt"><b>${esc(p.nombre_comercial)}</b>${p.ingrediente_activo ? ` (${esc(p.ingrediente_activo)})` : ""} · ${p.dosis_min!=null ? `${p.dosis_min}–${p.dosis_max ?? p.dosis_min} ${esc(p.unidad||"")}` : "sin dosis"}${p.intervalo_seguridad_d!=null ? ` · ${p.intervalo_seguridad_d} d a cosecha` : ""}${p.reentrada_h!=null ? ` · reentrada ${p.reentrada_h} h` : ""}${p.registro ? ` · reg. ${esc(p.registro)}` : ""}${p.notas ? `<br><span class="small muted">${esc(p.notas)}</span>` : ""}</div><div class="acts"><button class="btn sec" data-pbaja="${esc(p.id)}">Dar de baja</button></div></div>`).join("");
+    const cult = Object.entries(PLAGAS.cultivos||{}).map(([k,c])=>`<option value="${k}">${esc(c.nombre)}</option>`).join("");
+    body.innerHTML = tabs + `<p class="note">La lista la cura el agrónomo con las etiquetas vigentes (dosis mínima y máxima de etiqueta, intervalo de seguridad, reentrada, número de registro). El motor solo propone productos de esta lista, y nunca al productor directamente.</p>
+      <div class="card" style="box-shadow:none;border:1px solid var(--line)"><span class="eyebrow">Agregar producto</span>
+      <div class="grid2"><div class="field"><label>Cultivo</label><select id="pr-cultivo"><option value="">cualquiera</option>${cult}</select></div><div class="field"><label>Plaga</label><select id="pr-plaga"><option value="">cualquiera</option></select></div></div>
+      <div class="grid2"><div class="field"><label>Nombre comercial</label><input id="pr-nombre"></div><div class="field"><label>Ingrediente activo</label><input id="pr-ia"></div></div>
+      <div class="grid2"><div class="field"><label>Clase</label><select id="pr-clase"><option>insecticida</option><option>acaricida</option><option>fungicida</option><option>biológico</option><option>bactericida</option><option>feromona</option><option>otro</option></select></div><div class="field"><label>Unidad</label><select id="pr-unidad"><option>L/ha</option><option>kg/ha</option><option>mL/100 L</option><option>g/100 L</option><option>mL/ha</option><option>g/ha</option></select></div></div>
+      <div class="grid2"><div class="field"><label>Dosis mínima</label><input id="pr-dmin" inputmode="decimal"></div><div class="field"><label>Dosis máxima</label><input id="pr-dmax" inputmode="decimal"></div></div>
+      <div class="grid2"><div class="field"><label>Intervalo a cosecha (días)</label><input id="pr-int" inputmode="numeric"></div><div class="field"><label>Reentrada (horas)</label><input id="pr-reent" inputmode="numeric"></div></div>
+      <div class="grid2"><div class="field"><label>Registro (COFEPRIS / SENASA)</label><input id="pr-reg"></div><div class="field"><label>Notas</label><input id="pr-notas"></div></div>
+      <div class="row"><button class="btn acc" id="pr-guardar">Guardar producto</button></div></div>` + (lista || `<p class="note">Sin productos todavía.</p>`);
+    const selC = $("#pr-cultivo"), selP = $("#pr-plaga"); const llenar = ()=>{ const c = selC.value; selP.innerHTML = `<option value="">cualquiera</option>` + (c && PLAGAS.cultivos[c] ? Object.entries(PLAGAS.cultivos[c].plagas).map(([k,p])=>`<option value="${k}">${esc(p.nombre)}</option>`).join("") : ""); }; selC.addEventListener("change", llenar); llenar();
+    return;
+  }
+  const rs = (RECETAS||[]).filter(r=>r.estado!=="anulada").sort((a,b)=>String(b.creado_en||b.fecha).localeCompare(String(a.creado_en||a.fecha))).slice(0,30);
+  body.innerHTML = tabs + `<div class="row" style="margin-bottom:8px"><button class="btn sec" id="rc-nuevo">+ Nuevo borrador para ${esc(l0.nombre)}</button></div>` + (rs.length ? rs.map(r=>{ const l = LOTES.find(x=>(x.uuid||x.id)===r.lote_id) || {}; if(r.estado!=="borrador") return `<div class="rev"><div class="meta">${esc(l.nombre||"lote")} · ${esc(r.estado)}</div>${recetaHTML(r, l, false)}</div>`;
+    const prods = (PRODUCTOS||[]).filter(p=>p.activo!==false && (!p.cultivo || p.cultivo===plCultivoClave(l)) && (!p.plaga || p.plaga===r.plaga));
+    const lineas = (r.lineas||[]).map((x,i)=>`<div class="rev" style="padding:8px 10px" data-rl="${i}"><div class="grid2"><div class="field"><label>Producto</label><select data-rk="producto_id">${prods.map(p=>`<option value="${esc(p.id)}"${p.id===x.producto_id ? " selected" : ""}>${esc(p.nombre_comercial)} (${p.dosis_min ?? "?"}–${p.dosis_max ?? "?"} ${esc(p.unidad||"")})</option>`).join("")}<option value=""${x.producto_id ? "" : " selected"}>otro (escriba)</option></select><input data-rk="nombre" value="${esc(x.nombre||"")}" placeholder="nombre" style="margin-top:4px"></div><div class="field"><label>Dosis y unidad</label><input data-rk="dosis" inputmode="decimal" value="${x.dosis ?? ""}"><input data-rk="unidad" value="${esc(x.unidad||"")}" placeholder="L/ha" style="margin-top:4px"></div></div><div class="grid2"><div class="field"><label>Agua (L/ha)</label><input data-rk="agua_l_ha" inputmode="decimal" value="${x.agua_l_ha ?? ""}"></div><div class="field"><label>Observaciones</label><input data-rk="observaciones" value="${esc(x.observaciones||"")}"></div></div><div class="small muted">${x.dosis_min!=null ? `etiqueta: ${x.dosis_min}–${x.dosis_max ?? x.dosis_min} ${esc(x.unidad||"")}` : "sin dosis de etiqueta cargada"}</div><button class="inline-link" data-rlrm="${i}">Quitar línea</button></div>`).join("");
+    return `<div class="rev" data-rec="${esc(r.id)}"><div class="meta">${esc(l.nombre||"lote")} · ${esc(nombreCultivo(l.cultivo||""))} · borrador del ${esc(fmtD(r.fecha))}${r.plaga ? ` · ${esc(plNombre(l, r.plaga))}` : ""}${r.nivel!=null ? ` · nivel ${NIVEL_TXT[r.nivel]}` : ""}</div>
+      <div class="txt small muted">${esc(r.motivo||"")}</div>
+      ${lineas}<button class="inline-link" data-rladd="${esc(r.id)}">+ Agregar línea</button>
+      <div class="grid2" style="margin-top:8px"><div class="field"><label>Ventana (fecha)</label><input data-rk="ventana_fecha" type="date" value="${esc((r.ventana && r.ventana.fecha) || "")}"></div><div class="field"><label>Mejor hora</label><input data-rk="ventana_hora" value="${esc((r.ventana && r.ventana.mejor_hora) || "")}"></div></div>
+      <div class="field"><label>Condiciones</label><textarea data-rk="condiciones" rows="3">${esc(r.condiciones||"")}</textarea></div>
+      <div class="field"><label>Firma (nombre y cédula / matrícula)</label><input data-rk="firma" value="${esc(r.firma || (perfil && perfil.nombre) || "")}"></div>
+      <div class="acts" style="margin-top:8px"><button class="btn acc" data-rfirma="${esc(r.id)}">Firmar</button><button class="btn sec" data-rguardar="${esc(r.id)}">Guardar sin firmar</button><button class="btn sec" data-ranular="${esc(r.id)}">Anular</button></div></div>`; }).join("") : `<p class="note">Sin borradores. El motor crea uno cuando una plaga llega a nivel medio o alto en un lote y hay productos curados; también puede crearlo aquí.</p>`);
+}
+function recLeer(card, r){ const lineas = $$("[data-rl]", card).map((c,i)=>{ const x = {...((r.lineas||[])[i] || {})}; $$("[data-rk]", c).forEach(i2=>{ const k = i2.dataset.rk; x[k] = i2.value; }); const p = (PRODUCTOS||[]).find(q=>q.id===x.producto_id); if(p){ x.nombre = x.nombre || p.nombre_comercial; x.ingrediente = p.ingrediente_activo; x.clase = p.clase; x.dosis_min = p.dosis_min; x.dosis_max = p.dosis_max; x.unidad = x.unidad || p.unidad; x.intervalo_seguridad_d = p.intervalo_seguridad_d; x.reentrada_h = p.reentrada_h; } x.dosis = x.dosis==="" ? null : +String(x.dosis).replace(",","."); x.agua_l_ha = x.agua_l_ha==="" ? null : +x.agua_l_ha; return x; });
+  const g = k => { const el = card.querySelector(`[data-rk="${k}"]:not([data-rl] [data-rk])`); return el ? el.value : ""; }; const fecha = card.querySelector('[data-rk="ventana_fecha"]').value, hora = card.querySelector('[data-rk="ventana_hora"]').value;
+  return {lineas, ventana: fecha ? {...(r.ventana||{}), fecha, mejor_hora: hora||null} : (r.ventana||null), condiciones: card.querySelector('[data-rk="condiciones"]').value, firma: card.querySelector('[data-rk="firma"]').value.trim()}; }
+async function recPatch(r, campos){ Object.assign(r, campos); if(MODO==="nube" && sesion){ try{ await db("PATCH","recetas",{id:"eq."+r.id}, {...campos, actualizado_en:new Date().toISOString()}, "return=minimal"); }catch(e){ toast("No se pudo guardar: " + String(e.message||e).slice(0,80)); return false; } } cacheGuardar(); return true; }
+document.addEventListener("click", async e=>{
+  const t = e.target.closest("[data-rtab]"); if(t){ recTab = t.dataset.rtab; renderPanel(); return; }
+  const f = e.target.closest("[data-rfirma]"); if(f){ const card = f.closest("[data-rec]"); const r = (RECETAS||[]).find(x=>x.id===f.dataset.rfirma); if(!r) return; const d = recLeer(card, r);
+    if(!d.lineas.length){ toast("La receta necesita al menos una línea"); return; } if(!d.firma){ toast("Escriba su nombre y cédula en la firma"); return; }
+    const fuera = d.lineas.filter(x=>x.dosis!=null && x.dosis_max!=null && (x.dosis > x.dosis_max || (x.dosis_min!=null && x.dosis < x.dosis_min))); if(fuera.length){ toast(`Dosis fuera de etiqueta en: ${fuera.map(x=>x.nombre).join(", ")}`); return; }
+    if(d.lineas.some(x=>x.dosis==null)){ toast("Fije la dosis de cada línea"); return; }
+    if(await recPatch(r, {...d, estado:"firmada", firmada_en:new Date().toISOString(), agronomo: sesion && sesion.user ? sesion.user.id : null})){ toast("Receta firmada: el productor ya la ve en Hoy"); renderPanel(); renderRecetasHoy(); } return; }
+  const g = e.target.closest("[data-rguardar]"); if(g){ const card = g.closest("[data-rec]"); const r = (RECETAS||[]).find(x=>x.id===g.dataset.rguardar); if(!r) return; if(await recPatch(r, recLeer(card, r))) toast("Borrador guardado"); renderPanel(); return; }
+  const an = e.target.closest("[data-ranular]"); if(an){ const r = (RECETAS||[]).find(x=>x.id===an.dataset.ranular); if(!r) return; if(await recPatch(r, {estado:"anulada"})) toast("Borrador anulado"); renderPanel(); return; }
+  const add = e.target.closest("[data-rladd]"); if(add){ const r = (RECETAS||[]).find(x=>x.id===add.dataset.rladd); if(!r) return; const card = add.closest("[data-rec]"); Object.assign(r, recLeer(card, r)); r.lineas = (r.lineas||[]).concat([{nombre:"", dosis:null, unidad:"L/ha"}]); renderPanel(); return; }
+  const rm = e.target.closest("[data-rlrm]"); if(rm){ const card = rm.closest("[data-rec]"); const r = (RECETAS||[]).find(x=>x.id===card.dataset.rec); if(!r) return; const d = recLeer(card, r); d.lineas.splice(+rm.dataset.rlrm, 1); Object.assign(r, d); renderPanel(); return; }
+  const nv = e.target.closest("#rc-nuevo"); if(nv){ const l = LOTES[lotIdx]; if(l.sin || !l.nube){ toast("Elija un lote de la nube"); return; } const fila = {lote_id:l.uuid||l.id, productor:l.fila ? l.fila.propietario : null, agronomo: sesion && sesion.user ? sesion.user.id : null, fecha:hoyISO, estado:"borrador", plaga:null, nivel:null, motivo:"Borrador creado por el agrónomo en la app.", ventana:null, lineas:[], condiciones:CONDICIONES_TXT, origen:"app", version:"1.0"};
+    try{ const r = await db("POST","recetas",null,fila,"return=representation"); RECETAS.unshift(r[0]); cacheGuardar(); renderPanel(); }catch(err){ toast("No se pudo crear: " + String(err.message||err).slice(0,80)); } return; }
+  const pg = e.target.closest("#pr-guardar"); if(pg){ const v = id => ($("#"+id)||{}).value || ""; if(!v("pr-nombre").trim()){ toast("Escriba el nombre comercial"); return; }
+    const fila = {cultivo: v("pr-cultivo")||null, plaga: v("pr-plaga")||null, nombre_comercial: v("pr-nombre").trim(), ingrediente_activo: v("pr-ia").trim()||null, clase: v("pr-clase"), dosis_min: v("pr-dmin") ? +v("pr-dmin").replace(",",".") : null, dosis_max: v("pr-dmax") ? +v("pr-dmax").replace(",",".") : null, unidad: v("pr-unidad"), intervalo_seguridad_d: v("pr-int") ? +v("pr-int") : null, reentrada_h: v("pr-reent") ? +v("pr-reent") : null, registro: v("pr-reg").trim()||null, notas: v("pr-notas").trim()||null, activo:true, creado_por: sesion && sesion.user ? sesion.user.id : null};
+    try{ const r = await db("POST","productos_curados",null,fila,"return=representation"); PRODUCTOS.push(r[0]); cacheGuardar(); toast("Producto guardado en la lista curada"); renderPanel(); }catch(err){ toast("No se pudo guardar: " + String(err.message||err).slice(0,80)); } return; }
+  const pb = e.target.closest("[data-pbaja]"); if(pb){ const p = (PRODUCTOS||[]).find(x=>x.id===pb.dataset.pbaja); if(!p) return; p.activo = false; if(MODO==="nube" && sesion) db("PATCH","productos_curados",{id:"eq."+p.id},{activo:false},"return=minimal").catch(()=>{}); cacheGuardar(); renderPanel(); return; }
+});
+const CONDICIONES_TXT = "Aplicar con viento suave (3–15 km/h), sin lluvia en las 6 h siguientes, fuera del mediodía si hace calor. Equipo de protección completo; respetar el intervalo de seguridad a cosecha y el plazo de reentrada de la etiqueta; calibrar el equipo y usar el volumen de agua indicado; no mezclar sin compatibilidad conocida.";
 
 // ---------------------------------------------------------------- fotos y video entendidos en el teléfono (CLIP sin señal) · PRELIMINAR
 // Sospecha por clasificación "zero-shot" con el catálogo del cultivo (nombres en inglés para la red), sin entrenamiento propio todavía: dice
