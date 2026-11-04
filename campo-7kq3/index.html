@@ -2148,7 +2148,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "38 · 4 nov 2026";
+const APP_VERSION = "39 · 4 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3199,6 +3199,7 @@ function fotolConf(){ try{ return JSON.parse(localStorage.getItem(FOTOL_KEY)) ||
 function fotolDisponible(){ return fotol.estado==="listo" || !!fotolConf().listo; }
 async function fotolCargar(){
   fotol.estado = "cargando"; fotol.progreso = 0; fotol.error = null; renderSinSenal();
+  await ortLiberar("fotos");
   try{ const tjs = await vozlLib(); let motor = null, errs = [];
     for(const device of motoresEnCascada()){ if(caidaDe("fotos", FOTOL_MODELO, device)){ errs.push(`${device}: omitido (tumbó la app antes)`); continue; }
       cargaGuard({que:"fotos", modelo: FOTOL_MODELO, device, dtype:"q8"}); try{ fotol.pipe = await tjs.pipeline("zero-shot-image-classification", FOTOL_MODELO, {device, dtype:"q8", progress_callback: p=>{ cargaProgreso(p); if(p && p.status==="progress"){ fotol.progreso = Math.round(p.progress||0); fotol.archivo = (p.file||"").split("/").pop(); renderSinSenal(); } }}); cargaFin(); motor = device; break; } catch(e){ cargaFin(); errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); fotol.pipe = null; } }
@@ -3222,8 +3223,17 @@ function fotolEtiquetas(l){
   Object.entries(PLAGAS.clases_generales||{}).forEach(([k,txt])=>out.push({txt, plaga:null, estadio:null, general:k}));
   return out;
 }
+async function fotoReducida(file, max){                          // v39: la foto de 12 MP se reduce antes de mirarla en el teléfono (memoria); la original sigue yendo a la nube
+  try{ if(!file || typeof file==="string" || !/^image\//.test(file.type||"")) return file;
+    const url = URL.createObjectURL(file); const img = await new Promise((ok, no)=>{ const i = new Image(); i.onload = ()=>ok(i); i.onerror = ()=>no(new Error("imagen ilegible")); i.src = url; });
+    const mx = Math.max(img.naturalWidth, img.naturalHeight); if(mx <= max){ URL.revokeObjectURL(url); return file; }
+    const esc = max/mx; const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth*esc); c.height = Math.round(img.naturalHeight*esc); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+    const blob = await new Promise(ok=>c.toBlob(ok, "image/jpeg", 0.88)); c.width = c.height = 1; return blob || file;
+  }catch(e){ return file; }
+}
 async function fotolClasificar(fuente, l){
   if(!(await fotolAsegurar())) throw new Error(fotol.error || "modelo de fotos no disponible");
+  if(typeof fuente!=="string") fuente = await fotoReducida(fuente, 1280);
   const et = fotolEtiquetas(l); if(!et.length) throw new Error("sin catálogo para este cultivo");
   const url = typeof fuente==="string" ? fuente : URL.createObjectURL(fuente); const t0 = Date.now();
   const res = await fotol.pipe(url, et.map(x=>x.txt)); if(typeof fuente!=="string") URL.revokeObjectURL(url);
@@ -3258,12 +3268,12 @@ async function fotolEnVi(){
   viReco = null; const f = $("#vi-input").files && $("#vi-input").files[0]; const box = $("#vi-reco"); if(!box) return; box.hidden = true; box.textContent = "";
   const que = ($$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true")||{}).textContent || ""; if(!f || !/plaga|enfermedad/.test(que) || !fotolDisponible()) return;
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
-  try{ viReco = await fotolClasificar(f, LOTES[lotIdx]); box.textContent = fotolTexto(viReco, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(viReco, f, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
+  try{ const fr = await fotoReducida(f, 1280); viReco = await fotolClasificar(fr, LOTES[lotIdx]); box.textContent = fotolTexto(viReco, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(viReco, fr, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
 }
 async function fotolEnPunto(f){
   plReco = null; const box = $("#pl-foto-reco"); if(!box) return; box.hidden = true; if(!f || !fotolDisponible()) return;
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
-  try{ plReco = await fotolClasificar(f, LOTES[lotIdx]); box.textContent = fotolTexto(plReco, LOTES[lotIdx]) + (pl && plReco.plaga && plReco.plaga!==pl.plaga ? ` Ojo: usted está contando ${plNombre(LOTES[lotIdx], pl.plaga)}.` : ""); if(typeof clasifAnexar==="function") await clasifAnexar(plReco, f, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
+  try{ const fr = await fotoReducida(f, 1280); plReco = await fotolClasificar(fr, LOTES[lotIdx]); box.textContent = fotolTexto(plReco, LOTES[lotIdx]) + (pl && plReco.plaga && plReco.plaga!==pl.plaga ? ` Ojo: usted está contando ${plNombre(LOTES[lotIdx], pl.plaga)}.` : ""); if(typeof clasifAnexar==="function") await clasifAnexar(plReco, fr, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
 }
 async function fotolEnVideo(f){
   vidReco = null; const box = $("#vid-reco"); if(!box) return; box.hidden = true; if(!f || !fotolDisponible()) return;
@@ -3303,8 +3313,8 @@ const CARGA_KEY = "engram-campo-cargando-v1", CAIDAS_KEY = "engram-campo-caidas-
 function caidas(){ try{ return JSON.parse(localStorage.getItem(CAIDAS_KEY)) || []; }catch(e){ return []; } }
 function cargaGuard(info){ try{ localStorage.setItem(CARGA_KEY, JSON.stringify(Object.assign({t: new Date().toISOString(), app: APP_VERSION}, info))); }catch(e){} }
 function cargaFin(){ try{ localStorage.removeItem(CARGA_KEY); }catch(e){} }
-function caidaDe(que, modelo, device){ return caidas().find(c=>c.que===que && (!modelo || c.modelo===modelo) && (!device || c.device===device)) || null; }
-function motorCaido(device){ return caidas().some(c=>c.device===device && c.que!=="razon"); }     // el gráfico tumbó la app con voz, fotos o libreta: no se usa más en este teléfono
+function caidaDe(que, modelo, device){ return caidas().find(c=>!c.oculta && c.que===que && (!modelo || c.modelo===modelo) && (!device || c.device===device)) || null; }   // las de segundo plano no bloquean
+function motorCaido(device){ return caidas().some(c=>!c.oculta && c.device===device && c.que!=="razon"); }     // el gráfico tumbó la app con voz, fotos o libreta: no se usa más en este teléfono
 function caidasOlvidar(){ try{ localStorage.removeItem(CAIDAS_KEY); localStorage.removeItem(CARGA_KEY); }catch(e){} }
 const DIAG_KEY = "engram-campo-diag-v1";
 function diagAnotar(arr, l){ if(arr) arr.push(l); try{ const d = JSON.parse(localStorage.getItem(DIAG_KEY)) || []; d.push(new Date().toISOString().slice(5,19).replace("T"," ") + " " + String(l).slice(0,220)); localStorage.setItem(DIAG_KEY, JSON.stringify(d.slice(-40))); }catch(e){} }   // v37.1: el diagnóstico sobrevive a una caída
@@ -3314,10 +3324,10 @@ function cargaProgreso(p){                                      // v37.1: la ano
     if(p.status==="progress" && c.fase==="progress" && c.archivo===arch && Math.abs(prog - (c.progreso||0)) < 5) return;
     c.fase = p.status; c.archivo = arch; if(p.status==="progress") c.progreso = prog; if(p.status==="done") c.progreso = 100; localStorage.setItem(CARGA_KEY, JSON.stringify(c)); }catch(e){}
 }
-(function(){ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(c && c.que){ localStorage.removeItem(CARGA_KEY); if(!c.oculta){ const l = caidas(); l.push(Object.assign({}, c, {caida: new Date().toISOString()})); localStorage.setItem(CAIDAS_KEY, JSON.stringify(l.slice(-12))); window.__caidaReciente = c; } } }catch(e){} })();
-function cargaOculta(oc){ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(!c) return; c.oculta = !!oc; localStorage.setItem(CARGA_KEY, JSON.stringify(c)); }catch(e){} }   // si la app se esconde o se recarga a mano durante la carga, no es caída
-document.addEventListener("visibilitychange", ()=>cargaOculta(document.visibilityState==="hidden")); window.addEventListener("pagehide", ()=>cargaOculta(true));
-function caidaTxt(c){ const fase = c.fase==="done" || c.fase==="ready" ? "ya bajado, al cargarlo en memoria" : c.fase==="progress" ? `bajando ${c.archivo||""} al ${c.progreso||0} %` : c.fase ? c.fase : "al empezar"; return `${({voz:"modelo de voz", fotos:"modelo de fotos", libreta:"lector de libreta", razon:"modelo de razonamiento", clasificador:"clasificador propio"})[c.que] || c.que} · ${(c.modelo||"").split("/").pop()} · ${c.device||"?"}${c.dtype ? "/" + (typeof c.dtype==="string" ? c.dtype : "mixto") : ""} · ${fase} · ${(c.caida||c.t||"").slice(0,16).replace("T"," ")}`; }
+(function(){ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(c && c.que){ localStorage.removeItem(CARGA_KEY); if(!c.descartar){ const l = caidas(); l.push(Object.assign({}, c, {caida: new Date().toISOString()})); localStorage.setItem(CAIDAS_KEY, JSON.stringify(l.slice(-12))); if(!c.oculta) window.__caidaReciente = c; } } }catch(e){} })();   // v39: las de segundo plano (cámara, otra app) también se anotan, marcadas; una recarga a mano se descarta
+function cargaMarcar(campo, valor){ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(!c) return; c[campo] = !!valor; localStorage.setItem(CARGA_KEY, JSON.stringify(c)); }catch(e){} }
+document.addEventListener("visibilitychange", ()=>cargaMarcar("oculta", document.visibilityState==="hidden")); window.addEventListener("pagehide", ()=>cargaMarcar("descartar", true));
+function caidaTxt(c){ const fase = c.fase==="done" || c.fase==="ready" ? "ya bajado, al cargarlo en memoria" : c.fase==="progress" ? `bajando ${c.archivo||""} al ${c.progreso||0} %` : c.fase ? c.fase : "al empezar"; return `${({voz:"modelo de voz", fotos:"modelo de fotos", libreta:"lector de libreta", razon:"modelo de razonamiento", clasificador:"clasificador propio"})[c.que] || c.que} · ${(c.modelo||"").split("/").pop()} · ${c.device||"?"}${c.dtype ? "/" + (typeof c.dtype==="string" ? c.dtype : "mixto") : ""} · ${fase}${c.oculta ? " · en segundo plano (cámara u otra app abierta)" : ""} · ${(c.caida||c.t||"").slice(0,16).replace("T"," ")}`; }
 function caidasTxt(){ const l = caidas(); if(!l.length) return ""; const u = l[l.length-1]; const pista = u.que==="razon" && u.device!=="webllm" && webllmPosible(RAZL_MODELOS.qwen05) ? " Desde la versión 38 el razonador usa otro motor (WebLLM) que carga por tandas y no repite ese problema: vuelva a descargarlo." : u.device==="webgpu" ? " El gráfico queda apagado para voz, fotos y libreta." : ""; return `La app se cerró sola ${l.length===1 ? "una vez" : l.length + " veces"} mientras cargaba un modelo (última: ${caidaTxt(u)}). Eso es el sistema del teléfono cerrándola por falta de memoria, o el procesador gráfico fallando: ese intento ya no se repite solo.${pista} Con señal, el motor hace ese trabajo.`; }
 if(window.__caidaReciente) setTimeout(()=>{ try{ toast("La app se cerró sola cargando el " + caidaTxt(window.__caidaReciente).split(" · ")[0] + ": vea Más → Sin señal"); }catch(e){} }, 1500);
 async function vozlLib(){
@@ -3328,8 +3338,17 @@ async function vozlLib(){
   if(!tjs){ tjs = await import(TJS_CDN); vozl.lib = "cdn"; vozl.libUrl = TJS_CDN; }
   tjs.env.allowLocalModels = false; tjs.env.useBrowserCache = true; window.__tjs = tjs; return tjs;
 }
+async function ortLiberar(excepto){                             // v39: un solo modelo ORT (voz, fotos o libreta) en memoria a la vez; los demás quedan descargados y se recargan de la caché al usarlos
+  const libres = [];
+  if(excepto!=="voz" && vozl.pipe){ try{ await vozl.pipe.dispose(); }catch(e){} vozl.pipe = null; if(vozl.estado==="listo") vozl.estado = "no"; libres.push("voz"); }
+  if(excepto!=="fotos" && typeof fotol!=="undefined" && fotol.pipe){ try{ await fotol.pipe.dispose(); }catch(e){} fotol.pipe = null; if(fotol.estado==="listo") fotol.estado = "no"; libres.push("fotos"); }
+  if(excepto!=="libreta" && typeof ocrl!=="undefined" && ocrl.model){ try{ await ocrl.model.dispose(); }catch(e){} ocrl.model = null; if(ocrl.estado==="listo") ocrl.estado = "no"; libres.push("libreta"); }
+  if(libres.length) diagAnotar(null, `liberados de memoria: ${libres.join(", ")} (para cargar ${excepto})`);
+  return libres;
+}
 async function vozlCargar(modelo){
   const m = VOZL_MODELOS[modelo] || VOZL_MODELOS.base; vozl.estado = "cargando"; vozl.progreso = 0; vozl.error = null; vozl.modelo = modelo; vozl.motor = vozlMotor(); renderSinSenal();
+  await ortLiberar("voz");
   try{
     const tjs = await vozlLib(); const dtype = vozl.motor==="webgpu" ? {encoder_model:"fp32", decoder_model_merged:"q4"} : "q8";
     const prog = p => { cargaProgreso(p); if(p && p.status==="progress"){ vozl.progreso = Math.round(p.progress || 0); vozl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
@@ -3622,16 +3641,27 @@ function razlResumenPlano(h){                                  // respaldo deter
   if(h.recetas_firmadas && h.recetas_firmadas.length) p.push(`Hay ${h.recetas_firmadas.length} receta${h.recetas_firmadas.length===1?"":"s"} firmada${h.recetas_firmadas.length===1?"":"s"} en Hoy.`);
   return p.join(" ") || "Todavía no hay datos del motor para este lote en el teléfono.";
 }
+const RAZL_ETIQ = {lote:"Lote", cultivo:"Cultivo", fecha_hoy:"Hoy", horizonte_dias:"Horizonte en días", condicion:"Condición", etapa:"Etapa", riesgo_hoy:"Riesgo de hoy", semaforo:"Semáforo", alertas_vigentes:"Alertas vigentes", verdor:"Verdor (satélite)", plagas:"Plagas", sensores:"Sensores", polinizacion:"Polinización", ventana_aplicacion:"Ventana de aplicación", recetas_firmadas:"Recetas firmadas", ultimos_registros:"Últimos registros", pendientes_por_subir:"Registros pendientes por subir", senal:"Señal",
+  peligro:"peligro", nivel:"nivel", detalle:"detalle", titulo:"título", desde:"desde", hasta:"hasta", mediana:"mediana", etiqueta:"etiqueta", cambio:"cambio", tendencia:"tendencia", fecha:"fecha", plaga:"plaga", nivel_7_dias:"en 7 días", puntos_revisados:"puntos revisados", ultimo_recorrido:"último recorrido", sensor:"sensor", tipo:"tipo", valor:"valor", unidad:"unidad", pct_flores_con_marca:"% de flores con marca", sectores:"sectores", motivos:"motivos", mejor_hora:"mejor hora", firmada_por:"firmada por", nota:"nota", texto:"texto"};
+function razlTexto(v, nivel){                                   // v39: los hechos van al modelo como texto plano (con JSON, el modelo chico contesta copiando llaves y comillas)
+  nivel = nivel || 0; if(v===null || v===undefined || v==="") return "sin dato"; if(Array.isArray(v)){ if(!v.length) return "ninguno"; return v.map(x=>razlTexto(x, nivel+1)).join(nivel ? "; " : "\n  - "); }
+  if(typeof v==="object") return Object.entries(v).filter(([k, x])=>x!==undefined && x!==null && x!=="").map(([k, x])=>`${RAZL_ETIQ[k] || k.replace(/_/g, " ")}: ${razlTexto(x, nivel+1)}`).join(nivel ? ", " : "\n");
+  return String(v);
+}
+function razlHechosTexto(h){ return Object.entries(h).filter(([k, v])=>v!==undefined && v!==null && v!=="").map(([k, v])=>`${RAZL_ETIQ[k] || k.replace(/_/g, " ")}: ${Array.isArray(v) && v.length ? "\n  - " + razlTexto(v, 0) : razlTexto(v, 1)}`).join("\n"); }
+function razlEsFormatoDatos(t){ const x = String(t||"").trim(); return !x || /[{}\[\]]/.test(x) || /"[a-záéíóúñ_ ]+"\s*:/i.test(x) || /:\s*"[^"]*"\s*(,|$)/.test(x); }
+function razlLimpiar(t){ return String(t||"").replace(/```[a-z]*/gi, "").replace(/^\s*(respuesta|asistente)\s*:\s*/i, "").replace(/\*\*/g, "").trim(); }
 async function razlRedactar(instruccion, hechos, max, avisar){
-  const sys = `Eres el asistente de campo de Engram Campo. Responde en español de México, de usted, en máximo 4 frases cortas, SOLO con los datos del JSON de hechos. Si el dato no está en los hechos, diga que no lo tiene en el teléfono. Nunca recomiende, nombre ni sugiera productos, dosis ni mezclas: eso lo decide el agrónomo con una receta firmada. No invente números ni fechas; use exactamente los del JSON.`;
-  const txt = await razlGenerar([{role:"system", content: sys}, {role:"user", content: `Hechos del lote (JSON):\n${JSON.stringify(hechos)}\n\n${instruccion}`}], max || 160, avisar);
-  const sp = razlSinProductos(txt); const cp = razlCompuerta(sp.texto, hechos);
-  return {texto: cp.ok ? sp.texto : "", bruto: txt, compuerta: cp, quitadas: sp.quitadas};
+  const sys = `Eres el asistente de campo de Engram Campo. Responde en español de México, de usted, en máximo 4 frases cortas y naturales, SOLO con los datos del lote que recibes. Escribe oraciones: nunca uses llaves, corchetes, comillas ni copies el formato de los datos. Si el dato no está, diga que no lo tiene en el teléfono. Nunca recomiende, nombre ni sugiera productos, dosis ni mezclas: eso lo decide el agrónomo con una receta firmada. No invente números ni fechas; use exactamente los de los datos.`;
+  const bruto = await razlGenerar([{role:"system", content: sys}, {role:"user", content: `Datos del lote:\n${razlHechosTexto(hechos)}\n\n${instruccion}`}], max || 160, avisar);
+  const txt = razlLimpiar(bruto); const formato = razlEsFormatoDatos(txt);
+  const sp = razlSinProductos(formato ? "" : txt); const cp = razlCompuerta(sp.texto, hechos);
+  return {texto: cp.ok && !formato ? sp.texto : "", bruto, compuerta: cp, quitadas: sp.quitadas, formato};
 }
 async function razlPreguntar(pregunta, avisar){
   const h = razlHechos(); const r = await razlRedactar(`Pregunta del productor: ${pregunta}`, h, 170, avisar);
   let texto = r.texto, nota = `${razlNombre()} · en el teléfono · ${razl.ultimo ? razl.ultimo.segundos + " s" : ""} · PRELIMINAR`;
-  if(!texto){ texto = razlResumenPlano(h); nota += ` · la respuesta del modelo traía números sin respaldo (${r.compuerta.faltan.join(", ")}): se muestra lo que sí consta`; }
+  if(!texto){ texto = razlResumenPlano(h); nota += r.formato ? " · el modelo contestó en formato de datos, no en frases: se muestra lo que sí consta" : ` · la respuesta del modelo traía números sin respaldo (${r.compuerta.faltan.join(", ")}): se muestra lo que sí consta`; }
   if(r.quitadas) nota += ` · ${r.quitadas} frase${r.quitadas===1?"":"s"} sobre productos o dosis omitida${r.quitadas===1?"":"s"} (eso lo decide su agrónomo)`;
   return {texto, nota, hechos: h};
 }
@@ -3670,7 +3700,7 @@ $("#ss-razon-probar").addEventListener("click", razlProbar);
 $("#ss-razon-diag").addEventListener("click", async ()=>{ const t = razlDiagTexto(); try{ await navigator.clipboard.writeText(t); toast("Diagnóstico copiado: péguelo en el chat"); }catch(e){ prompt("Copie este diagnóstico:", t); } });
 $$("#ss-razon-btns button[data-razl]").forEach(b=>b.addEventListener("click", ()=>razlCargar(b.dataset.razl)));
 window.__engramRazl = {hechos: razlHechos, compuerta: razlCompuerta, sinProductos: razlSinProductos, json: razlJSON};   // para depurar en el teléfono (consola)
-window.__engramMotor = {motor: vozlMotor, intentos: razlIntentos, modelos: RAZL_MODELOS, caidas, diag: razlDiagTexto, webllmPosible, generar: razlGenerar, estado: ()=>razl};   // v37: motor elegido, intentos del razonador y caídas (consola/pruebas)
+window.__engramMotor = {motor: vozlMotor, intentos: razlIntentos, modelos: RAZL_MODELOS, caidas, diag: razlDiagTexto, webllmPosible, generar: razlGenerar, estado: ()=>razl, reducir: fotoReducida, liberar: ortLiberar, hechosTexto: razlHechosTexto, esFormato: razlEsFormatoDatos, redactar: razlRedactar, vozl: ()=>vozl, fotol: ()=>fotol};   // v37: motor elegido, intentos del razonador y caídas (consola/pruebas)
 $("#ss-razon-quitar").addEventListener("click", async ()=>{ razlGuardarConf({}); const eng = razl.engine; razl = {estado:"no", progreso:0, pipe:null, engine:null, modelo:null, motor:null, error:null, archivo:"", ocupado:false, ultimo:null}; renderSinSenal(); renderRazonHoy();
   try{ if(eng && eng.unload) await eng.unload(); }catch(e){}
   try{ const lib = window.__webllm || (navigator.onLine ? await webllmLib() : null); if(lib && lib.deleteModelAllInfoInCache){ for(const k of Object.keys(RAZL_MODELOS)){ try{ await lib.deleteModelAllInfoInCache(RAZL_MODELOS[k].mlc); }catch(e){} } } }catch(e){}   // v38: pesos de WebLLM fuera de la caché
@@ -3688,6 +3718,7 @@ function ocrlGuardarConf(c){ try{ localStorage.setItem(OCRL_KEY, JSON.stringify(
 function ocrlDisponible(){ return ocrl.estado==="listo" || !!ocrlConf().listo; }
 async function ocrlCargar(){
   ocrl.estado = "cargando"; ocrl.progreso = 0; ocrl.error = null; ocrl.motor = vozlMotor(); renderSinSenal();
+  await ortLiberar("libreta");
   try{
     const tjs = await vozlLib();
     const prog = p => { cargaProgreso(p); if(p && p.status==="progress"){ ocrl.progreso = Math.round(p.progress || 0); ocrl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
