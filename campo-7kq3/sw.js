@@ -1,9 +1,10 @@
 // Engram Campo — service worker: red primero (siempre la versión más nueva), caché de respaldo para abrir sin señal.
-const CACHE = "engram-campo-v13";
+const CACHE = "engram-campo-v14";
 const SHELL = ["./", "./index.html", "./manifest.json", "./leaflet.js", "./leaflet.css", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  // v14: solo se borran las cachés viejas de la app (engram-campo-v*); las de modelos (transformers-cache) y del mapa (engram-tiles) se quedan: antes cada actualización obligaba a bajar los modelos de nuevo
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith("engram-campo-v") && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 const TILES = "engram-tiles-v1";   // mapa guardado para el campo (Más -> Sin señal): primero la caché, si no la red (y se guarda)
 self.addEventListener("fetch", e => {
