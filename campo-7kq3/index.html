@@ -890,6 +890,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
           <label class="photo" for="pl-foto-input"><b>Foto (opcional)</b><span class="small muted">De la hoja, la trampa o el daño: el motor la lee con señal y su agrónomo la confirma.</span><input class="hiddeninput" id="pl-foto-input" type="file" accept="image/*" capture="environment"></label>
           <div id="pl-foto-prev" hidden></div>
           <p class="small" id="pl-foto-reco" hidden style="color:var(--blue)"></p>
+          <div id="pl-foto-trampa" hidden></div>
         </div>
         <div id="pl-fin" hidden>
           <div class="card">
@@ -941,6 +942,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
         </div>
         <label class="photo" for="le-foto-input"><b>Foto del instrumento</b><span class="small muted">Si no quiere teclear el valor: el motor lee la aguja o la pantalla con señal.</span><input class="hiddeninput" id="le-foto-input" type="file" accept="image/*" capture="environment"></label>
         <div id="le-foto-prev" hidden></div>
+        <div id="le-foto-reco" hidden></div>
       </div>
       <div class="flow" id="flow-polin" hidden>
         <div id="po-ruta">
@@ -964,6 +966,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
           </div>
           <label class="photo" for="po-foto-input"><b>Foto de las flores (opcional)</b><span class="small muted">De cerca, con las anteras visibles: el motor cuenta las marcas con señal.</span><input class="hiddeninput" id="po-foto-input" type="file" accept="image/*" capture="environment"></label>
           <div id="po-foto-prev" hidden></div>
+          <div id="po-foto-reco" hidden></div>
         </div>
         <div id="po-fin" hidden>
           <div class="card">
@@ -1661,7 +1664,7 @@ function mostrarLogin(on){ $("#login").hidden = !on; document.body.classList.tog
 function renderSesion(){
   const kv_ = $("#sesion-kv"); if(!kv_) return;
   const conf = NUBE.url && NUBE.anon;
-  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()],["Alertas", alertasError ? `no se pudieron leer: ${alertasError}` : `${ALERTAS.length} cargada${ALERTAS.length===1?"":"s"} (${ALERTAS.filter(a=>a.vigente).length} vigente${ALERTAS.filter(a=>a.vigente).length===1?"":"s"})`]].concat(estadoRig && estadoRig.detalle && estadoRig.detalle.evaluacion ? [["Acierto de las alertas", (ev=>`${ev.total} emitidas · ${ev.confirmadas} confirmadas por el agrónomo · ${ev.reportadas} reportadas por el productor · ${ev.sin_evidencia} sin evidencia · ${ev.pendientes} en curso`)(estadoRig.detalle.evaluacion)]] : []).concat(estadoRig && estadoRig.detalle && estadoRig.detalle.acuerdo_telefono ? [["Acuerdo teléfono‑motor", (ac=>Object.entries(ac).filter(([k,v])=>v && v.n).map(([k,v])=>`${({voz:"voz", interpretacion:"interpretación", foto:"fotos", razonamiento:"razonamiento", libreta:"libreta", video:"video"})[k]||k} ${Math.round((v.media||0)*100)} % (n=${v.n})`).join(" · ") || "sin comparaciones todavía")(estadoRig.detalle.acuerdo_telefono)]] : []) : []).concat([["Versión de la app", APP_VERSION]]));
+  kv_.innerHTML = kv([["Modo", MODO==="nube" ? "conectado a la nube" : conf ? "demostración (sin sesión)" : "demostración (nube sin configurar)"],["Usuario", sesion && sesion.user ? sesion.user.email : "—"],["Rol", perfil ? perfil.rol : "—"]].concat(MODO==="nube" ? [["Motor (última corrida)", latidoTxt()],["Alertas", alertasError ? `no se pudieron leer: ${alertasError}` : `${ALERTAS.length} cargada${ALERTAS.length===1?"":"s"} (${ALERTAS.filter(a=>a.vigente).length} vigente${ALERTAS.filter(a=>a.vigente).length===1?"":"s"})`]].concat(estadoRig && estadoRig.detalle && estadoRig.detalle.evaluacion ? [["Acierto de las alertas", (ev=>`${ev.total} emitidas · ${ev.confirmadas} confirmadas por el agrónomo · ${ev.reportadas} reportadas por el productor · ${ev.sin_evidencia} sin evidencia · ${ev.pendientes} en curso`)(estadoRig.detalle.evaluacion)]] : []).concat(estadoRig && estadoRig.detalle && estadoRig.detalle.acuerdo_telefono ? [["Acuerdo teléfono‑motor", (ac=>Object.entries(ac).filter(([k,v])=>v && v.n).map(([k,v])=>`${({voz:"voz", interpretacion:"interpretación", foto:"fotos", razonamiento:"razonamiento", libreta:"libreta", video:"video", instrumento:"instrumentos", trampa:"trampas", flores:"flores"})[k]||k} ${Math.round((v.media||0)*100)} % (n=${v.n})`).join(" · ") || "sin comparaciones todavía")(estadoRig.detalle.acuerdo_telefono)]] : []) : []).concat([["Versión de la app", APP_VERSION]]));
   $("#sesion-salir").hidden = !(MODO==="nube"); $("#sesion-entrar").hidden = !(conf && MODO!=="nube");
   $("#nube-url").value = NUBE.url; $("#nube-anon").value = NUBE.anon;
 }
@@ -2138,7 +2141,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "32.1 · 3 nov 2026";
+const APP_VERSION = "33 · 3 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2877,7 +2880,7 @@ function plPuntoRender(){
   const meds = Object.entries(cfg.medidas||{}).sort((a,b)=>(a[1].informativa?1:0)-(b[1].informativa?1:0));
   $("#pl-medidas").innerHTML = meds.map(([k,m])=>{ const mt = (PLAGAS.medidas||{})[k] || {}; return `<div class="field"><label>${esc(mt.txt||k)}${m.informativa ? " <span class='tag'>informativo</span>" : ""} <span class="small muted">· bajo ≥ ${m.umbrales[0]}, medio ≥ ${m.umbrales[1]}, alto ≥ ${m.umbrales[2]}</span></label><div class="row" style="flex-wrap:nowrap"><button class="btn sec sm" data-plm="${k}" data-d="-1">−</button><input data-plk="${k}" inputmode="decimal" placeholder="0" style="text-align:center;font-weight:700;font-size:18px"><button class="btn sec sm" data-plm="${k}" data-d="1">+</button></div><div class="note">${esc(mt.como||"")}</div></div>`; }).join("")
     + `<div class="grid2"><div class="field"><label>Hojas o plantas revisadas</label><input data-plk="_n" inputmode="numeric" value="10"></div><div class="field"><label>Estadio que más vio</label><select data-plk="_estadio">${(cfg.estadios||[]).map(e=>`<option>${esc(e)}</option>`).join("")}<option>ninguno</option></select></div></div>`;
-  $$("#pl-nivel button").forEach(b=>b.setAttribute("aria-pressed","false")); pl.foto = null; $("#pl-foto-prev").hidden = true; $("#pl-foto-prev").innerHTML = ""; $("#pl-foto-input").value = "";
+  $$("#pl-nivel button").forEach(b=>b.setAttribute("aria-pressed","false")); pl.foto = null; plTelTrampa = null; { const b = $("#pl-foto-trampa"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#pl-foto-prev").hidden = true; $("#pl-foto-prev").innerHTML = ""; $("#pl-foto-input").value = "";
   plMotorRender();
 }
 function plConteos(){ const c = {}; $$("#pl-medidas [data-plk]").forEach(i=>{ const k = i.dataset.plk; if(k.startsWith("_")){ c[k] = i.value; return; } const v = String(i.value||"").replace(",","."); if(v!=="" && !isNaN(+v)) c[k] = +v; }); return c; }
@@ -2893,7 +2896,7 @@ $("#pl-medidas").addEventListener("click", e=>{ const b = e.target.closest("[dat
 $("#pl-nivel").addEventListener("click", e=>{ const b = e.target.closest("button[data-n]"); if(!b) return; $$("#pl-nivel button").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); plMotorRender(); });
 $("#pl-plagas").addEventListener("click", e=>{ const b = e.target.closest("[data-plp]"); if(!b) return; pl.plaga = b.dataset.plp; $$("#pl-plagas .chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); plPuntosArmar(); plPaso("ruta"); });
 $("#pl-puntos").addEventListener("click", e=>{ const b = e.target.closest("[data-plpt]"); if(!b) return; pl.actual = pl.puntos.find(p=>p.id===b.dataset.plpt); plPaso("punto"); });
-$("#pl-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; pl.foto = f; const u = URL.createObjectURL(f); $("#pl-foto-prev").hidden = false; $("#pl-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; fotolEnPunto(f); });
+$("#pl-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; pl.foto = f; if(typeof plAnalizarTrampa==="function") plAnalizarTrampa(f); const u = URL.createObjectURL(f); $("#pl-foto-prev").hidden = false; $("#pl-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; fotolEnPunto(f); });
 $("#pl-volver").addEventListener("click", ()=>plPaso("ruta"));
 $("#pl-terminar").addEventListener("click", ()=>plPaso("fin"));
 async function plFinRazon(hs, sect, mapa, cfg, mx){       // v31: el modelo chico del teléfono redacta el resumen (con compuerta de números; sin productos)
@@ -2908,7 +2911,7 @@ function plGuardarPunto(){
   const p = pl.actual; const c = plConteos(); const conteos = Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith("_"))); const np = plNivelProductor();
   if(!Object.keys(conteos).length && np==null){ toast("Anote al menos un conteo o marque el nivel"); return; }
   plMotorRender(); const idx = pl.idx, g = pl.gate; const pos = plPos && plDist(plPos, p) <= 30 ? plPos : null;
-  pl.hechos = pl.hechos.filter(h=>h.punto_id!==p.id); pl.hechos.push({punto_id:p.id, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, conteos:{...conteos, hojas_o_plantas: +c._n || null, estadio: c._estadio || null, ...(plReco ? {reconocimiento_telefono: plReco} : {})}, nivel_productor: np, nivel_motor: idx.nivel, nivel_final: g.nivel_final, acuerdo: g.acuerdo, motivo_motor: (idx.razones.concat(idx.agravantes.map(a=>"agravante: "+a)).join(" · ")).slice(0,400), foto: pl.foto, motivo: p.motivo});
+  pl.hechos = pl.hechos.filter(h=>h.punto_id!==p.id); pl.hechos.push({punto_id:p.id, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, conteos:{...conteos, hojas_o_plantas: +c._n || null, estadio: c._estadio || null, ...(plReco ? {reconocimiento_telefono: plReco} : {}), ...(plTelTrampa ? {trampa_telefono: plTelTrampa} : {})}, nivel_productor: np, nivel_motor: idx.nivel, nivel_final: g.nivel_final, acuerdo: g.acuerdo, motivo_motor: (idx.razones.concat(idx.agravantes.map(a=>"agravante: "+a)).join(" · ")).slice(0,400), foto: pl.foto, motivo: p.motivo});
   toast(`${p.id} guardado: ${NIVEL_TXT[g.nivel_final]}`); pl.actual = null; plPaso("ruta");
 }
 function plFinRender(){
@@ -2985,22 +2988,23 @@ function seGuardar(){
 }
 // --- anotar una lectura
 let leFoto = null, lePre = null;
-function leIniciar(){ const l = LOTES[lotIdx]; const ss = sensoresDe(l); leFoto = null; $("#le-foto-prev").hidden = true; $("#le-foto-prev").innerHTML = ""; $("#le-foto-input").value = ""; $("#le-valor").value = "";
+function leIniciar(){ const l = LOTES[lotIdx]; const ss = sensoresDe(l); leFoto = null; leTel = null; { const b = $("#le-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#le-foto-prev").hidden = true; $("#le-foto-prev").innerHTML = ""; $("#le-foto-input").value = ""; $("#le-valor").value = "";
   const ahora = new Date(); $("#le-fecha").value = localISO(ahora); $("#le-hora").value = `${String(ahora.getHours()).padStart(2,"0")}:${String(ahora.getMinutes()).padStart(2,"0")}`;
   $("#le-sensores").innerHTML = ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note">Primero agregue un sensor (Más → Sensores y riego).</p>`; lePre = null; leUnidad(); }
 function leSensor(){ const b = $$("#le-sensores .chip").find(x=>x.getAttribute("aria-pressed")==="true"); return b ? (SENSORES||[]).find(s=>s.id===b.dataset.les) : null; }
 function leUnidad(){ const s = leSensor(); $("#le-unidad").textContent = s ? (s.unidad || (SENSOR_TIPOS[s.tipo]||{}).unidad || "") : ""; const x = s ? ultimaLectura(s) : null; $("#le-ultima").textContent = s ? (x ? `Última: ${lecturaTxt(s, x, LOTES[lotIdx]).txt}` : "Sin lecturas todavía.") : ""; }
 $("#le-sensores").addEventListener("click", e=>{ const b = e.target.closest("[data-les]"); if(!b) return; $$("#le-sensores .chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); leUnidad(); });
-$("#le-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; leFoto = f; const u = URL.createObjectURL(f); $("#le-foto-prev").hidden = false; $("#le-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; });
+$("#le-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; leFoto = f; const u = URL.createObjectURL(f); $("#le-foto-prev").hidden = false; $("#le-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; if(typeof leAnalizar==="function") leAnalizar(f); });
 function leGuardar(){
   const l = LOTES[lotIdx]; const s = leSensor(); if(!s){ toast("Elija el sensor"); return; } const v = $("#le-valor").value.trim().replace(",","."); if(v==="" && !leFoto){ toast("Anote el valor o tome la foto del instrumento"); return; }
   if(String(s.id).startsWith("local-")){ toast("Este sensor todavía no subió a la nube: espere la señal y vuelva a intentar"); return; }
   const fecha = new Date(`${$("#le-fecha").value || hoyISO}T${$("#le-hora").value || "12:00"}:00`); const cid = uuid();
-  const fila = {_tabla:"lecturas_sensor", cliente_id:cid, sensor_id:s.id, lote_id:l.uuid||l.id, usuario: sesion && sesion.user ? sesion.user.id : null, fecha: isNaN(fecha) ? new Date().toISOString() : fecha.toISOString(), valor: v==="" ? null : +v, unidad: s.unidad || (SENSOR_TIPOS[s.tipo]||{}).unidad || null, fuente: v==="" ? "foto" : "manual"};
+  const tel = leTel ? Object.fromEntries(Object.entries(leTel).filter(([k])=>k!=="dataURL")) : null;   // v33: lo que propuso el teléfono (trampa / aguja / pantalla)
+  const fila = {_tabla:"lecturas_sensor", cliente_id:cid, sensor_id:s.id, lote_id:l.uuid||l.id, usuario: sesion && sesion.user ? sesion.user.id : null, fecha: isNaN(fecha) ? new Date().toISOString() : fecha.toISOString(), valor: v==="" ? null : +v, unidad: s.unidad || (SENSOR_TIPOS[s.tipo]||{}).unidad || null, fuente: v==="" ? "foto" : (tel && leFoto && tel.valor!=null && Math.abs(+v - tel.valor) < 1e-9) ? "foto_telefono" : "manual"};
   const local = {...fila, id:"local-"+cid}; delete local._tabla; LECTURAS.unshift(local);
   if(MODO==="nube" && l.nube){ const arch = leFoto ? {bucket:"fotos", ext:extDe(leFoto), blob:leFoto} : null; if(arch) fila._campo_archivo = "foto"; encolarRegistro(fila, arch); }
   const t = v==="" ? "foto del instrumento: el motor la lee con señal" : `${v} ${fila.unidad||""}${s.tipo==="tensiometro" ? " · " + tensioNivel(+v, l).t : ""}`;
-  addLog("sensor", `${s.nombre}: ${t}`, localISO(isNaN(fecha) ? new Date() : fecha), undefined, {sensor_id:s.id, valor: v==="" ? null : +v, unidad: fila.unidad});
+  addLog("sensor", `${s.nombre}: ${t}${fila.fuente==="foto_telefono" ? " · leído por el teléfono" : ""}`, localISO(isNaN(fecha) ? new Date() : fecha), undefined, {sensor_id:s.id, valor: v==="" ? null : +v, unidad: fila.unidad, lectura_cliente_id: cid, ...(tel ? {telefono: tel} : {})});
   cacheGuardar(); renderSensoresHoy(); afterSave(v==="" ? "Foto guardada: el motor lee el instrumento con señal" : `Lectura guardada: ${t}`);
 }
 $("#se-csv-input").addEventListener("change", async e=>{
@@ -3050,15 +3054,15 @@ function poDibujar(poly){ if(!poMap){ poMap = L.map("po-map", {zoomControl:true,
   po.puntos.forEach(p=>{ const h = hechos[p.id]; const col = h ? {bueno:"#17955A", regular:"#F2B04E", bajo:"#D63B2F"}[h.nivel] : null; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt" style="${col ? `background:${col};color:#fff;border-color:#fff` : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(poMap); m.on("click", ()=>{ po.actual = p; poPaso("punto"); }); poCapas.push(m); });
   if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
   poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ poMap.invalidateSize(); poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380); }
-function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
+function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; poTel = null; { const b = $("#po-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
 function poCalc(){ const fl = +$("#po-flores").value || 0, cm = +$("#po-marca").value; const cfg = poCfg(LOTES[lotIdx]); const box = $("#po-calc"); if(!fl || isNaN(cm) || $("#po-marca").value===""){ box.innerHTML = `<p class="note">Revise ${fl || 20} flores abiertas de 2 a 3 días y cuente las que tienen la marca (moretón café en el cono de anteras). Si prefiere, tome la foto y el motor cuenta con señal.</p>`; return; } const pct = Math.round(1000*Math.min(cm, fl)/fl)/10; const n = poNivel(pct, cfg); box.innerHTML = `<div class="row between"><span class="big" style="font-size:32px">${pct} %<small> con marca</small></span><span class="lvl ${PO_CLS[n]}">${n}</span></div><p class="note">${esc(cfg ? cfg.txt : "")}</p>`; }
 $("#po-flores").addEventListener("input", poCalc); $("#po-marca").addEventListener("input", poCalc);
 $("#po-medidas").addEventListener("click", e=>{ const b = e.target.closest("[data-pom]"); if(!b) return; const inp = $("#po-"+b.dataset.pom); inp.value = Math.max(0, (+inp.value||0) + (+b.dataset.d)); poCalc(); });
 $("#po-puntos").addEventListener("click", e=>{ const b = e.target.closest("[data-popt]"); if(!b) return; po.actual = po.puntos.find(p=>p.id===b.dataset.popt); poPaso("punto"); });
-$("#po-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; poFoto = f; const u = URL.createObjectURL(f); $("#po-foto-prev").hidden = false; $("#po-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; });
+$("#po-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; poFoto = f; const u = URL.createObjectURL(f); $("#po-foto-prev").hidden = false; $("#po-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; if(typeof poAnalizar==="function") poAnalizar(f); });
 $("#po-volver").addEventListener("click", ()=>poPaso("ruta")); $("#po-terminar").addEventListener("click", ()=>poPaso("fin")); $("#po-otro").addEventListener("click", ()=>poPaso("ruta"));
 function poGuardarPunto(){ const p = po.actual; const fl = +$("#po-flores").value || 0; const cmTxt = $("#po-marca").value; if(cmTxt==="" && !poFoto){ toast("Cuente las flores con marca o tome la foto"); return; } const cm = cmTxt==="" ? null : Math.min(+cmTxt, fl); const pct = cm==null ? null : Math.round(1000*cm/fl)/10; const pos = plPos && plDist(plPos, p) <= 30 ? plPos : null;
-  po.hechos = po.hechos.filter(h=>h.punto_id!==p.id); po.hechos.push({punto_id:p.id, sector:p.sector, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, flores: cm==null ? null : fl, marca: cm, pct, nivel: poNivel(pct, poCfg(LOTES[lotIdx])), foto: poFoto}); toast(`${p.id} guardado${pct!=null ? `: ${pct} %` : " (foto para el motor)"}`); po.actual = null; poPaso("ruta"); }
+  po.hechos = po.hechos.filter(h=>h.punto_id!==p.id); po.hechos.push({punto_id:p.id, sector:p.sector, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, flores: cm==null ? null : fl, marca: cm, pct, nivel: poNivel(pct, poCfg(LOTES[lotIdx])), foto: poFoto, telefono: poTel ? {flores: poTel.flores, con_marca: poTel.con_marca, pct: poTel.pct, confianza: poTel.confianza, modelo: poTel.modelo, usado: cm!=null && poTel.con_marca===cm && poTel.flores===fl} : null}); toast(`${p.id} guardado${pct!=null ? `: ${pct} %` : " (foto para el motor)"}`); po.actual = null; poPaso("ruta"); }
 function poFinRender(){ const hs = po.hechos; const con = hs.filter(h=>h.pct!=null); const pct = con.length ? Math.round(10*con.reduce((a,h)=>a+h.pct,0)/con.length)/10 : null; const cfg = poCfg(LOTES[lotIdx]); const n = poNivel(pct, cfg);
   $("#po-fin-h").innerHTML = pct!=null ? `Polinización · <b>${pct} %</b> de flores con marca <span class="lvl ${PO_CLS[n]}">${n}</span>` : "Polinización · fotos para que el motor cuente";
   $("#po-fin-tabla").innerHTML = hs.map(h=>`<div class="sem-item" style="grid-template-columns:1fr auto"><div><b>${h.punto_id} · ${esc(h.sector)}</b><span>${h.pct!=null ? `${h.marca} de ${h.flores} flores con marca` : "foto: el motor cuenta con señal"}${h.foto ? " · con foto" : ""}</span></div>${h.nivel ? `<span class="lvl ${PO_CLS[h.nivel]}">${h.nivel}</span>` : ""}</div>`).join("");
@@ -3066,7 +3070,7 @@ function poFinRender(){ const hs = po.hechos; const con = hs.filter(h=>h.pct!=nu
 function poGuardarRecorrido(){ const l = LOTES[lotIdx]; if(!po.hechos.length) return; const uid = sesion && sesion.user ? sesion.user.id : null; const lid = l.uuid||l.id; const grupo = uuid(); const con = po.hechos.filter(h=>h.pct!=null); const pct = con.length ? Math.round(10*con.reduce((a,h)=>a+h.pct,0)/con.length)/10 : null; const n = poNivel(pct, poCfg(l));
   po.hechos.forEach(h=>{ const cid = uuid(); const fila = {_tabla:"polinizacion", cliente_id:cid, lote_id:lid, usuario:uid, fecha:hoyISO, sector:h.sector, punto_id:h.punto_id, lat:h.lat, lon:h.lon, flores_revisadas:h.flores, flores_con_marca:h.marca, pct_marca:h.pct, nivel:h.nivel, recorrido:grupo}; const local = {...fila, id:"local-"+cid}; delete local._tabla; POLINIZACION.unshift(local);
     if(MODO==="nube" && l.nube){ const arch = h.foto ? {bucket:"fotos", ext:extDe(h.foto), blob:h.foto} : null; if(arch) fila._campo_archivo = "foto"; encolarRegistro(fila, arch); } });
-  addLog("polinizacion", `Polinización · ${po.hechos.length} punto${po.hechos.length===1?"":"s"}${pct!=null ? ` · ${pct} % con marca · ${n}` : " · fotos para el motor"}`, hoyISO, undefined, {puntos:po.hechos.length, pct, nivel:n, recorrido:grupo});
+  addLog("polinizacion", `Polinización · ${po.hechos.length} punto${po.hechos.length===1?"":"s"}${pct!=null ? ` · ${pct} % con marca · ${n}` : " · fotos para el motor"}`, hoyISO, undefined, {puntos:po.hechos.length, pct, nivel:n, recorrido:grupo, telefono: po.hechos.filter(h=>h.telefono).map(h=>({punto_id:h.punto_id, ...h.telefono}))});
   cacheGuardar(); renderPolinHoy(); plGeoParar(); afterSave(pct!=null ? `Recorrido guardado: ${pct} % de flores con marca (${n})` : "Recorrido guardado: el motor cuenta las flores con señal"); }
 $("#po-save").addEventListener("click", ()=>{ if(!po) return; if(po.paso==="ruta"){ const pend = poPendientes(); if(pend.length){ po.actual = pend[0]; poPaso("punto"); } else if(po.hechos.length) poPaso("fin"); } else if(po.paso==="punto") poGuardarPunto(); else poGuardarRecorrido(); });
 function renderPolinMas(){ const card = $("#mas-polin"); if(!card || card.hidden) return; const l = LOTES[lotIdx]; const cfg = poCfg(l); if(!cfg){ $("#po-mas-txt").textContent = `La polinización con abejorros está configurada para tomate; este lote es de ${nombreCultivo(l.cultivo)}.`; $("#po-mas-kv").innerHTML = ""; $("#po-mas-lista").innerHTML = ""; $("#po-mas-map").hidden = true; return; }
@@ -3677,6 +3681,142 @@ function renderOcrSinSenal(){
 $("#ss-ocr-cargar").addEventListener("click", ocrlCargar);
 $("#ss-ocr-quitar").addEventListener("click", ()=>{ ocrlGuardarConf({}); ocrl = {estado:"no", progreso:0, model:null, processor:null, tokenizer:null, motor:null, error:null, archivo:"", ultimo:null}; renderSinSenal(); toast("Lector de libreta quitado del teléfono"); });
 window.__engramOcr = {lineas: ocrlLineas};
+// ---------------------------------------------------------------- visión en el teléfono v1 (3 nov 2026) · PRELIMINAR · mini RIG, parte 1
+// Lo que antes solo leía el motor con señal, ahora el teléfono lo propone al instante, sin modelos nuevos (visión clásica sobre el canvas) y con el
+// lector de libreta (Florence-2) para pantallas con dígitos: (1) conteo de insectos en TRAMPAS adhesivas (manchas oscuras sobre fondo amarillo/azul),
+// (2) TENSIÓMETRO de aguja (ángulo de la aguja sobre la escala 0–100 cb, con ajuste por manómetro), (3) PANTALLAS digitales (dígitos por OCR),
+// (4) FLORES de tomate con marca de abejorro (amarillo con mancha café). Todo es una PROPUESTA que la persona acepta o corrige; el motor vuelve a
+// leer la foto con el modelo grande cuando hay señal y mide el acuerdo. Nunca productos ni dosis.
+async function imgACanvas(file, maxLado){
+  const url = URL.createObjectURL(file); try{
+    const img = await new Promise((ok, no)=>{ const i = new Image(); i.onload = ()=>ok(i); i.onerror = ()=>no(new Error("no se pudo abrir la imagen")); i.src = url; });
+    const s = Math.min(1, (maxLado||1024) / Math.max(img.naturalWidth, img.naturalHeight)); const w = Math.max(1, Math.round(img.naturalWidth*s)), h = Math.max(1, Math.round(img.naturalHeight*s));
+    const c = document.createElement("canvas"); c.width = w; c.height = h; const ctx = c.getContext("2d", {willReadFrequently:true}); ctx.drawImage(img, 0, 0, w, h);
+    return {canvas:c, ctx, w, h, data: ctx.getImageData(0, 0, w, h).data};
+  } finally { URL.revokeObjectURL(url); }
+}
+function hsvDe(r, g, b){ r/=255; g/=255; b/=255; const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx-mn; let h = 0; if(d){ if(mx===r) h = 60*(((g-b)/d)%6); else if(mx===g) h = 60*((b-r)/d+2); else h = 60*((r-g)/d+4); } if(h<0) h += 360; return [h, mx ? d/mx : 0, mx]; }
+function componentes(mask, w, h, minArea, maxArea){           // componentes conexas (8 vecinos) sobre una máscara 0/1; devuelve centro, área y caja
+  const vis = new Uint8Array(w*h), out = [], pila = new Int32Array(w*h);
+  for(let i=0;i<w*h;i++){ if(!mask[i] || vis[i]) continue; let top = 0; pila[top++] = i; vis[i] = 1; let area = 0, sx = 0, sy = 0, minx = w, miny = h, maxx = 0, maxy = 0;
+    while(top){ const p = pila[--top]; const x = p % w, y = (p - x) / w; area++; sx += x; sy += y; if(x<minx) minx = x; if(x>maxx) maxx = x; if(y<miny) miny = y; if(y>maxy) maxy = y;
+      for(let dy=-1; dy<=1; dy++){ const yy = y+dy; if(yy<0||yy>=h) continue; for(let dx=-1; dx<=1; dx++){ const xx = x+dx; if(xx<0||xx>=w) continue; const q = yy*w+xx; if(mask[q] && !vis[q]){ vis[q] = 1; pila[top++] = q; } } } }
+    if(area >= minArea && area <= maxArea) out.push({area, cx: sx/area, cy: sy/area, minx, miny, maxx, maxy});
+  }
+  return out;
+}
+function abrir3(mask, w, h){                                    // apertura morfológica 3x3: quita puntitos de un píxel
+  const er = new Uint8Array(w*h), di = new Uint8Array(w*h);
+  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){ const i = y*w+x; if(mask[i] && mask[i-1] && mask[i+1] && mask[i-w] && mask[i+w]) er[i] = 1; }
+  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){ const i = y*w+x; if(er[i] || er[i-1] || er[i+1] || er[i-w] || er[i+w]) di[i] = 1; }
+  return di;
+}
+function dibujar(c, fn){ const ctx = c.canvas.getContext("2d"); ctx.save(); fn(ctx); ctx.restore(); return c.canvas.toDataURL("image/jpeg", .7); }
+// --- (1) trampa adhesiva: fondo amarillo o azul, insectos = manchas oscuras dentro de la trampa
+async function trampaContar(file){
+  const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const hsvH = new Float32Array(n), hsvS = new Float32Array(n), hsvV = new Float32Array(n);
+  const hist = new Uint32Array(36); for(let i=0;i<n;i++){ const [hh, s, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); hsvH[i] = hh; hsvS[i] = s; hsvV[i] = v; if(s > .35 && v > .35) hist[Math.floor(hh/10) % 36]++; }
+  let best = 0; for(let k=1;k<36;k++) if(hist[k] > hist[best]) best = k; const hueFondo = best*10 + 5; const fondo = (hueFondo >= 35 && hueFondo <= 75) ? "amarillo" : (hueFondo >= 190 && hueFondo <= 260) ? "azul" : "otro";
+  const esFondo = i => hsvS[i] > .25 && hsvV[i] > .35 && Math.min(Math.abs(hsvH[i]-hueFondo), 360-Math.abs(hsvH[i]-hueFondo)) <= 20;
+  const fm = new Uint8Array(n); let cob = 0; for(let i=0;i<n;i++){ if(esFondo(i)){ fm[i] = 1; cob++; } }
+  const cobertura = cob / n; if(fondo === "otro" || cobertura < .15) return {conteo:null, fondo, cobertura_pct: Math.round(cobertura*100), confianza:0, motivo:"no se distingue una trampa amarilla o azul que llene la foto: acérquese y que la trampa ocupe casi todo el cuadro", modelo:"visión clásica · teléfono", preliminar:true};
+  // caja de la trampa: el componente de fondo más grande (en una versión reducida x4)
+  const w4 = Math.floor(w/4), h4 = Math.floor(h/4), m4 = new Uint8Array(w4*h4); for(let y=0;y<h4;y++) for(let x=0;x<w4;x++){ m4[y*w4+x] = fm[(y*4)*w + x*4]; }
+  const comps = componentes(m4, w4, h4, 50, w4*h4); comps.sort((a,b)=>b.area-a.area); const t = comps[0]; const pad = 6;
+  const bx0 = t ? Math.max(0, t.minx*4 + pad) : 0, by0 = t ? Math.max(0, t.miny*4 + pad) : 0, bx1 = t ? Math.min(w-1, t.maxx*4 + 3 - pad) : w-1, by1 = t ? Math.min(h-1, t.maxy*4 + 3 - pad) : h-1;
+  const areaTrampa = (bx1-bx0+1)*(by1-by0+1);
+  const fg = new Uint8Array(n); for(let y=by0;y<=by1;y++) for(let x=bx0;x<=bx1;x++){ const i = y*w+x; if(!fm[i] && (hsvV[i] < .6 || (hsvS[i] < .22 && hsvV[i] < .8))) fg[i] = 1; }
+  const ab = abrir3(fg, w, h); const escala = w/1024; const bichos = componentes(ab, w, h, Math.max(4, 5*escala), Math.max(50, areaTrampa*0.02));
+  const chicos = bichos.filter(b=>b.area < 35*escala).length, grandes = bichos.filter(b=>b.area > 150*escala).length, medianos = bichos.length - chicos - grandes;
+  const dataURL = dibujar(c, ctx=>{ ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 2; ctx.strokeRect(bx0, by0, bx1-bx0, by1-by0); ctx.strokeStyle = "#00e5ff"; bichos.forEach(b=>{ const r = Math.max(5, Math.sqrt(b.area)); ctx.beginPath(); ctx.arc(b.cx, b.cy, r+3, 0, 2*Math.PI); ctx.stroke(); }); });
+  const confianza = bichos.length ? (cobertura > .45 ? .55 : .4) : .3;
+  return {conteo: bichos.length, chicos, medianos, grandes, fondo, cobertura_pct: Math.round(cobertura*100), confianza, modelo:"visión clásica · teléfono", preliminar:true, dataURL,
+          nota: `${bichos.length} mancha${bichos.length===1?"":"s"} oscura${bichos.length===1?"":"s"} sobre la trampa ${fondo} (${chicos} chicas · ${medianos} medianas · ${grandes} grandes). Cuenta manchas, no especies: el modelo de fotos dice qué parece y el motor confirma con señal.`};
+}
+// --- (2) tensiómetro de aguja: ángulo de la aguja (línea oscura desde el centro) sobre la escala
+const AGUJA_KEY = "engram-campo-aguja-v1";
+function agujaCal(sensorId){ try{ const all = JSON.parse(localStorage.getItem(AGUJA_KEY)) || {}; return Object.assign({v0:0, vmax:100, a0:225, a1:135, cx:.5, cy:.5, r:.38}, all[sensorId] || {}); }catch(e){ return {v0:0, vmax:100, a0:225, a1:135, cx:.5, cy:.5, r:.38}; } }   // a: grados en sentido horario desde arriba; escala típica Irrometer: 0 abajo-izquierda, 100 abajo-derecha (270°)
+function agujaGuardarCal(sensorId, cal){ try{ const all = JSON.parse(localStorage.getItem(AGUJA_KEY)) || {}; all[sensorId] = cal; localStorage.setItem(AGUJA_KEY, JSON.stringify(all)); }catch(e){} }
+function anguloHorario(cx, cy, x, y){ return (Math.atan2(x-cx, -(y-cy))*180/Math.PI + 360) % 360; }           // 0 arriba, 90 derecha, 180 abajo, 270 izquierda
+function valorDeAngulo(a, cal){ const sweep = ((cal.a1 - cal.a0) % 360 + 360) % 360 || 270; let d = ((a - cal.a0) % 360 + 360) % 360; if(d > sweep + 12) return null; d = Math.min(d, sweep); return Math.round((cal.v0 + d/sweep*(cal.vmax-cal.v0))*10)/10; }
+async function agujaLeer(file, cal){
+  const c = await imgACanvas(file, 800); const {w, h, data} = c; const cx = cal.cx*w, cy = cal.cy*h, R = cal.r*Math.min(w, h);
+  const gris = new Float32Array(w*h); for(let i=0;i<w*h;i++) gris[i] = 255 - (0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2]);
+  const osc = new Float32Array(360);
+  for(let a=0;a<360;a++){ const th = a*Math.PI/180; let s = 0, k = 0; for(let r=0.18*R; r<0.72*R; r+=2){ const x = Math.round(cx + r*Math.sin(th)), y = Math.round(cy - r*Math.cos(th)); if(x<0||y<0||x>=w||y>=h) continue; s += gris[y*w+x]; k++; } osc[a] = k ? s/k : 0; }
+  const suave = new Float32Array(360); for(let a=0;a<360;a++) suave[a] = (osc[(a+359)%360] + osc[a] + osc[(a+1)%360]) / 3;
+  let best = 0; for(let a=1;a<360;a++) if(suave[a] > suave[best]) best = a;
+  const ord = Array.from(suave).sort((a,b)=>a-b); const mediana = ord[180]; const contraste = (suave[best] - mediana) / (mediana + 1);
+  const valor = valorDeAngulo(best, cal); const confianza = contraste > .6 ? .6 : contraste > .3 ? .4 : .2;
+  const dataURL = dibujar(c, ctx=>{ ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2*Math.PI); ctx.stroke(); const th = best*Math.PI/180; ctx.strokeStyle = "#00e5ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 0.8*R*Math.sin(th), cy - 0.8*R*Math.cos(th)); ctx.stroke();
+    [[cal.a0, "0"], [cal.a1, String(cal.vmax)]].forEach(([a, t])=>{ const tt = a*Math.PI/180; ctx.fillStyle = "#ffd60a"; ctx.font = "bold 16px sans-serif"; ctx.fillText(t, cx + 0.9*R*Math.sin(tt) - 6, cy - 0.9*R*Math.cos(tt) + 6); }); });
+  return {valor, angulo: best, contraste: Math.round(contraste*100)/100, confianza, modelo:"aguja por geometría · teléfono", preliminar:true, dataURL,
+          nota: valor==null ? "La aguja quedó fuera de la escala conocida: ajuste la escala tocando el 0 y el máximo en la foto, o teclee el valor." : `Aguja a ${best}° → ${valor} ${cal.unidad||"cb"} con la escala ${cal.v0}–${cal.vmax} (contraste ${contraste > .6 ? "alto" : contraste > .3 ? "medio" : "bajo"}). Si no coincide, ajuste la escala o teclee el valor.`};
+}
+// --- (3) pantalla digital: dígitos por OCR (lector de libreta)
+async function ocrlTexto(file, avisar){
+  if(!(await ocrlAsegurar())) throw new Error(ocrl.error || "lector de libreta no descargado (Más → Sin señal)");
+  const tjs = window.__tjs; let image = await tjs.RawImage.fromBlob(file); try{ const mx = Math.max(image.width||0, image.height||0); if(mx > 1024){ const s = 1024/mx; image = await image.resize(Math.round(image.width*s), Math.round(image.height*s)); } }catch(e){}
+  if(avisar) avisar("Leyendo la pantalla en el teléfono…");
+  const vision = await ocrl.processor(image); const task = "<OCR>"; const text = ocrl.tokenizer(ocrl.processor.construct_prompts(task));
+  const ids = await ocrl.model.generate(Object.assign({}, text, vision, {max_new_tokens: 64})); const gen = ocrl.tokenizer.batch_decode(ids, {skip_special_tokens:false})[0];
+  let plano = ""; try{ const res = ocrl.processor.post_process_generation(gen, task, image.size || [image.width, image.height]); plano = String((res && res[task]) || ""); }catch(e){ plano = String(gen||""); }
+  return plano.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+function numeroDeTexto(t){ const m = String(t||"").replace(/,/g, ".").match(/-?\d+(?:\.\d+)?/); return m ? +m[0] : null; }
+// --- (4) flores de tomate con marca de abejorro: flor = mancha amarilla; marca = café oscuro dentro de la flor
+async function floresEstimar(file){
+  const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const am = new Uint8Array(n), caf = new Uint8Array(n);
+  for(let i=0;i<n;i++){ const [hh, s, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); if(hh >= 40 && hh <= 72 && s > .35 && v > .45) am[i] = 1; else if(hh >= 8 && hh <= 45 && s > .3 && v < .5) caf[i] = 1; }
+  const escala = w/1024; const flores = componentes(abrir3(am, w, h), w, h, 120*escala, n*0.25); let marcadas = 0;
+  flores.forEach(f=>{ let k = 0; for(let y=f.miny;y<=f.maxy;y++) for(let x=f.minx;x<=f.maxx;x++) if(caf[y*w+x]) k++; f.marca = k / f.area; if(f.marca > .035) { f.conMarca = true; marcadas++; } });
+  const pct = flores.length ? Math.round(1000*marcadas/flores.length)/10 : null;
+  const dataURL = dibujar(c, ctx=>{ ctx.lineWidth = 2; flores.forEach(f=>{ ctx.strokeStyle = f.conMarca ? "#ff2d55" : "#00e5ff"; ctx.strokeRect(f.minx, f.miny, f.maxx-f.minx+1, f.maxy-f.miny+1); }); });
+  return {flores: flores.length, con_marca: marcadas, pct, confianza: flores.length ? .35 : .1, modelo:"color y forma · teléfono", preliminar:true, dataURL,
+          nota: flores.length ? `${flores.length} flor${flores.length===1?"":"es"} amarilla${flores.length===1?"":"s"} y ${marcadas} con mancha café (${pct} %). Es una ayuda para contar, no un conteo: corrija lo que vea distinto.` : "No se distinguen flores amarillas de cerca: acérquese con las anteras visibles."};
+}
+// --- ganchos en la app: lectura de sensor (trampa / aguja / pantalla), polinización (flores), punto de monitoreo (trampa)
+let leTel = null, poTel = null, plTelTrampa = null;
+function visTarjeta(box, r, usar){
+  box.hidden = false; box.innerHTML = `<p class="small" style="color:var(--blue);margin:6px 0 4px"><b>El teléfono propone:</b> ${esc(r.nota||"")}</p>` + (r.dataURL ? `<img src="${r.dataURL}" style="max-width:100%;border-radius:10px">` : "") + (usar ? `<div class="row" style="gap:8px;margin-top:6px"><button class="btn sec sm" data-usar>${esc(usar)}</button></div>` : "") + `<p class="note">PRELIMINAR: lo calcula el teléfono sin señal; el motor vuelve a leer la foto con señal y mide el acuerdo.</p>`;
+}
+async function leAnalizar(f){
+  leTel = null; const box = $("#le-foto-reco"); if(!box) return; box.hidden = true; const s = leSensor(); if(!s || !f) return;
+  box.hidden = false; box.innerHTML = `<p class="small muted">Mirando la foto en el teléfono…</p>`;
+  try{
+    let r = null, usar = null;
+    if(s.tipo === "trampa"){ r = await trampaContar(f); if(r.conteo!=null){ usar = `Usar ${r.conteo}`; r.valor = r.conteo; } }
+    else if(s.digital || !["tensiometro"].includes(s.tipo)){ const t = await ocrlTexto(f, m=>{ box.innerHTML = `<p class="small muted">${esc(m)}</p>`; }); const v = numeroDeTexto(t); r = {valor: v, texto: t, modelo:"dígitos por OCR · teléfono", preliminar:true, confianza: v!=null ? .5 : .1, nota: v!=null ? `Leí «${t.slice(0,40)}» → ${v}.` : `No encontré un número en la pantalla (leí «${t.slice(0,40)}»). Teclee el valor.`}; if(v!=null) usar = `Usar ${v}`; }
+    else { const cal = agujaCal(s.id); cal.unidad = s.unidad || "cb"; r = await agujaLeer(f, cal); r.cal = {v0:cal.v0, vmax:cal.vmax, a0:cal.a0, a1:cal.a1}; if(r.valor!=null) usar = `Usar ${r.valor}`; }
+    leTel = r; visTarjeta(box, r, usar);
+    if(s.tipo === "tensiometro" && !s.digital) box.insertAdjacentHTML("beforeend", `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="inline-link" data-aguja="punta">Marcar la punta de la aguja</button><button class="inline-link" data-aguja="escala">Marcar el 0 y el máximo</button><button class="inline-link" data-aguja="centro">Marcar el centro</button></div><p class="small muted" id="le-aguja-ayuda"></p>`);
+  }catch(e){ box.innerHTML = `<p class="small muted">No se pudo leer en el teléfono (${esc(String(e.message||e).slice(0,90))}); el motor la lee con señal.</p>`; }
+}
+let agujaModo = null, agujaPuntos = [];
+$("#le-foto-reco").addEventListener("click", async e=>{
+  const u = e.target.closest("[data-usar]"); if(u && leTel && leTel.valor!=null){ $("#le-valor").value = String(leTel.valor); toast("Valor tomado de la foto: revíselo antes de guardar"); return; }
+  const a = e.target.closest("[data-aguja]"); if(a){ agujaModo = a.dataset.aguja; agujaPuntos = []; $("#le-aguja-ayuda").textContent = agujaModo==="punta" ? "Toque la punta de la aguja en la foto." : agujaModo==="escala" ? "Toque el 0 de la escala y después el máximo." : "Toque el centro del cuadrante."; return; }
+  const img = e.target.closest("img"); if(img && agujaModo && leFoto){ const s = leSensor(); if(!s) return; const rect = img.getBoundingClientRect(); const fx = (e.clientX - rect.left)/rect.width, fy = (e.clientY - rect.top)/rect.height; const cal = agujaCal(s.id);
+    if(agujaModo==="centro"){ cal.cx = fx; cal.cy = fy; agujaGuardarCal(s.id, cal); agujaModo = null; toast("Centro marcado; vuelvo a leer"); }
+    else if(agujaModo==="punta"){ const a = anguloHorario(cal.cx*rect.width, cal.cy*rect.height, fx*rect.width, fy*rect.height); const v = valorDeAngulo(a, cal); if(v!=null){ $("#le-valor").value = String(v); toast(`Aguja a ${Math.round(a)}° → ${v}`); if(leTel) { leTel.valor = v; leTel.manual = "punta"; } } else toast("Esa punta queda fuera de la escala: marque el 0 y el máximo"); agujaModo = null; return; }
+    else { agujaPuntos.push(anguloHorario(cal.cx*rect.width, cal.cy*rect.height, fx*rect.width, fy*rect.height)); if(agujaPuntos.length < 2){ $("#le-aguja-ayuda").textContent = "Ahora toque el máximo de la escala."; return; } cal.a0 = Math.round(agujaPuntos[0]); cal.a1 = Math.round(agujaPuntos[1]); agujaGuardarCal(s.id, cal); agujaModo = null; toast(`Escala guardada para ${s.nombre}: 0 a ${cal.a0}°, ${cal.vmax} a ${cal.a1}°`); }
+    leAnalizar(leFoto); }
+});
+async function poAnalizar(f){
+  poTel = null; const box = $("#po-foto-reco"); if(!box || !f) return; box.hidden = false; box.innerHTML = `<p class="small muted">Mirando las flores en el teléfono…</p>`;
+  try{ const r = await floresEstimar(f); poTel = r; visTarjeta(box, r, r.pct!=null ? `Usar ${r.flores} flores · ${r.con_marca} con marca` : null); }
+  catch(e){ box.innerHTML = `<p class="small muted">No se pudo mirar en el teléfono (${esc(String(e.message||e).slice(0,80))}).</p>`; }
+}
+$("#po-foto-reco").addEventListener("click", e=>{ const u = e.target.closest("[data-usar]"); if(u && poTel && poTel.pct!=null){ $("#po-flores").value = String(poTel.flores); $("#po-marca").value = String(poTel.con_marca); $("#po-flores").dispatchEvent(new Event("input")); $("#po-marca").dispatchEvent(new Event("input")); toast("Conteo tomado de la foto: revíselo"); } });
+async function plAnalizarTrampa(f){
+  plTelTrampa = null; const box = $("#pl-foto-trampa"); if(!box) return; box.hidden = true; if(!f || !pl) return;
+  const keys = $$("#pl-medidas input[data-plk]").map(i=>i.dataset.plk); const kTrampa = keys.find(k=>/trampa/i.test(k) || /trampa/i.test(plMedTxt(k))); if(!kTrampa) return;
+  box.hidden = false; box.innerHTML = `<p class="small muted">Contando la trampa en el teléfono…</p>`;
+  try{ const r = await trampaContar(f); plTelTrampa = {...r, medida: kTrampa}; delete plTelTrampa.dataURL; visTarjeta(box, r, r.conteo!=null ? `Usar ${r.conteo} en «${plMedTxt(kTrampa)}»` : null); }
+  catch(e){ box.innerHTML = `<p class="small muted">No se pudo contar en el teléfono (${esc(String(e.message||e).slice(0,80))}).</p>`; }
+}
+$("#pl-foto-trampa").addEventListener("click", e=>{ const u = e.target.closest("[data-usar]"); if(u && plTelTrampa && plTelTrampa.conteo!=null){ const inp = $(`#pl-medidas input[data-plk="${plTelTrampa.medida}"]`); if(inp){ inp.value = String(plTelTrampa.conteo); inp.dispatchEvent(new Event("input")); toast("Conteo de la trampa tomado de la foto: revíselo"); } } });
+window.__engramVision = {trampaContar, agujaLeer, floresEstimar, valorDeAngulo, anguloHorario};
 // ---------------------------------------------------------------- video
 let vidFile = null, vidURL = null;
 $("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; fotolEnVideo(f); if(typeof vozlEnVideo==="function") vozlEnVideo(f); if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
