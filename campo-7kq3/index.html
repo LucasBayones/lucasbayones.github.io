@@ -2150,7 +2150,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "39.1 · 4 nov 2026";
+const APP_VERSION = "40 · 4 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3352,6 +3352,7 @@ async function ortLiberar(excepto){                             // v39: un solo 
   if(excepto!=="voz" && vozl.pipe){ try{ await vozl.pipe.dispose(); }catch(e){} vozl.pipe = null; if(vozl.estado==="listo") vozl.estado = "no"; libres.push("voz"); }
   if(excepto!=="fotos" && typeof fotol!=="undefined" && fotol.pipe){ try{ await fotol.pipe.dispose(); }catch(e){} fotol.pipe = null; if(fotol.estado==="listo") fotol.estado = "no"; libres.push("fotos"); }
   if(excepto!=="libreta" && typeof ocrl!=="undefined" && ocrl.model){ try{ await ocrl.model.dispose(); }catch(e){} ocrl.model = null; if(ocrl.estado==="listo") ocrl.estado = "no"; libres.push("libreta"); }
+  try{ if(esIPhone() && razl && razl.engine && (RAZL_MODELOS[razl.modelo]||{}).gpu){ await razlDescargarMotor("para cargar " + excepto + " en iPhone"); libres.push("razonador grande (se recarga al preguntar)"); } }catch(e){}   // v40: 1.5B + CLIP no caben juntos en el iPhone
   if(libres.length) diagAnotar(null, `liberados de memoria: ${libres.join(", ")} (para cargar ${excepto})`);
   return libres;
 }
@@ -3511,8 +3512,13 @@ function razlConf(){ try{ return JSON.parse(localStorage.getItem(RAZL_KEY)) || {
 function razlGuardarConf(c){ try{ localStorage.setItem(RAZL_KEY, JSON.stringify(c)); }catch(e){} }
 function razlDisponible(){ return razl.estado==="listo" || !!razlConf().listo; }
 function razlNombre(){ const c = razlConf(); const m = RAZL_MODELOS[razl.modelo || c.modelo || "qwen05"]; return m ? m.txt.split(" · ")[0] : "modelo del teléfono"; }
+async function razlDescargarMotor(motivo){                   // v40: un solo motor de lenguaje en la GPU; se vuelve a cargar de la caché cuando haga falta
+  if(razl.engine){ try{ await razl.engine.unload(); }catch(e){} razl.engine = null; if(razl.estado==="listo") razl.estado = "no"; diagAnotar(razl.diag, `razonador descargado de la GPU (${motivo})`); return true; }
+  if(razl.pipe){ try{ await razl.pipe.dispose(); }catch(e){} razl.pipe = null; if(razl.estado==="listo") razl.estado = "no"; return true; }
+  return false;
+}
 async function razlCargar(modelo){
-  const m = RAZL_MODELOS[modelo] || RAZL_MODELOS.qwen05; razl.estado = "cargando"; razl.progreso = 0; razl.error = null; razl.modelo = modelo; razl.motor = vozlMotor(); renderSinSenal();
+  const m = RAZL_MODELOS[modelo] || RAZL_MODELOS.qwen05; await razlDescargarMotor("para cargar " + (m.txt||modelo)); razl.estado = "cargando"; razl.progreso = 0; razl.error = null; razl.modelo = modelo; razl.motor = vozlMotor(); renderSinSenal();
   razl.diag = []; diagAnotar(razl.diag, `razón: ${m.id} · ${navigator.userAgent.slice(0,80)} · gpu:${window.__gpuOK} · gpu iPhone:${gpuIOSActivo()}`);
   try{
     const tjs = await vozlLib(); diagAnotar(razl.diag, `biblioteca: ${vozl.lib || "?"}`);
@@ -3548,7 +3554,7 @@ async function razlGenerar(messages, max, avisar, opts){
   razl.ocupado = true; const t0 = Date.now(); let n = 0;
   try{
     if(razl.engine){                                            // v38: WebLLM (API estilo chat.completions, con streaming); con opts.json, la gramática obliga a JSON válido
-      const pedir = async (conJson) => { const req = {messages, max_tokens: max || 200, temperature: 0, stream: true}; if(conJson) req.response_format = {type:"json_object"}; const chunks = await razl.engine.chat.completions.create(req); let txt = "";
+      const pedir = async (conJson) => { const req = {messages, max_tokens: max || 200, temperature: 0, stream: true}; if(conJson) req.response_format = {type:"json_object", schema: JSON.stringify(RAZL_ESQUEMA_INTERP)}; const chunks = await razl.engine.chat.completions.create(req); let txt = "";
         for await (const ch of chunks){ const d = ch && ch.choices && ch.choices[0] && ch.choices[0].delta ? ch.choices[0].delta.content : ""; if(d){ txt += d; n++; if(avisar && n % 4 === 0) avisar(`Pensando en el teléfono… ${n} palabras · ${Math.round((Date.now()-t0)/1000)} s`); } } return txt; };
       if(avisar) avisar("Pensando en el teléfono…"); let txt;
       try{ txt = await pedir(!!(opts && opts.json)); }catch(e){ if(!(opts && opts.json)) throw e; diagAnotar(razl.diag, `webllm json: ${String(e && e.message || e).slice(0,120)}; reintento sin gramática`); txt = await pedir(false); }
@@ -3589,6 +3595,7 @@ function razlSinProductos(texto){                              // ninguna frase 
 }
 // --- (1) entender notas: líneas -> registros (mismo formato que el lector y las reglas locales)
 const RAZL_UNIDADES = ["kg/ha","L/ha","g/ha","mL/ha","kg total","L total"], RAZL_CLASES = ["fungicida","fertilizante","insecticida","herbicida","bioestimulante","otro"], RAZL_METODOS = ["aspersión","goteo","gravedad","pivote"];
+const RAZL_ESQUEMA_INTERP = {type:"object", properties:{registros:{type:"array", items:{type:"object", properties:{linea:{type:"integer"}, tipo:{type:"string", enum:["riego","aplicacion","observacion","cosecha"]}, fecha:{type:"string"}, horas:{type:"number"}, metodo:{type:"string"}, que:{type:"string"}, donde:{type:"string"}, sev:{type:"integer"}, producto:{type:"string"}, dosis:{type:"number"}, unidad:{type:"string"}, clase:{type:"string"}, rend:{type:"number"}, perdida:{type:"number"}}, required:["linea","tipo","fecha"]}}, sin_interpretar:{type:"array", items:{type:"object", properties:{linea:{type:"integer"}, texto:{type:"string"}, motivo:{type:"string"}}, required:["linea","texto"]}}}, required:["registros","sin_interpretar"]};   // v40: esquema para la gramática de WebLLM (JSON válido garantizado)
 function razlPromptInterpretar(lineas, ctx){
   const ayer = localISO(new Date(new Date(hoyISO+"T12:00:00").getTime() - 86400000));
   const sys = `Eres el intérprete de notas de campo de Engram Campo. Convierte las frases de un productor en registros JSON. Responde SOLO con JSON válido, sin explicación.
