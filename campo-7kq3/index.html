@@ -628,6 +628,10 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="small muted" id="ss-foto-txt"></p>
     <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" id="ss-foto-cargar">Descargar modelo de fotos (~150 MB)</button><button class="btn sec" id="ss-foto-quitar" hidden>Quitar</button></div>
     <p class="note">Con él, al tomar una foto de plaga (Vi algo, punto de monitoreo) o un video, el teléfono da una sospecha al instante —"parece mosquita blanca (adultos), 62 %"— sin internet. Es PRELIMINAR (reconocimiento general, sin entrenar con sus fotos todavía): el motor lo lee con el modelo grande con señal y su agrónomo confirma; con lo confirmado el modelo mejora.</p>
+    <h3 class="small" style="margin-top:6px">Clasificador propio (entrenado en su RIG)</h3>
+    <div class="kv" id="ss-clasif-kv"></div>
+    <p class="small muted" id="ss-clasif-txt"></p>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sec" id="ss-clasif-cargar" hidden>Descargar clasificador propio</button></div>
     <h3 class="small" style="margin-top:6px">Lector de libreta en el teléfono</h3>
     <div class="kv" id="ss-ocr-kv"></div>
     <div class="progress" id="ss-ocr-prog" hidden><i></i></div>
@@ -1522,7 +1526,7 @@ function armarLotes(filas, reps, parcs){
   geoSave(); if(lotIdx >= LOTES.length) lotIdx = 0;
 }
 let ultimoCache = {};
-function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES, tems: TEMPORADAS, mons: MONITOREOS, pest: PLAGAS_ESTADO, recos: RECONOCIMIENTOS, sens: SENSORES, lects: LECTURAS, polin: POLINIZACION, vents: VENTANAS, recs: RECETAS, prods: PRODUCTOS, avz: AVISOS_VOZ})); }catch(e){} }
+function cacheGuardar(){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({...ultimoCache, perfil, estadoRig, alertas: ALERTAS, trans: TRANSCRIPCIONES, pcs: PERFILES_CULTIVO, fms: FORMULARIOS, pls: PLANILLAS, revs: REVISIONES, pred: PERFILES_RED, rpdf: REPORTES_PDF, wam: WA_MENSAJES, tems: TEMPORADAS, mons: MONITOREOS, pest: PLAGAS_ESTADO, recos: RECONOCIMIENTOS, sens: SENSORES, lects: LECTURAS, polin: POLINIZACION, vents: VENTANAS, recs: RECETAS, prods: PRODUCTOS, avz: AVISOS_VOZ, cerebro: CEREBRO})); }catch(e){} }
 async function cargarLotes(){
   const desde = localISO(new Date(Date.now() - 14*86400000));
   const [filas, reps, perf, parcs, est, als, trs, pcs, fms, pls, revs, avs, rpdf, wam, tems, mons, pest, recos, sens, lects, polin, vents, recs, prods] = await Promise.all([
@@ -1558,12 +1562,13 @@ async function cargarLotes(){
   PERFILES_CULTIVO = pcs || [];
   FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || []; MONITOREOS = (mons || []).filter(m=>!monsLocal.some(x=>x.cliente_id===m.cliente_id)).concat(monsLocal); PLAGAS_ESTADO = pest || []; RECONOCIMIENTOS = recos || []; SENSORES = (sens || []).filter(x=>!sensLocal.some(y=>y.cliente_id===x.cliente_id)).concat(sensLocal); LECTURAS = lects || []; POLINIZACION = polin || []; VENTANAS = vents || []; RECETAS = recs || []; PRODUCTOS = prods || [];
   try{ AVISOS_VOZ = (await db("GET","transcripciones",{select:"registro_id,acuerdo,aviso,modelo_telefono,texto", aviso:"not.is.null", order:"creado_en.desc", limit:"60"})) || []; }catch(e){}   // v31: cuando el motor oyó distinto que el teléfono
+  try{ const cb = await db("GET","cerebro",{select:"version,contenido,generado", id:"eq.1"}); if(cb && cb[0] && cb[0].contenido){ CEREBRO = cb[0].contenido; CEREBRO._bajado = new Date().toISOString(); } }catch(e){}   // v34: lo que el RIG aprendió, para usar sin señal
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
-function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; RECONOCIMIENTOS = c.recos || []; SENSORES = c.sens || []; LECTURAS = c.lects || []; POLINIZACION = c.polin || []; VENTANAS = c.vents || []; RECETAS = c.recs || []; PRODUCTOS = c.prods || []; AVISOS_VOZ = c.avz || []; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
+function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; RECONOCIMIENTOS = c.recos || []; SENSORES = c.sens || []; LECTURAS = c.lects || []; POLINIZACION = c.polin || []; VENTANAS = c.vents || []; RECETAS = c.recs || []; PRODUCTOS = c.prods || []; AVISOS_VOZ = c.avz || []; CEREBRO = c.cerebro || null; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
@@ -2141,7 +2146,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "33 · 3 nov 2026";
+const APP_VERSION = "36 · 3 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2206,7 +2211,10 @@ function avisarAlertasNuevas(){                  // una vez por alerta: aviso al
 // ---------------------------------------------------------------- notas de voz transcritas (etapa 1, punto 5)
 // El RIG transcribe cada nota de voz (Whisper) e interpreta las frases con el criterio del lector; aquí se revisan con la misma pantalla
 // que la libreta: lo que oí (frases corregibles) -> lo que entendí (registros) -> guardar. La app solo marca la revisión en la nube.
-let TRANSCRIPCIONES = [], libFuente = "libreta", libTrans = null, pendTrans = {}, AVISOS_VOZ = [];
+let TRANSCRIPCIONES = [], libFuente = "libreta", libTrans = null, pendTrans = {}, AVISOS_VOZ = [], CEREBRO = null;
+function cerebroAjuste(l, plaga){ if(!CEREBRO || !CEREBRO.plagas) return 1; const lid = l && (l.uuid||l.id); const a = ((CEREBRO.plagas.ajuste_umbral||{})[lid]||{})[plaga] || (CEREBRO.plagas.ajuste_red||{})[plaga]; return a && a.factor ? +a.factor : 1; }
+function cerebroPrior(l, plaga){ if(!CEREBRO || !CEREBRO.fotos || !l) return null; const pr = (CEREBRO.fotos.priors||{})[claveCultivo(l.cultivo)]; if(!pr || !pr[plaga]) return pr ? 0 : null; return +pr[plaga].prop || 0; }
+function cerebroTxt(){ if(!CEREBRO) return "sin cerebro del motor todavía (se baja con señal)"; const d = new Date(CEREBRO.version); const aj = Object.keys((CEREBRO.plagas||{}).ajuste_umbral||{}).length, red = Object.keys((CEREBRO.plagas||{}).ajuste_red||{}).length, pr = Object.keys((CEREBRO.fotos||{}).priors||{}).length; return `versión ${isNaN(d) ? CEREBRO.version : d.toLocaleDateString("es-MX",{day:"numeric",month:"short"}) + " " + d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})} · umbrales ajustados en ${aj} lote${aj===1?"":"s"}${red ? ` (+${red} de red)` : ""} · priors de fotos para ${pr} cultivo${pr===1?"":"s"}`; }
 const PENDT_KEY = "engram-campo-pend-trans-v1";
 function pendTCargar(){ try{ pendTrans = JSON.parse(localStorage.getItem(PENDT_KEY)) || {}; }catch(e){ pendTrans = {}; } }
 function pendTGuardar(){ try{ localStorage.setItem(PENDT_KEY, JSON.stringify(pendTrans)); }catch(e){} }
@@ -2748,8 +2756,9 @@ function plNivelDe(v, um){ if(v==null || v==="" || isNaN(+v)) return 0; let n = 
 function plAgravante(cond, ctx){ cond = String(cond||"").trim(); if(cond.startsWith("dias_desde_siembra")){ const d = ctx.dias_desde_siembra; if(d==null) return false; if(cond.includes(">=")) return d >= +cond.split(">=")[1]; if(cond.includes("<")) return d < +cond.split("<")[1]; } if(cond.startsWith("etapa in")){ const et = String(ctx.etapa||"").toLowerCase().replace(/ /g,"_"); return cond.split("in")[1].split(",").some(x=>et.startsWith(x.trim())); } if(cond==="hutton"||cond==="semilla") return !!ctx[cond]; return false; }
 function plIndice(cfg, conteos, ctx){
   ctx = ctx || {}; let factor = 1, agr = []; (cfg.agravantes||[]).forEach(a=>{ if(plAgravante(a.cuando, ctx)){ factor *= +(a.factor||1); agr.push(a.txt||""); } });
+  const ajuste = +(ctx.ajuste_lote || 1) || 1; if(ajuste !== 1) agr.push(`umbrales ajustados por el agrónomo ×${ajuste}`);          // v34: cerebro del motor
   let nivel = 0, crudo = 0, puntaje = 0, principal = null; const razones = [], info = [];
-  Object.entries(conteos||{}).forEach(([med, val])=>{ const m = (cfg.medidas||{})[med]; if(!m || val==null || val==="" || isNaN(+val)) return; const v = +val; const um = m.umbrales, ua = um.map(u=>u/factor); const nv0 = plNivelDe(v, um), nv = plNivelDe(v, ua), sc = v/ua[2]; const txt = ((PLAGAS.medidas||{})[med]||{}).txt || med;
+  Object.entries(conteos||{}).forEach(([med, val])=>{ const m = (cfg.medidas||{})[med]; if(!m || val==null || val==="" || isNaN(+val)) return; const v = +val; const um = m.umbrales, ua = um.map(u=>u*ajuste/factor); const nv0 = plNivelDe(v, um), nv = plNivelDe(v, ua), sc = v/ua[2]; const txt = ((PLAGAS.medidas||{})[med]||{}).txt || med;
     if(m.informativa){ info.push(`${txt}: ${v} (${NIVEL_TXT[nv0]}; anuncia lo que viene)`); return; }
     razones.push(`${txt}: ${v} frente a ${+ua[0].toFixed(2)} / ${+ua[1].toFixed(2)} / ${+ua[2].toFixed(2)} (bajo / medio / alto${factor>1 ? "; umbrales bajados por agravante" : factor<1 ? "; umbrales subidos" : ""}) → ${NIVEL_TXT[nv]}`);
     if(nv > nivel || (nv===nivel && sc > puntaje)){ nivel = nv; principal = med; } crudo = Math.max(crudo, nv0); puntaje = Math.max(puntaje, sc); });
@@ -2832,6 +2841,7 @@ function mpDibujar(poly, e, mapa){
   const pts = (e && e.puntos_muestreo) || plPuntos(poly, {plaga: plCfg(LOTES[lotIdx], mpPlaga)});
   pts.forEach(p=>{ const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt" title="${esc(p.motivo)}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(mpMap); m.bindPopup(`<b>${p.id}</b> · ${esc(p.motivo)}`); mpCapas.push(m); });
   ((e && e.puntos_proximos) || []).forEach(p=>{ const c = L.circleMarker([p.lat, p.lon], {radius:9, color:"#2563EB", weight:3, fill:false}).addTo(mpMap); c.bindPopup(`Próxima revisión: ${esc(p.motivo)}`); mpCapas.push(c); });
+  (((e && e.mapa && e.mapa.reconocimientos) || {}).puntos || []).forEach(p=>{ const c = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div style="width:16px;height:16px;border-radius:4px;border:2px solid ${p.fuente==="agronomo" ? "#119A5E" : "#A78BFA"};background:${["#9AA5B1","#8BD17C","#F2B04E","#D63B2F"][p.nivel||0]};box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>`, iconSize:[16,16], iconAnchor:[8,8]})}).addTo(mpMap); c.bindPopup(`Foto/video ${p.fuente==="agronomo" ? "confirmado por el agrónomo" : "reconocido por el motor"} · ${esc(p.fecha||"")} · nivel ${NIVEL_TXT[p.nivel||0]}`); mpCapas.push(c); });   // v36: fotos y videos reconocidos en el mapa
   (plMonitoreosLote(LOTES[lotIdx], mpPlaga)||[]).slice(0,40).forEach(m=>{ if(m.lat==null) return; const n = m.nivel_final!=null ? m.nivel_final : (m.nivel_motor||0); const c = L.circleMarker([m.lat, m.lon], {radius:5, color:"#fff", weight:1.5, fillColor: ["#9AA5B1","#8BD17C","#F2B04E","#D63B2F"][n], fillOpacity:.95}).addTo(mpMap); c.bindPopup(`${fmtD(m.fecha)} · ${m.punto_id||""} · ${NIVEL_TXT[n]}${m.acuerdo===false ? " (desacuerdo)" : ""}`); mpCapas.push(c); });
   mpMap.fitBounds(pg.getBounds(), {padding:[12,12]}); setTimeout(()=>{ mpMap.invalidateSize(); mpMap.fitBounds(pg.getBounds(), {padding:[12,12]}); }, 250);
 }
@@ -2887,7 +2897,7 @@ function plConteos(){ const c = {}; $$("#pl-medidas [data-plk]").forEach(i=>{ co
 function plNivelProductor(){ const b = $$("#pl-nivel button").find(x=>x.getAttribute("aria-pressed")==="true"); return b ? +b.dataset.n : null; }
 function plMotorRender(){
   const l = LOTES[lotIdx]; const cfg = plCfg(l, pl.plaga); if(!cfg) return; const c = plConteos(); const conteos = Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith("_")));
-  const idx = plIndice(cfg, conteos, {dias_desde_siembra: plDiasSiembra(l), etapa: plEtapa(l)}); const np = plNivelProductor(); const g = plCompuerta(np, idx);
+  const idx = plIndice(cfg, conteos, {dias_desde_siembra: plDiasSiembra(l), etapa: plEtapa(l), ajuste_lote: cerebroAjuste(l, pl.plaga)}); const np = plNivelProductor(); const g = plCompuerta(np, idx);
   pl.idx = idx; pl.gate = g; const hay = Object.keys(conteos).length;
   $("#pl-motor").innerHTML = hay ? `<div class="row between"><span class="eyebrow">El motor ve</span><span class="lvl ${NIVEL_CLS[idx.nivel]}">${NIVEL_TXT[idx.nivel]}</span></div><div class="small">${esc(idx.razones.join(" · ") || "sin conteos que comparar")}</div>${idx.informativas.length ? `<div class="small muted">${esc(idx.informativas.join(" · "))}</div>` : ""}${idx.agravantes.length ? `<div class="small" style="color:var(--warn)">Agravante: ${esc(idx.agravantes.join("; "))}</div>` : ""}<div class="small ${g.acuerdo ? "muted" : ""}" style="${g.acuerdo ? "" : "color:var(--warn);font-weight:600"}">${esc(g.mensaje)}</div>` : `<p class="note">Anote los conteos: el motor calcula su nivel con los umbrales del catálogo (PRELIMINAR) y lo compara con el suyo.</p>`;
 }
@@ -3187,9 +3197,10 @@ function fotolConf(){ try{ return JSON.parse(localStorage.getItem(FOTOL_KEY)) ||
 function fotolDisponible(){ return fotol.estado==="listo" || !!fotolConf().listo; }
 async function fotolCargar(){
   fotol.estado = "cargando"; fotol.progreso = 0; fotol.error = null; renderSinSenal();
-  try{ const tjs = await vozlLib(); const motor = vozlMotor();
-    fotol.pipe = await tjs.pipeline("zero-shot-image-classification", FOTOL_MODELO, {device: motor, dtype:"q8", progress_callback: p=>{ if(p && p.status==="progress"){ fotol.progreso = Math.round(p.progress||0); fotol.archivo = (p.file||"").split("/").pop(); renderSinSenal(); } }});
-    fotol.estado = "listo"; fotol.progreso = 100; try{ localStorage.setItem(FOTOL_KEY, JSON.stringify({listo:true, motor, fecha:new Date().toISOString()})); }catch(e){}
+  try{ const tjs = await vozlLib(); let motor = null, errs = [];
+    for(const device of motoresEnCascada()){ try{ fotol.pipe = await tjs.pipeline("zero-shot-image-classification", FOTOL_MODELO, {device, dtype:"q8", progress_callback: p=>{ if(p && p.status==="progress"){ fotol.progreso = Math.round(p.progress||0); fotol.archivo = (p.file||"").split("/").pop(); renderSinSenal(); } }}); motor = device; break; } catch(e){ errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); fotol.pipe = null; } }
+    if(!motor) throw new Error(errs.join(" | ").slice(0,300));
+    fotol.estado = "listo"; fotol.progreso = 100; try{ localStorage.setItem(FOTOL_KEY, JSON.stringify({listo:true, motor, fecha:new Date().toISOString()})); }catch(e){} guardadoPermanente();
   }catch(e){ fotol.estado = "error"; fotol.error = String(e && e.message || e).slice(0,160); fotol.pipe = null; }
   renderSinSenal(); return fotol.estado==="listo";
 }
@@ -3213,9 +3224,12 @@ async function fotolClasificar(fuente, l){
   const et = fotolEtiquetas(l); if(!et.length) throw new Error("sin catálogo para este cultivo");
   const url = typeof fuente==="string" ? fuente : URL.createObjectURL(fuente); const t0 = Date.now();
   const res = await fotol.pipe(url, et.map(x=>x.txt)); if(typeof fuente!=="string") URL.revokeObjectURL(url);
-  const top = (res||[]).slice(0,4).map(r=>{ const e = et.find(x=>x.txt===r.label) || {}; return {plaga:e.plaga||null, estadio:e.estadio||null, general:e.general||null, score:+(r.score||0).toFixed(3)}; });
+  let top = (res||[]).map(r=>{ const e = et.find(x=>x.txt===r.label) || {}; return {plaga:e.plaga||null, estadio:e.estadio||null, general:e.general||null, score:+(r.score||0)}; });
+  let conPrior = false; top.forEach(t=>{ const pr = t.plaga ? cerebroPrior(l, t.plaga) : null; if(pr!=null){ t.score = t.score * (0.7 + 0.6*pr); conPrior = true; } });   // v34: lo que el agrónomo confirmó en esta red inclina la sospecha
+  if(conPrior){ const sum = top.reduce((a,t)=>a+t.score, 0) || 1; top.forEach(t=>{ t.score = t.score/sum; }); top.sort((a,b)=>b.score-a.score); }
+  top = top.slice(0,4).map(t=>({...t, score:+t.score.toFixed(3)}));
   const mejor = top[0] || {}; const porPlaga = {}; top.forEach(t=>{ if(t.plaga) porPlaga[t.plaga] = (porPlaga[t.plaga]||0) + t.score; });
-  return {plaga: mejor.plaga, estadio: mejor.estadio, general: mejor.general, confianza: mejor.score, top, modelo:"clip-vit-base-patch32 · teléfono", segundos: Math.round((Date.now()-t0)/100)/10, preliminar:true};
+  return {plaga: mejor.plaga, estadio: mejor.estadio, general: mejor.general, confianza: mejor.score, top, modelo:"clip-vit-base-patch32 · teléfono" + (conPrior ? " + priors del cerebro" : ""), cerebro: conPrior ? (CEREBRO && CEREBRO.version) : null, segundos: Math.round((Date.now()-t0)/100)/10, preliminar:true};
 }
 function fotolTexto(r, l){
   if(!r) return ""; const nombre = r.plaga ? plNombre(l, r.plaga) : ({hoja_sana:"una hoja sana", trampa:"una trampa", suelo:"suelo", fruto:"un fruto sin plaga", otro:"algo que no es planta"})[r.general] || "no se distingue";
@@ -3241,12 +3255,12 @@ async function fotolEnVi(){
   viReco = null; const f = $("#vi-input").files && $("#vi-input").files[0]; const box = $("#vi-reco"); if(!box) return; box.hidden = true; box.textContent = "";
   const que = ($$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true")||{}).textContent || ""; if(!f || !/plaga|enfermedad/.test(que) || !fotolDisponible()) return;
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
-  try{ viReco = await fotolClasificar(f, LOTES[lotIdx]); box.textContent = fotolTexto(viReco, LOTES[lotIdx]); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
+  try{ viReco = await fotolClasificar(f, LOTES[lotIdx]); box.textContent = fotolTexto(viReco, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(viReco, f, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
 }
 async function fotolEnPunto(f){
   plReco = null; const box = $("#pl-foto-reco"); if(!box) return; box.hidden = true; if(!f || !fotolDisponible()) return;
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
-  try{ plReco = await fotolClasificar(f, LOTES[lotIdx]); box.textContent = fotolTexto(plReco, LOTES[lotIdx]) + (pl && plReco.plaga && plReco.plaga!==pl.plaga ? ` Ojo: usted está contando ${plNombre(LOTES[lotIdx], pl.plaga)}.` : ""); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
+  try{ plReco = await fotolClasificar(f, LOTES[lotIdx]); box.textContent = fotolTexto(plReco, LOTES[lotIdx]) + (pl && plReco.plaga && plReco.plaga!==pl.plaga ? ` Ojo: usted está contando ${plNombre(LOTES[lotIdx], pl.plaga)}.` : ""); if(typeof clasifAnexar==="function") await clasifAnexar(plReco, f, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
 }
 async function fotolEnVideo(f){
   vidReco = null; const box = $("#vid-reco"); if(!box) return; box.hidden = true; if(!f || !fotolDisponible()) return;
@@ -3272,7 +3286,10 @@ let vozl = { estado:"no", progreso:0, pipe:null, modelo:null, motor:null, error:
 let vozlPend = null;                                                                                   // la nota entendida en el teléfono, esperando el "Guardar"
 function vozlConf(){ try{ return JSON.parse(localStorage.getItem(VOZL_KEY)) || {}; }catch(e){ return {}; } }
 function vozlGuardarConf(c){ try{ localStorage.setItem(VOZL_KEY, JSON.stringify(c)); }catch(e){} }
-function vozlMotor(){ const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints > 1); return (navigator.gpu && !ios && window.__gpuOK !== false) ? "webgpu" : "wasm"; }
+function vozlMotor(){ const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints > 1); if(!navigator.gpu || window.__gpuOK === false) return "wasm"; return (!ios || window.__gpuOK === true) ? "webgpu" : "wasm"; }   // v33.1: en iPhone, WebGPU solo cuando el adaptador existe de verdad
+function motoresEnCascada(){ const m = vozlMotor(); return m==="webgpu" ? ["webgpu","wasm"] : ["wasm"]; }
+async function guardadoPermanente(){ try{ if(navigator.storage && navigator.storage.persist){ const ya = await navigator.storage.persisted(); return ya || await navigator.storage.persist(); } }catch(e){} return null; }
+async function espacioModelos(){ try{ if(navigator.storage && navigator.storage.estimate){ const e = await navigator.storage.estimate(); return {usado: e.usage||0, cuota: e.quota||0}; } }catch(e){} return null; }
 (async ()=>{ try{ window.__gpuOK = !!(navigator.gpu && await navigator.gpu.requestAdapter()); }catch(e){ window.__gpuOK = false; } })();   // v32.1: si el adaptador no existe, todo va por WASM
 async function vozlLib(){
   if(window.__tjs) return window.__tjs;
@@ -3287,9 +3304,12 @@ async function vozlCargar(modelo){
   try{
     const tjs = await vozlLib(); const dtype = vozl.motor==="webgpu" ? {encoder_model:"fp32", decoder_model_merged:"q4"} : "q8";
     const prog = p => { if(p && p.status==="progress"){ vozl.progreso = Math.round(p.progress || 0); vozl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
-    try{ vozl.pipe = await tjs.pipeline("automatic-speech-recognition", m.id, {device: vozl.motor, dtype, progress_callback: prog}); }
-    catch(e1){ vozl.pipe = await tjs.pipeline("automatic-speech-recognition", m.alt, {device: vozl.motor, dtype, progress_callback: prog}); }
-    vozl.estado = "listo"; vozl.progreso = 100; vozlGuardarConf({modelo, listo:true, motor: vozl.motor, fecha: new Date().toISOString()});
+    let ok = false; vozl.diag = [];
+    for(const device of motoresEnCascada()){ const dt = device==="webgpu" ? {encoder_model:"fp32", decoder_model_merged:"q4"} : "q8";
+      for(const id of [m.id, m.alt]){ try{ vozl.pipe = await tjs.pipeline("automatic-speech-recognition", id, {device, dtype: dt, progress_callback: prog}); vozl.motor = device; ok = true; vozl.diag.push(`cargado ${id} con ${device}`); break; } catch(e){ vozl.diag.push(`${id}/${device}: ${String(e && e.message || e).slice(0,160)}`); vozl.pipe = null; } }
+      if(ok) break; }
+    if(!ok) throw new Error(vozl.diag.join(" | ").slice(0,300));
+    vozl.estado = "listo"; vozl.progreso = 100; vozlGuardarConf({modelo, listo:true, motor: vozl.motor, fecha: new Date().toISOString()}); guardadoPermanente();
   }catch(e){ vozl.estado = "error"; vozl.error = (e && e.message ? e.message : String(e)).slice(0, 160); vozl.pipe = null; }
   renderSinSenal(); return vozl.estado==="listo";
 }
@@ -3350,7 +3370,10 @@ function renderSinSenal(){
   const c = vozlConf(); const filas = [];
   const est = vozl.estado==="listo" ? `listo (${VOZL_MODELOS[vozl.modelo||"base"].txt}, ${vozl.motor})` : vozl.estado==="cargando" ? `descargando… ${vozl.progreso} %${vozl.archivo ? " · " + vozl.archivo : ""}` : vozl.estado==="error" ? "error" : c.listo ? `descargado (${VOZL_MODELOS[c.modelo||"base"].txt}); se carga al usarlo` : "no descargado";
   filas.push(["Modelo de voz", est]); if(c.fecha) filas.push(["Descargado el", fmtD(c.fecha.slice(0,10))]); filas.push(["Motor del teléfono", vozlMotor()==="webgpu" ? "gráfico (WebGPU)" : "procesador (WASM)"]); if(vozl.lib) filas.push(["Biblioteca", vozl.lib==="local" ? "en la app (sin señal)" : "del CDN (necesita señal la primera vez)"]);
+  filas.push(["Cerebro del motor", cerebroTxt()]);
+  if(window.__espacio) filas.push(["Espacio para modelos", `${Math.round(window.__espacio.usado/1048576)} MB usados de ${Math.round(window.__espacio.cuota/1048576)} MB${window.__persistido===true ? " · guardado permanente" : window.__persistido===false ? " · el sistema puede borrarlos si falta espacio" : ""}`]);
   $("#ss-voz-kv").innerHTML = kv(filas);
+  espacioModelos().then(e=>{ if(e && (!window.__espacio || Math.abs(e.usado-window.__espacio.usado) > 1e6)){ window.__espacio = e; renderSinSenal(); } else if(e) window.__espacio = e; }); if(window.__persistido===undefined){ window.__persistido = null; (navigator.storage && navigator.storage.persisted ? navigator.storage.persisted() : Promise.resolve(null)).then(v=>{ window.__persistido = v; }).catch(()=>{}); }
   const pr = $("#ss-voz-prog"); pr.hidden = vozl.estado!=="cargando"; pr.querySelector("i").style.width = vozl.progreso + "%";
   $("#ss-voz-txt").textContent = vozl.estado==="error" ? "No se pudo cargar: " + vozl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : vozl.estado==="listo" ? "Las notas de voz se entienden en este teléfono. Grabe en Registrar → Nota de voz." : c.listo ? "Listo para usarse sin señal." : "Con wifi, descargue el modelo una vez.";
   $("#ss-voz-base").disabled = vozl.estado==="cargando"; $("#ss-voz-small").disabled = vozl.estado==="cargando"; $("#ss-voz-quitar").hidden = !c.listo;
@@ -3363,7 +3386,7 @@ function renderSinSenal(){
   const mc = mapaCacheInfo(); $("#ss-mapa-kv").innerHTML = kv([["Lote", LOTES[lotIdx] ? LOTES[lotIdx].nombre : "—"], ["Mapa guardado", mc.guardado ? `${mc.tiles} baldosas · ${fmtD(mc.fecha)}` : "no"]]);
   $("#ss-mapa-guardar").disabled = !navigator.onLine || mapaGuardando;
   $("#ss-mapa-guardar").textContent = mapaGuardando ? `Guardando… ${mapaProg}` : navigator.onLine ? "Guardar el mapa de este lote" : "Guardar el mapa (necesita señal)";
-  if(typeof renderRazonSinSenal==="function") renderRazonSinSenal(); if(typeof renderOcrSinSenal==="function") renderOcrSinSenal();
+  if(typeof renderRazonSinSenal==="function") renderRazonSinSenal(); if(typeof renderOcrSinSenal==="function") renderOcrSinSenal(); if(typeof renderClasifSinSenal==="function") renderClasifSinSenal();
 }
 $("#ss-voz-base").addEventListener("click", ()=>vozlCargar("base"));
 $("#ss-voz-small").addEventListener("click", ()=>vozlCargar("small"));
@@ -3417,7 +3440,7 @@ async function razlCargar(modelo){
       catch(e){ razl.diag.push(`${device}/${dtype}: ${(e && e.message ? e.message : String(e)).slice(0, 200)}`); razl.pipe = null; }
     }
     if(!ok) throw new Error(razl.diag.slice(2).join(" | ").slice(0, 300));
-    razl.estado = "listo"; razl.progreso = 100; razlGuardarConf({modelo, listo:true, motor: razl.motor, dtype: razl.dtype, fecha: new Date().toISOString()});
+    razl.estado = "listo"; razl.progreso = 100; razlGuardarConf({modelo, listo:true, motor: razl.motor, dtype: razl.dtype, fecha: new Date().toISOString()}); guardadoPermanente();
   }catch(e){ razl.estado = "error"; razl.error = (e && e.message ? e.message : String(e)).slice(0, 300); razl.pipe = null; }
   renderSinSenal(); renderRazonHoy(); return razl.estado==="listo";
 }
@@ -3428,7 +3451,7 @@ async function razlProbar(){                                 // v32.1: "Probar":
   catch(e){ el.textContent = "No funcionó: " + String(e.message||e).slice(0,200); }
   renderSinSenal();
 }
-function razlDiagTexto(){ const c = razlConf(); return [`Engram Campo ${APP_VERSION}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · error: ${razl.error||"-"}`].concat(razl.diag || []).join("\n"); }
+function razlDiagTexto(){ const c = razlConf(); const e = window.__espacio; return [`Engram Campo ${APP_VERSION}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · error: ${razl.error||"-"}`, `biblioteca: ${vozl.lib||"no cargada"} · gpu: ${window.__gpuOK} · espacio: ${e ? Math.round(e.usado/1048576) + " de " + Math.round(e.cuota/1048576) + " MB" : "?"} · permanente: ${window.__persistido}`, `voz: ${JSON.stringify(vozlConf())} · fotos: ${localStorage.getItem(FOTOL_KEY)||"{}"} · libreta: ${JSON.stringify(ocrlConf())}`].concat(razl.diag || []).concat(vozl.diag || []).join("\n"); }
 async function razlAsegurar(){ if(razl.estado==="listo" && razl.pipe) return true; const c = razlConf(); if(!c.listo) return false; return razlCargar(c.modelo || "qwen05"); }
 async function razlGenerar(messages, max, avisar){
   if(!(await razlAsegurar())) throw new Error(razl.error || "modelo de razonamiento no disponible");
@@ -3595,12 +3618,14 @@ async function ocrlCargar(){
   ocrl.estado = "cargando"; ocrl.progreso = 0; ocrl.error = null; ocrl.motor = vozlMotor(); renderSinSenal();
   try{
     const tjs = await vozlLib();
-    const dtype = ocrl.motor==="webgpu" ? {embed_tokens:"fp16", vision_encoder:"fp16", encoder_model:"q4", decoder_model_merged:"q4"} : {embed_tokens:"q8", vision_encoder:"q8", encoder_model:"q8", decoder_model_merged:"q8"};
     const prog = p => { if(p && p.status==="progress"){ ocrl.progreso = Math.round(p.progress || 0); ocrl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
-    ocrl.model = await tjs.Florence2ForConditionalGeneration.from_pretrained(OCRL_MODELO, {dtype, device: ocrl.motor, progress_callback: prog});
+    let ok = false, errs = [];
+    for(const device of motoresEnCascada()){ const dtype = device==="webgpu" ? {embed_tokens:"fp16", vision_encoder:"fp16", encoder_model:"q4", decoder_model_merged:"q4"} : {embed_tokens:"q8", vision_encoder:"q8", encoder_model:"q8", decoder_model_merged:"q8"};
+      try{ ocrl.model = await tjs.Florence2ForConditionalGeneration.from_pretrained(OCRL_MODELO, {dtype, device, progress_callback: prog}); ocrl.motor = device; ok = true; break; } catch(e){ errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); ocrl.model = null; } }
+    if(!ok) throw new Error(errs.join(" | ").slice(0,300));
     ocrl.processor = await tjs.AutoProcessor.from_pretrained(OCRL_MODELO, {progress_callback: prog});
     ocrl.tokenizer = await tjs.AutoTokenizer.from_pretrained(OCRL_MODELO, {progress_callback: prog});
-    ocrl.estado = "listo"; ocrl.progreso = 100; ocrlGuardarConf({listo:true, motor: ocrl.motor, fecha: new Date().toISOString()});
+    ocrl.estado = "listo"; ocrl.progreso = 100; ocrlGuardarConf({listo:true, motor: ocrl.motor, fecha: new Date().toISOString()}); guardadoPermanente();
   }catch(e){ ocrl.estado = "error"; ocrl.error = (e && e.message ? e.message : String(e)).slice(0, 160); ocrl.model = null; }
   renderSinSenal(); return ocrl.estado==="listo";
 }
@@ -3817,6 +3842,74 @@ async function plAnalizarTrampa(f){
 }
 $("#pl-foto-trampa").addEventListener("click", e=>{ const u = e.target.closest("[data-usar]"); if(u && plTelTrampa && plTelTrampa.conteo!=null){ const inp = $(`#pl-medidas input[data-plk="${plTelTrampa.medida}"]`); if(inp){ inp.value = String(plTelTrampa.conteo); inp.dispatchEvent(new Event("input")); toast("Conteo de la trampa tomado de la foto: revíselo"); } } });
 window.__engramVision = {trampaContar, agujaLeer, floresEstimar, valorDeAngulo, anguloHorario};
+// ---------------------------------------------------------------- clasificador propio en el teléfono (ONNX entrenado en el RIG) · visión v1 · PRELIMINAR
+// El cerebro (tabla `cerebro`, fotos.clasificador) dice si hay un clasificador propio publicado: su URL (modelos/plagas_v1.onnx en la misma carpeta
+// de la app), sus clases y su preprocesado. La app lo baja una vez (con señal), lo guarda (el service worker cachea lo propio) y lo corre con
+// ONNX Runtime Web (lib/ort.min.js) sin señal, al lado del modelo general (CLIP): "Clasificador propio v1: paratrioza 81 %". Dice qué plaga parece,
+// no cuántas hay. El motor y el agrónomo confirman con señal, y con lo confirmado el RIG vuelve a entrenar.
+const CLASIF_KEY = "engram-campo-clasif-v1", ORT_CDN = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.min.js";
+let clasif = { estado:"no", sesion:null, spec:null, error:null, ultimo:null };
+function clasifSpec(){ return (CEREBRO && CEREBRO.fotos && CEREBRO.fotos.clasificador && CEREBRO.fotos.clasificador.url) ? CEREBRO.fotos.clasificador : null; }
+function clasifConf(){ try{ return JSON.parse(localStorage.getItem(CLASIF_KEY)) || {}; }catch(e){ return {}; } }
+function clasifDisponible(){ const sp = clasifSpec(); return !!sp && (clasif.estado==="listo" || clasifConf().version===sp.version); }
+function cargarScript(src){ return new Promise((ok, no)=>{ const s = document.createElement("script"); s.src = src; s.onload = ()=>ok(true); s.onerror = ()=>no(new Error("no se pudo cargar " + src.split("/").slice(-2).join("/"))); document.head.appendChild(s); }); }
+async function ortLib(){
+  if(window.ort && window.ort.InferenceSession) return window.ort;
+  try{ await cargarScript(new URL("lib/ort.min.js", location.href).href); window.ort.env.wasm.wasmPaths = new URL("lib/", location.href).href; }
+  catch(e){ await cargarScript(ORT_CDN); }
+  if(!window.ort || !window.ort.InferenceSession) throw new Error("ONNX Runtime no disponible");
+  return window.ort;
+}
+async function clasifCargar(){
+  const sp = clasifSpec(); if(!sp) { clasif.estado = "no"; clasif.error = "el cerebro no trae un clasificador publicado todavía"; renderSinSenal(); return false; }
+  clasif.estado = "cargando"; clasif.error = null; renderSinSenal();
+  try{
+    const ort = await ortLib(); const url = new URL(sp.url, location.href).href;
+    const r = await fetch(url); if(!r.ok) throw new Error(`modelo no encontrado (${r.status}): suba la carpeta 'modelos' a GitHub`); const buf = await r.arrayBuffer();
+    clasif.sesion = await ort.InferenceSession.create(buf, {executionProviders:["wasm"]}); clasif.spec = sp; clasif.estado = "listo";
+    try{ localStorage.setItem(CLASIF_KEY, JSON.stringify({version: sp.version, listo:true, fecha:new Date().toISOString(), bytes: buf.byteLength})); }catch(e){}
+  }catch(e){ clasif.estado = "error"; clasif.error = String(e && e.message || e).slice(0,160); clasif.sesion = null; }
+  renderSinSenal(); return clasif.estado==="listo";
+}
+async function clasifAsegurar(){ if(clasif.estado==="listo" && clasif.sesion && clasif.spec && clasif.spec.version===(clasifSpec()||{}).version) return true; if(!clasifDisponible()) return false; return clasifCargar(); }
+async function clasifTensor(fuente, lado, mean, std){
+  const url = typeof fuente==="string" ? fuente : URL.createObjectURL(fuente);
+  try{
+    const img = await new Promise((ok, no)=>{ const i = new Image(); i.onload = ()=>ok(i); i.onerror = ()=>no(new Error("imagen ilegible")); i.src = url; });
+    const esc = 256/Math.min(img.naturalWidth, img.naturalHeight); const w = Math.round(img.naturalWidth*esc), h = Math.round(img.naturalHeight*esc);
+    const c = document.createElement("canvas"); c.width = lado; c.height = lado; const ctx = c.getContext("2d", {willReadFrequently:true});
+    ctx.drawImage(img, (lado-w)/2, (lado-h)/2, w, h); const d = ctx.getImageData(0, 0, lado, lado).data; const n = lado*lado; const t = new Float32Array(3*n);
+    for(let i=0;i<n;i++){ t[i] = (d[i*4]/255 - mean[0])/std[0]; t[n+i] = (d[i*4+1]/255 - mean[1])/std[1]; t[2*n+i] = (d[i*4+2]/255 - mean[2])/std[2]; }
+    return t;
+  } finally { if(typeof fuente!=="string") URL.revokeObjectURL(url); }
+}
+async function clasifPredecir(fuente){
+  if(!(await clasifAsegurar())) throw new Error(clasif.error || "clasificador propio no disponible");
+  const sp = clasif.spec, ent = sp.entrada || {}; const lado = ent.lado || 224, mean = ent.mean || [0.485,0.456,0.406], std = ent.std || [0.229,0.224,0.225]; const t0 = Date.now();
+  const datos = await clasifTensor(fuente, lado, mean, std); const ort = window.ort;
+  const feeds = {}; feeds[ent.nombre || clasif.sesion.inputNames[0] || "imagen"] = new ort.Tensor("float32", datos, [1, 3, lado, lado]);
+  const out = await clasif.sesion.run(feeds); const salida = out[clasif.sesion.outputNames ? clasif.sesion.outputNames[0] : "logits"] || out.logits || Object.values(out)[0];
+  const logits = Array.from(salida.data); const mx = Math.max(...logits); const ex = logits.map(v=>Math.exp(v-mx)); const sum = ex.reduce((a,b)=>a+b, 0) || 1; const probs = ex.map(v=>v/sum);
+  const top = probs.map((p, i)=>({clave: sp.etiquetas[i], nombre: (sp.nombres||{})[sp.etiquetas[i]] || sp.etiquetas[i], score:+p.toFixed(3)})).sort((a,b)=>b.score-a.score).slice(0,3);
+  clasif.ultimo = {segundos: Math.round((Date.now()-t0)/100)/10}; return {plaga: top[0].clave, nombre: top[0].nombre, confianza: top[0].score, top, version: sp.version, modelo:"clasificador propio · teléfono", segundos: clasif.ultimo.segundos, preliminar:true};
+}
+function clasifTxt(r){ return `Clasificador propio ${r.version}: ${r.nombre} ${Math.round(r.confianza*100)} %` + (r.top[1] ? ` · o ${r.top[1].nombre} ${Math.round(r.top[1].score*100)} %` : "") + ` (${r.segundos} s; entrenado en su RIG, PRELIMINAR).`; }
+async function clasifAnexar(reco, fuente, box){           // al lado de la sospecha del modelo general: lo que dice el clasificador propio (si hay)
+  if(!reco || !clasifDisponible()) return reco;
+  try{ const r = await clasifPredecir(fuente); reco.propio = {plaga: r.plaga, confianza: r.confianza, top: r.top, version: r.version}; if(box) box.textContent += " " + clasifTxt(r); }
+  catch(e){ if(box) box.textContent += ` (clasificador propio: ${String(e.message||e).slice(0,60)})`; }
+  return reco;
+}
+function renderClasifSinSenal(){
+  const kvEl = $("#ss-clasif-kv"); if(!kvEl) return; const sp = clasifSpec(); const c = clasifConf();
+  if(!sp){ kvEl.innerHTML = kv([["Clasificador propio", "todavía no hay uno publicado por el RIG (visión v1: instalar_vision_v1.sh)"]]); $("#ss-clasif-cargar").hidden = true; return; }
+  const m = sp.metricas || {}; const est = clasif.estado==="listo" ? "listo" : clasif.estado==="cargando" ? "descargando…" : clasif.estado==="error" ? "error" : c.version===sp.version ? "descargado; se carga al usarlo" : "no descargado";
+  kvEl.innerHTML = kv([["Clasificador propio", `${sp.version} · ${(sp.etiquetas||[]).length} clases · ${est}`], ["Exactitud", `validación ${m.val_acc!=null ? Math.round(m.val_acc*100) + " %" : "?"}${m.reservado_acc!=null ? ` · fotos confirmadas ${Math.round(m.reservado_acc*100)} % (n=${m.n_reservado})` : " · sin fotos confirmadas todavía"}`], ["Tamaño", sp.bytes ? `${Math.round(sp.bytes/1048576)} MB` : "?"]]);
+  const b = $("#ss-clasif-cargar"); b.hidden = false; b.disabled = clasif.estado==="cargando"; b.textContent = c.version===sp.version ? "Volver a cargar" : "Descargar clasificador propio";
+  $("#ss-clasif-txt").textContent = clasif.estado==="error" ? "No se pudo cargar: " + clasif.error : "Con él, cada foto de plaga lleva dos opiniones: el modelo general y el entrenado en su RIG con fotos públicas y las que confirmó su agrónomo.";
+}
+$("#ss-clasif-cargar").addEventListener("click", clasifCargar);
+window.__engramClasif = {predecir: clasifPredecir, spec: clasifSpec};
 // ---------------------------------------------------------------- video
 let vidFile = null, vidURL = null;
 $("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; fotolEnVideo(f); if(typeof vozlEnVideo==="function") vozlEnVideo(f); if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
