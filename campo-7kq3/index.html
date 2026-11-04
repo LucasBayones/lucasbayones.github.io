@@ -803,6 +803,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
           <div class="seg" id="vi-sev"><button aria-pressed="false">0</button><button aria-pressed="false">1</button><button aria-pressed="true">2</button><button aria-pressed="false">3</button><button aria-pressed="false">4</button><button aria-pressed="false">5</button></div>
         </div>
         <label class="photo" for="vi-input" style="padding:12px"><b>Foto (opcional)</b><span class="small muted">Con fecha y lugar. Alimenta la detección de daño y la lectura del satélite.</span><input class="hiddeninput" id="vi-input" type="file" accept="image/*" capture="environment"></label>
+        <label class="inline-link" for="vi-gal" style="justify-self:center;cursor:pointer;text-align:center;display:block">o elegir una foto de la galería<input class="hiddeninput" id="vi-gal" type="file" accept="image/*"></label>
         <div id="vi-preview" hidden></div>
         <p class="small" id="vi-reco" hidden style="color:var(--blue)"></p>
         <p class="note" id="vi-nota">Queda como sospecha: un agrónomo la confirma. La app no diagnostica.</p>
@@ -894,6 +895,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
             <div id="pl-motor"></div>
           </div>
           <label class="photo" for="pl-foto-input"><b>Foto (opcional)</b><span class="small muted">De la hoja, la trampa o el daño: el motor la lee con señal y su agrónomo la confirma.</span><input class="hiddeninput" id="pl-foto-input" type="file" accept="image/*" capture="environment"></label>
+          <label class="inline-link" for="pl-foto-gal" style="justify-self:center;cursor:pointer;text-align:center;display:block">o elegir una foto de la galería<input class="hiddeninput" id="pl-foto-gal" type="file" accept="image/*"></label>
           <div id="pl-foto-prev" hidden></div>
           <p class="small" id="pl-foto-reco" hidden style="color:var(--blue)"></p>
           <div id="pl-foto-trampa" hidden></div>
@@ -2148,7 +2150,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "39 · 4 nov 2026";
+const APP_VERSION = "39.1 · 4 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2432,6 +2434,9 @@ function previewPhoto(input, target, afterTxt){
 }
 $("#etq-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#etq-preview"), "Foto guardada. Lectura automática de producto, dosis y fecha: etapa 1. Por ahora confirme o corrija los campos."); if(!$("#ap-prod").value) $("#ap-prod").placeholder = "lo que diga la etiqueta"; toast("Foto de la etiqueta guardada"); });
 $("#vi-input").addEventListener("change", e=>{ previewPhoto(e.target, $("#vi-preview"), "Foto con fecha y lugar guardada."); fotolEnVi(); });
+function pasarArchivo(desde, hacia){ const f = desde.files && desde.files[0]; if(!f) return; try{ const dt = new DataTransfer(); dt.items.add(f); hacia.files = dt.files; hacia.dispatchEvent(new Event("change", {bubbles:true})); }catch(e){ toast("Este navegador no deja elegir de la galería aquí: use la cámara"); } desde.value = ""; }   // v39.1: una foto ya tomada (galería) entra por el mismo camino que la de la cámara
+$("#vi-gal").addEventListener("change", e=>pasarArchivo(e.target, $("#vi-input")));
+$("#pl-foto-gal").addEventListener("change", e=>pasarArchivo(e.target, $("#pl-foto-input")));
 $("#vi-tipo").addEventListener("click", ()=>{ setTimeout(fotolEnVi, 50); });
 // ---------------------------------------------------------------- libreta: foto -> transcripción (corregible) -> interpretación -> bitácora
 // Dos etapas separadas a propósito: primero "lo que leí" (la transcripción renglón por renglón, que la persona corrige), después
@@ -3205,7 +3210,7 @@ async function fotolCargar(){
       cargaGuard({que:"fotos", modelo: FOTOL_MODELO, device, dtype:"q8"}); try{ fotol.pipe = await tjs.pipeline("zero-shot-image-classification", FOTOL_MODELO, {device, dtype:"q8", progress_callback: p=>{ cargaProgreso(p); if(p && p.status==="progress"){ fotol.progreso = Math.round(p.progress||0); fotol.archivo = (p.file||"").split("/").pop(); renderSinSenal(); } }}); cargaFin(); motor = device; break; } catch(e){ cargaFin(); errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); fotol.pipe = null; } }
     if(!motor) throw new Error(errs.join(" | ").slice(0,300));
     fotol.estado = "listo"; fotol.progreso = 100; try{ localStorage.setItem(FOTOL_KEY, JSON.stringify({listo:true, motor, fecha:new Date().toISOString()})); }catch(e){} guardadoPermanente();
-  }catch(e){ fotol.estado = "error"; fotol.error = String(e && e.message || e).slice(0,160); fotol.pipe = null; }
+  }catch(e){ fotol.estado = "error"; fotol.error = errorCarga(e).slice(0,160); fotol.pipe = null; }
   renderSinSenal(); return fotol.estado==="listo";
 }
 async function fotolAsegurar(){ if(fotol.estado==="listo" && fotol.pipe) return true; if(!fotolConf().listo) return false; return fotolCargar(); }
@@ -3266,12 +3271,13 @@ async function fotolVideo(file, l){
 let viReco = null, plReco = null, vidReco = null;
 async function fotolEnVi(){
   viReco = null; const f = $("#vi-input").files && $("#vi-input").files[0]; const box = $("#vi-reco"); if(!box) return; box.hidden = true; box.textContent = "";
-  const que = ($$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true")||{}).textContent || ""; if(!f || !/plaga|enfermedad/.test(que) || !fotolDisponible()) return;
+  const que = ($$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true")||{}).textContent || ""; if(!f || !/plaga|enfermedad/.test(que)) return;
+  if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Más → Sin señal, con wifi, ~150 MB). Con señal, el motor la lee igual."; return; }   // v39.1
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
   try{ const fr = await fotoReducida(f, 1280); viReco = await fotolClasificar(fr, LOTES[lotIdx]); box.textContent = fotolTexto(viReco, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(viReco, fr, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
 }
 async function fotolEnPunto(f){
-  plReco = null; const box = $("#pl-foto-reco"); if(!box) return; box.hidden = true; if(!f || !fotolDisponible()) return;
+  plReco = null; const box = $("#pl-foto-reco"); if(!box) return; box.hidden = true; if(!f) return; if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Más → Sin señal, con wifi). Con señal, el motor la lee igual."; return; }
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
   try{ const fr = await fotoReducida(f, 1280); plReco = await fotolClasificar(fr, LOTES[lotIdx]); box.textContent = fotolTexto(plReco, LOTES[lotIdx]) + (pl && plReco.plaga && plReco.plaga!==pl.plaga ? ` Ojo: usted está contando ${plNombre(LOTES[lotIdx], pl.plaga)}.` : ""); if(typeof clasifAnexar==="function") await clasifAnexar(plReco, fr, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
 }
@@ -3338,6 +3344,9 @@ async function vozlLib(){
   if(!tjs){ tjs = await import(TJS_CDN); vozl.lib = "cdn"; vozl.libUrl = TJS_CDN; }
   tjs.env.allowLocalModels = false; tjs.env.useBrowserCache = true; window.__tjs = tjs; return tjs;
 }
+function errorCarga(e){                                        // v39.1: "Load failed" sin señal = el modelo no está descargado en este teléfono; que lo diga claro
+  const m = (e && e.message ? e.message : String(e)); if(/Load failed|Failed to fetch|NetworkError|network error|net::/i.test(m) && !navigator.onLine) return "sin señal y el modelo no está descargado en este teléfono: bájelo con wifi en Más → Sin señal";
+  if(/Load failed|Failed to fetch|NetworkError/i.test(m)) return "no se pudo bajar el modelo (" + m.slice(0,60) + "): revise la señal e intente de nuevo"; return m; }
 async function ortLiberar(excepto){                             // v39: un solo modelo ORT (voz, fotos o libreta) en memoria a la vez; los demás quedan descargados y se recargan de la caché al usarlos
   const libres = [];
   if(excepto!=="voz" && vozl.pipe){ try{ await vozl.pipe.dispose(); }catch(e){} vozl.pipe = null; if(vozl.estado==="listo") vozl.estado = "no"; libres.push("voz"); }
@@ -3359,7 +3368,7 @@ async function vozlCargar(modelo){
       if(ok) break; }
     if(!ok) throw new Error((caidaDe("voz", m.id) ? "este modelo tumbó la app en este teléfono (sin memoria); " : "") + vozl.diag.join(" | ").slice(0,300));
     vozl.estado = "listo"; vozl.progreso = 100; vozlGuardarConf({modelo, listo:true, motor: vozl.motor, fecha: new Date().toISOString()}); guardadoPermanente();
-  }catch(e){ vozl.estado = "error"; vozl.error = (e && e.message ? e.message : String(e)).slice(0, 160); vozl.pipe = null; }
+  }catch(e){ vozl.estado = "error"; vozl.error = errorCarga(e).slice(0, 160); vozl.pipe = null; }
   renderSinSenal(); return vozl.estado==="listo";
 }
 function vozlDisponible(){ return vozl.estado==="listo" || !!vozlConf().listo; }               // descargado alguna vez (en caché) o ya cargado en memoria
@@ -3520,7 +3529,7 @@ async function razlCargar(modelo){
     }
     if(!ok) throw new Error((omitidos ? `este modelo ya tumbó la app en este teléfono (sin memoria): no se repite el intento. Pruebe uno más chico o use el motor con señal. ` : "") + razl.diag.slice(1).join(" | ").slice(0, 300));
     razl.estado = "listo"; razl.progreso = 100; razlGuardarConf({modelo, listo:true, motor: razl.motor, dtype: razl.dtype, fecha: new Date().toISOString()}); guardadoPermanente();
-  }catch(e){ razl.estado = "error"; razl.error = (e && e.message ? e.message : String(e)).slice(0, 300); razl.pipe = null; }
+  }catch(e){ razl.estado = "error"; razl.error = errorCarga(e).slice(0, 300); razl.pipe = null; }
   renderSinSenal(); renderRazonHoy(); return razl.estado==="listo";
 }
 async function razlProbar(){                                 // v32.1: "Probar": una respuesta cortita para ver que el modelo funciona de verdad en este teléfono
@@ -3730,7 +3739,7 @@ async function ocrlCargar(){
     ocrl.processor = await tjs.AutoProcessor.from_pretrained(OCRL_MODELO, {progress_callback: prog});
     ocrl.tokenizer = await tjs.AutoTokenizer.from_pretrained(OCRL_MODELO, {progress_callback: prog});
     ocrl.estado = "listo"; ocrl.progreso = 100; ocrlGuardarConf({listo:true, motor: ocrl.motor, fecha: new Date().toISOString()}); guardadoPermanente();
-  }catch(e){ ocrl.estado = "error"; ocrl.error = (e && e.message ? e.message : String(e)).slice(0, 160); ocrl.model = null; }
+  }catch(e){ ocrl.estado = "error"; ocrl.error = errorCarga(e).slice(0, 160); ocrl.model = null; }
   renderSinSenal(); return ocrl.estado==="listo";
 }
 async function ocrlAsegurar(){ if(ocrl.estado==="listo" && ocrl.model) return true; if(!ocrlConf().listo) return false; return ocrlCargar(); }
@@ -3767,7 +3776,7 @@ async function libStartLocal(file){                         // la foto de la lib
     const r = await ocrlLeer(file, hint); libTimers.forEach(clearTimeout); $("#lib-bar").style.width = "100%";
     libSim = false; libFuente = "libreta"; libModelo = r.modelo; libLines = r.lineas.length ? normLines(r.lineas) : [{texto:"", confianza:1, dudas:[]}]; libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = [];
     $("#lib-banner").textContent = r.lineas.length ? `Leído en el teléfono, sin señal (${r.segundos} s, PRELIMINAR): ${r.lineas.length} renglón${r.lineas.length===1?"":"es"}. Compare con la página y corrija lo que no coincida; con señal el motor la vuelve a leer.` : "El teléfono no encontró renglones legibles (letra muy apretada o poca luz). Escriba las líneas tal como están en la página.";
-  }catch(e){ libTimers.forEach(clearTimeout); libSim = true; libLines = [{texto:"", confianza:1, dudas:[]}]; $("#lib-banner").textContent = "No se pudo leer en el teléfono (" + String(e.message||e).slice(0,80) + "). Escriba las líneas tal como están en la página; la interpretación se hace aquí."; }
+  }catch(e){ libTimers.forEach(clearTimeout); libSim = true; libLines = [{texto:"", confianza:1, dudas:[]}]; $("#lib-banner").textContent = "No se pudo leer en el teléfono (" + String(errorCarga(e)||e).slice(0,80) + "). Escriba las líneas tal como están en la página; la interpretación se hace aquí."; }
   $("#lib-leido-eyebrow").textContent = "Lo que leí (en el teléfono)"; renderLibLines(); libShow("trans");
 }
 // --- (a) video -> voz
