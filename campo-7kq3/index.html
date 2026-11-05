@@ -623,7 +623,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <button class="btn sec" id="ss-voz-small">Modelo mejor (~250 MB)</button>
       <button class="btn sec" id="ss-voz-quitar" hidden>Quitar el modelo</button>
     </div>
-    <p class="note">Descárguelo con wifi; queda guardado en el teléfono. El básico entiende bien frases claras; el mejor cuesta más espacio y tarda un poco más. El audio nunca sale del teléfono hasta que hay señal y, cuando la hay, el motor vuelve a oírlo para confirmar.</p>
+    <p class="note">Descárguelo con wifi; queda guardado en el teléfono. El básico entiende bien frases claras; el mejor cuesta más espacio, tarda más y en iPhone puede quedarse sin memoria al transcribir (si pasa, la app vuelve sola al básico: tenga los dos descargados). El audio nunca sale del teléfono hasta que hay señal y, cuando la hay, el motor vuelve a oírlo para confirmar.</p>
     <h3 class="small" style="margin-top:6px">Modelo de fotos y video en el teléfono</h3>
     <div class="kv" id="ss-foto-kv"></div>
     <div class="progress" id="ss-foto-prog" hidden><i></i></div>
@@ -2150,7 +2150,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "43 · 5 nov 2026";
+const APP_VERSION = "44 · 5 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3240,6 +3240,9 @@ async function fotoReducida(file, max){                          // v39: la foto
 async function fotolClasificar(fuente, l){
   if(!(await fotolAsegurar())) throw new Error(fotol.error || "modelo de fotos no disponible");
   if(typeof fuente!=="string") fuente = await fotoReducida(fuente, 1280);
+  const g = usoGuard("fotos", FOTOL_MODELO, fotol.pipe && fotol.pipe.device || "wasm", "mirando una foto"); try{ return await fotolClasificar2(fuente, l); } finally{ usoFin(g); }
+}
+async function fotolClasificar2(fuente, l){
   const et = fotolEtiquetas(l); if(!et.length) throw new Error("sin catálogo para este cultivo");
   const t0 = Date.now(); let res;
   if(fotol.pipe && fotol.pipe.worker){ res = await wkRpc({cmd:"clasificar", blob: await aBlob(fuente), etiquetas: et.map(x=>x.txt), max:1280}); }
@@ -3338,7 +3341,7 @@ function cargaProgreso(p){                                      // v37.1: la ano
 (function(){ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(c && c.que){ localStorage.removeItem(CARGA_KEY); if(!c.descartar){ const l = caidas(); l.push(Object.assign({}, c, {caida: new Date().toISOString()})); localStorage.setItem(CAIDAS_KEY, JSON.stringify(l.slice(-12))); if(!c.oculta) window.__caidaReciente = c; } } }catch(e){} })();   // v39: las de segundo plano (cámara, otra app) también se anotan, marcadas; una recarga a mano se descarta
 function cargaMarcar(campo, valor){ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(!c) return; c[campo] = !!valor; localStorage.setItem(CARGA_KEY, JSON.stringify(c)); }catch(e){} }
 document.addEventListener("visibilitychange", ()=>cargaMarcar("oculta", document.visibilityState==="hidden")); window.addEventListener("pagehide", ()=>cargaMarcar("descartar", true));
-function caidaTxt(c){ const fase = c.fase==="done" || c.fase==="ready" ? "ya bajado, al cargarlo en memoria" : c.fase==="progress" ? `bajando ${c.archivo||""} al ${c.progreso||0} %` : c.fase ? c.fase : "al empezar"; return `${({voz:"modelo de voz", fotos:"modelo de fotos", libreta:"lector de libreta", razon:"modelo de razonamiento", clasificador:"clasificador propio"})[c.que] || c.que} · ${(c.modelo||"").split("/").pop()} · ${c.device||"?"}${c.dtype ? "/" + (typeof c.dtype==="string" ? c.dtype : "mixto") : ""} · ${fase}${c.oculta ? " · en segundo plano (cámara u otra app abierta)" : ""} · ${(c.caida||c.t||"").slice(0,16).replace("T"," ")}`; }
+function caidaTxt(c){ const fase = c.fase==="usando" ? `al usarlo (${c.archivo||"trabajando"}, ${c.segundos!=null ? c.segundos + " s" : "?"})` : c.fase==="done" || c.fase==="ready" ? "ya bajado, al cargarlo en memoria" : c.fase==="progress" ? `bajando ${c.archivo||""} al ${c.progreso||0} %` : c.fase ? c.fase : "al empezar"; return `${({voz:"modelo de voz", fotos:"modelo de fotos", libreta:"lector de libreta", razon:"modelo de razonamiento", clasificador:"clasificador propio"})[c.que] || c.que} · ${(c.modelo||"").split("/").pop()} · ${c.device||"?"}${c.dtype ? "/" + (typeof c.dtype==="string" ? c.dtype : "mixto") : ""} · ${fase}${c.oculta ? " · en segundo plano (cámara u otra app abierta)" : ""} · ${(c.caida||c.t||"").slice(0,16).replace("T"," ")}`; }
 function caidasTxt(){ const l = caidas(); if(!l.length) return ""; const u = l[l.length-1]; const pista = u.que==="razon" && u.device!=="webllm" && webllmPosible(RAZL_MODELOS.qwen05) ? " Desde la versión 38 el razonador usa otro motor (WebLLM) que carga por tandas y no repite ese problema: vuelva a descargarlo." : u.device==="webgpu" ? " El gráfico queda apagado para voz, fotos y libreta." : ""; return `La app se cerró sola ${l.length===1 ? "una vez" : l.length + " veces"} mientras cargaba un modelo (última: ${caidaTxt(u)}). Eso es el sistema del teléfono cerrándola por falta de memoria, o el procesador gráfico fallando: ese intento ya no se repite solo.${pista} Con señal, el motor hace ese trabajo.`; }
 if(window.__caidaReciente) setTimeout(()=>{ try{ toast("La app se cerró sola cargando el " + caidaTxt(window.__caidaReciente).split(" · ")[0] + ": vea Más → Sin señal"); }catch(e){} }, 1500);
 async function vozlLib(){
@@ -3385,7 +3388,7 @@ async function ortLiberar(excepto){                             // v39: un solo 
   if(excepto!=="voz" && vozl.pipe){ try{ await vozl.pipe.dispose(); }catch(e){} vozl.pipe = null; if(vozl.estado==="listo") vozl.estado = "no"; libres.push("voz"); }
   if(excepto!=="fotos" && typeof fotol!=="undefined" && fotol.pipe){ try{ await fotol.pipe.dispose(); }catch(e){} fotol.pipe = null; if(fotol.estado==="listo") fotol.estado = "no"; libres.push("fotos"); }
   if(excepto!=="libreta" && typeof ocrl!=="undefined" && ocrl.model){ try{ await ocrl.model.dispose(); }catch(e){} ocrl.model = null; if(ocrl.estado==="listo") ocrl.estado = "no"; libres.push("libreta"); }
-  try{ if(esIPhone() && razl && razl.engine && (RAZL_MODELOS[razl.modelo]||{}).gpu){ await razlDescargarMotor("para cargar " + excepto + " en iPhone"); libres.push("razonador grande (se recarga al preguntar)"); } }catch(e){}   // v40: 1.5B + CLIP no caben juntos en el iPhone
+  try{ if(esIPhone() && razl && razl.engine && (RAZL_MODELOS[razl.modelo]||{}).gpu){ await razlDescargarMotor("para cargar " + excepto + " en iPhone"); libres.push("razonador grande (se recarga al preguntar)"); await new Promise(r=>setTimeout(r, 1200)); } }catch(e){}   // v40: 1.5B + CLIP no caben juntos en el iPhone · v44: un respiro para que el sistema libere la GPU
   if(libres.length) diagAnotar(null, `liberados de memoria: ${libres.join(", ")} (para cargar ${excepto})`);
   return libres;
 }
@@ -3406,7 +3409,9 @@ async function vozlCargar(modelo){
   renderSinSenal(); return vozl.estado==="listo";
 }
 function vozlDisponible(){ return vozl.estado==="listo" || !!vozlConf().listo; }               // descargado alguna vez (en caché) o ya cargado en memoria
-async function vozlAsegurar(){ if(vozl.estado==="listo" && vozl.pipe) return true; const c = vozlConf(); if(!c.listo) return false; return vozlCargar(c.modelo || "base"); }
+async function vozlAsegurar(){ if(vozl.estado==="listo" && vozl.pipe) return true; const c = vozlConf(); if(!c.listo) return false; let modelo = c.modelo || "base";
+  if(modelo==="small" && caidaDe("voz", VOZL_MODELOS.small.id)){ modelo = "base"; diagAnotar(vozl.diag, "el modelo mejor tumbó la app en este teléfono: se usa el básico"); try{ toast("El modelo de voz «mejor» se quedó sin memoria en este teléfono: se usa el básico (si no está descargado, bájelo con wifi)"); }catch(e){} }   // v44
+  return vozlCargar(modelo); }
 async function blobAFloat32(blob){
   const ab = await blob.arrayBuffer(); const AC = window.AudioContext || window.webkitAudioContext; let ac;
   try{ ac = new AC({sampleRate:16000}); }catch(e){ ac = new AC(); }
@@ -3423,13 +3428,15 @@ function chunksALineas(chunks, texto){
   const out = []; frases.forEach(t=>{ if(out.length && out[out.length-1].texto.length < 25 && !/[.!?]$/.test(out[out.length-1].texto)) out[out.length-1].texto += " " + t; else out.push({texto:t, confianza:.9, dudas:[]}); });
   return out.map(l=>({...l, confianza: l.texto.length < 8 ? .6 : .9}));
 }
+function usoGuard(que, modelo, device, archivo){ cargaGuard({que, modelo, device, dtype:"q8", fase:"usando", archivo, segundos:0}); const t0 = Date.now(); return setInterval(()=>{ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(c && c.fase==="usando"){ c.segundos = Math.round((Date.now()-t0)/1000); localStorage.setItem(CARGA_KEY, JSON.stringify(c)); } }catch(e){} }, 1000); }   // v44: si la app cae mientras el modelo trabaja, queda anotado "al usarlo (…, N s)"
+function usoFin(t){ clearInterval(t); cargaFin(); }
 async function vozlTranscribir(blob, avisar){
   avisar("Cargando el modelo de voz en el teléfono…"); if(!(await vozlAsegurar())) throw new Error(vozl.error || "modelo de voz no disponible");
-  avisar("Preparando el audio…"); const audio = await blobAFloat32(blob); const t0 = Date.now();
-  const tick = setInterval(()=>avisar(`Transcribiendo en el teléfono… ${Math.round((Date.now()-t0)/1000)} s`), 500);
+  avisar("Preparando el audio…"); const audio = await blobAFloat32(blob); const t0 = Date.now(); const dur = Math.round(audio.length/16000);
+  const tick = setInterval(()=>avisar(`Transcribiendo en el teléfono… ${Math.round((Date.now()-t0)/1000)} s`), 500); const g = usoGuard("voz", (VOZL_MODELOS[vozl.modelo]||VOZL_MODELOS.base).id, vozl.motor, `transcribiendo ${dur} s de audio`);
   try{ const opts = {language:"spanish", task:"transcribe", chunk_length_s:30, stride_length_s:5, return_timestamps:true}; const out = vozl.pipe && vozl.pipe.worker ? await wkRpc({cmd:"transcribir", audio, opts}, null, [audio.buffer]) : await vozl.pipe(audio, opts);
     const texto = String((out && out.text) || "").trim(); return {texto, lineas: chunksALineas(out && out.chunks, texto), segundos: Math.round((Date.now()-t0)/1000)}; }
-  finally{ clearInterval(tick); }
+  finally{ clearInterval(tick); usoFin(g); }
 }
 async function vozlEntender(blob, dur){
   const hint = $("#voz-hint"); const avisar = m => { hint.textContent = m; }; $("#voz-rec").disabled = true; $("#voz-save").disabled = true;
@@ -3929,6 +3936,9 @@ async function agujaLeer(file, cal){
 }
 // --- (3) pantalla digital: dígitos por OCR (lector de libreta)
 async function ocrlGenerar(file, task, max, max_new_tokens){                 // v41: Florence en el hilo aparte (o en el principal si no hay hilo); devuelve {gen, res, size}
+  const g = usoGuard("libreta", OCRL_MODELO, ocrl.motor || "wasm", task==="<OCR>" ? "leyendo una pantalla" : "leyendo una página"); try{ return await ocrlGenerar2(file, task, max, max_new_tokens); } finally{ usoFin(g); }
+}
+async function ocrlGenerar2(file, task, max, max_new_tokens){
   if(ocrl.model && ocrl.model.worker) return wkRpc({cmd:"ocr", blob: await aBlob(file), task, max, max_new_tokens});
   const tjs = window.__tjs; let image = await tjs.RawImage.fromBlob(file); try{ const mx = Math.max(image.width||0, image.height||0); if(mx > max){ const s = max/mx; image = await image.resize(Math.round(image.width*s), Math.round(image.height*s)); } }catch(e){}
   const vision = await ocrl.processor(image); const text = ocrl.tokenizer(ocrl.processor.construct_prompts(task));
