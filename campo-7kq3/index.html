@@ -644,7 +644,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="kv" id="ss-razon-kv"></div>
     <div class="progress" id="ss-razon-prog" hidden><i></i></div>
     <p class="small muted" id="ss-razon-txt"></p>
-    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~300 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~900 MB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
+    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~300 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~900 MB)</button><button class="btn sec" data-razl="llama1">Llama 3.2 1B (~700 MB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
     <p class="small" id="ss-razon-prueba" hidden></p>
     <p class="note">Descárguelo desde la app instalada en la pantalla de inicio (no desde el navegador: son memorias separadas). Corre en el procesador gráfico del teléfono (WebGPU, con el motor WebLLM, que sube los pesos por tandas): iPhone 15 Pro o más nuevo con iOS 26, Android con Chrome al día y procesador gráfico compatible, y computadoras con Chrome. Sin procesador gráfico no hay razonador en el teléfono (el camino por WASM pide demasiada memoria y suele cerrar la app): las notas se entienden por reglas, sin señal, y el motor las entiende con señal. Si el sistema cierra la app mientras carga, la app lo recuerda y no vuelve a intentarlo sola. Después de descargar, toque <b>Probar</b>: si responde, ya funciona sin señal.</p>
     <p class="note">Un modelo de lenguaje chico que vive en el teléfono: entiende las notas de voz y de libreta en registros (mejor que las reglas), resume el recorrido de plagas y responde preguntas sobre el lote con lo que la app tiene guardado (Hoy → "Pregúntele al teléfono"). Dos compuertas siempre: ningún número que no esté en los datos y nunca productos ni dosis. Con señal, el motor vuelve a entender cada nota con el modelo grande y mide el acuerdo: así se sabe cuánto confiar en el teléfono. PRELIMINAR.</p>
@@ -2150,7 +2150,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "42 · 5 nov 2026";
+const APP_VERSION = "39.1 · 4 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3205,10 +3205,9 @@ function fotolDisponible(){ return fotol.estado==="listo" || !!fotolConf().listo
 async function fotolCargar(){
   fotol.estado = "cargando"; fotol.progreso = 0; fotol.error = null; renderSinSenal();
   await ortLiberar("fotos");
-  try{ if(!usarWorker()) await vozlLib(); let motor = null, errs = [];
-    const prog = p=>{ cargaProgreso(p); if(p && p.status==="progress"){ fotol.progreso = Math.round(p.progress||0); fotol.archivo = (p.file||"").split("/").pop(); renderSinSenal(); } };
+  try{ const tjs = await vozlLib(); let motor = null, errs = [];
     for(const device of motoresEnCascada()){ if(caidaDe("fotos", FOTOL_MODELO, device)){ errs.push(`${device}: omitido (tumbó la app antes)`); continue; }
-      cargaGuard({que:"fotos", modelo: FOTOL_MODELO, device, dtype:"q8"}); try{ fotol.pipe = await cargarPipeline("fotos", "cargar_fotos", FOTOL_MODELO, device, "q8", prog); cargaFin(); motor = device; break; } catch(e){ cargaFin(); errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); fotol.pipe = null; } }
+      cargaGuard({que:"fotos", modelo: FOTOL_MODELO, device, dtype:"q8"}); try{ fotol.pipe = await tjs.pipeline("zero-shot-image-classification", FOTOL_MODELO, {device, dtype:"q8", progress_callback: p=>{ cargaProgreso(p); if(p && p.status==="progress"){ fotol.progreso = Math.round(p.progress||0); fotol.archivo = (p.file||"").split("/").pop(); renderSinSenal(); } }}); cargaFin(); motor = device; break; } catch(e){ cargaFin(); errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); fotol.pipe = null; } }
     if(!motor) throw new Error(errs.join(" | ").slice(0,300));
     fotol.estado = "listo"; fotol.progreso = 100; try{ localStorage.setItem(FOTOL_KEY, JSON.stringify({listo:true, motor, fecha:new Date().toISOString()})); }catch(e){} guardadoPermanente();
   }catch(e){ fotol.estado = "error"; fotol.error = errorCarga(e).slice(0,160); fotol.pipe = null; }
@@ -3241,9 +3240,8 @@ async function fotolClasificar(fuente, l){
   if(!(await fotolAsegurar())) throw new Error(fotol.error || "modelo de fotos no disponible");
   if(typeof fuente!=="string") fuente = await fotoReducida(fuente, 1280);
   const et = fotolEtiquetas(l); if(!et.length) throw new Error("sin catálogo para este cultivo");
-  const t0 = Date.now(); let res;
-  if(fotol.pipe && fotol.pipe.worker){ res = await wkRpc({cmd:"clasificar", blob: await aBlob(fuente), etiquetas: et.map(x=>x.txt), max:1280}); }
-  else { const url = typeof fuente==="string" ? fuente : URL.createObjectURL(fuente); res = await fotol.pipe(url, et.map(x=>x.txt)); if(typeof fuente!=="string") URL.revokeObjectURL(url); }
+  const url = typeof fuente==="string" ? fuente : URL.createObjectURL(fuente); const t0 = Date.now();
+  const res = await fotol.pipe(url, et.map(x=>x.txt)); if(typeof fuente!=="string") URL.revokeObjectURL(url);
   let top = (res||[]).map(r=>{ const e = et.find(x=>x.txt===r.label) || {}; return {plaga:e.plaga||null, estadio:e.estadio||null, general:e.general||null, score:+(r.score||0)}; });
   let conPrior = false; top.forEach(t=>{ const pr = t.plaga ? cerebroPrior(l, t.plaga) : null; if(pr!=null){ t.score = t.score * (0.7 + 0.6*pr); conPrior = true; } });   // v34: lo que el agrónomo confirmó en esta red inclina la sospecha
   if(conPrior){ const sum = top.reduce((a,t)=>a+t.score, 0) || 1; top.forEach(t=>{ t.score = t.score/sum; }); top.sort((a,b)=>b.score-a.score); }
@@ -3303,8 +3301,6 @@ function recoTag(x){ const r = x.cid ? recoDe(x.cid)[0] : null; if(!r) return ""
 const VOZL_KEY = "engram-campo-vozlocal-v1";
 const VOZL_MODELOS = { base: {id:"onnx-community/whisper-base", alt:"Xenova/whisper-base", mb:80, txt:"básico"}, small: {id:"onnx-community/whisper-small", alt:"Xenova/whisper-small", mb:250, txt:"mejor"} };
 const TJS_CDN = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.2/dist/transformers.min.js";
-const ORT_VER = "1.22.0-dev.20250409-89f8206ba4", ORT_DIST_CDN = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VER}/dist/`;   // v42: la versión exacta de ONNX Runtime que trae transformers.js 3.5.2 (ahí están los binarios sin JSEP)
-function ortBinarioSinJsep(tjs, base){ try{ tjs.env.backends.onnx.wasm.wasmPaths = {mjs: base + "ort-wasm-simd-threaded.mjs", wasm: base + "ort-wasm-simd-threaded.wasm"}; return true; }catch(e){ return false; } }   // v42: binario sin JSEP (ver worker_modelos.js: el JSEP tumba WebKit 26 en iPhone)
 let vozl = { estado:"no", progreso:0, pipe:null, modelo:null, motor:null, error:null, archivo:"" };   // estado: no | cargando | listo | error
 let vozlPend = null;                                                                                   // la nota entendida en el teléfono, esperando el "Guardar"
 function vozlConf(){ try{ return JSON.parse(localStorage.getItem(VOZL_KEY)) || {}; }catch(e){ return {}; } }
@@ -3345,46 +3341,17 @@ async function vozlLib(){
   if(window.ENGRAM_TJS_FAKE){ window.__tjs = window.ENGRAM_TJS_FAKE; return window.__tjs; }          // pruebas: transcriptor falso inyectado
   let tjs = null;
   for(const base of ["lib/", "../lib/"]){ try{ tjs = await import(new URL(base + "transformers.min.js", location.href).href); tjs.env.backends.onnx.wasm.wasmPaths = new URL(base, location.href).href; vozl.lib = base==="lib/" ? "local" : "raíz del sitio"; vozl.libUrl = new URL(base, location.href).href; break; }catch(e){ tjs = null; } }   // v37: también en la raíz del sitio
-  if(!tjs){ tjs = await import(TJS_CDN); vozl.lib = "cdn"; vozl.libUrl = TJS_CDN; tjs.env.backends.onnx.wasm.wasmPaths = ORT_DIST_CDN; }
-  if(vozlMotor()==="wasm"){ ortBinarioSinJsep(tjs, vozl.lib==="cdn" ? ORT_DIST_CDN : vozl.libUrl); diagAnotar(null, "hilo principal: binario wasm sin JSEP"); }   // v42
+  if(!tjs){ tjs = await import(TJS_CDN); vozl.lib = "cdn"; vozl.libUrl = TJS_CDN; }
   tjs.env.allowLocalModels = false; tjs.env.useBrowserCache = true; window.__tjs = tjs; return tjs;
 }
 function errorCarga(e){                                        // v39.1: "Load failed" sin señal = el modelo no está descargado en este teléfono; que lo diga claro
   const m = (e && e.message ? e.message : String(e)); if(/Load failed|Failed to fetch|NetworkError|network error|net::/i.test(m) && !navigator.onLine) return "sin señal y el modelo no está descargado en este teléfono: bájelo con wifi en Más → Sin señal";
   if(/Load failed|Failed to fetch|NetworkError/i.test(m)) return "no se pudo bajar el modelo (" + m.slice(0,60) + "): revise la señal e intente de nuevo"; return m; }
-// v41: hilo aparte para los modelos ORT. wkModelos() lo crea y carga la biblioteca; wkRpc manda una orden y espera; wkTerminar lo mata (memoria devuelta).
-let wk = null, wkId = 0, wkPend = {};
-function usarWorker(){ return !window.ENGRAM_TJS_FAKE && typeof Worker !== "undefined" && !window.__sinWorker; }
-function wkRpc(msg, prog, transfer){ return new Promise((ok, no)=>{ if(!wk) return no(new Error("hilo de modelos no iniciado")); const id = ++wkId; wkPend[id] = {ok, no, prog}; try{ wk.postMessage(Object.assign({id}, msg), transfer || []); }catch(e){ delete wkPend[id]; no(e); } }); }
-async function wkModelos(){
-  if(wk) return wk;
-  const w = new Worker(new URL("worker_modelos.js", location.href).href, {type:"module"}); wk = w;
-  w.onmessage = e => { const m = e.data || {}; const p = wkPend[m.id]; if(!p) return; if(m.tipo==="progreso"){ try{ p.prog && p.prog(m.p); }catch(x){} return; } delete wkPend[m.id]; if(m.tipo==="ok") p.ok(m.r); else p.no(new Error(m.error || "error en el hilo de modelos")); };
-  w.onerror = e => { diagAnotar(null, "hilo de modelos: " + String(e && e.message || "error").slice(0,120)); };
-  try{ const bases = ["lib/", "../lib/"].map(b=>new URL(b, location.href).href); const r = await wkRpc({cmd:"lib", bases, cdn: TJS_CDN, ortDist: ORT_DIST_CDN}); vozl.lib = r.lib; vozl.libUrl = r.url; diagAnotar(null, `hilo de modelos iniciado · biblioteca ${r.lib}`); }
-  catch(e){ wkTerminar("no arrancó"); window.__sinWorker = true; diagAnotar(null, "hilo de modelos no disponible (" + String(e && e.message || e).slice(0,80) + "): modelos en el hilo principal"); throw e; }
-  return wk;
-}
-function wkTerminar(motivo){
-  if(!wk) return false; try{ wk.terminate(); }catch(e){} wk = null; const pend = wkPend; wkPend = {}; for(const id of Object.keys(pend)){ try{ pend[id].no(new Error("hilo de modelos terminado")); }catch(e){} }
-  vozl.pipe = null; if(vozl.estado==="listo") vozl.estado = "no"; try{ fotol.pipe = null; if(fotol.estado==="listo") fotol.estado = "no"; }catch(e){} try{ ocrl.model = null; if(ocrl.estado==="listo") ocrl.estado = "no"; }catch(e){}
-  diagAnotar(null, `hilo de modelos terminado (${motivo||""}): memoria devuelta`); return true;
-}
-async function cargarPipeline(que, cmd, modelo, device, dtype, prog){                 // en el hilo aparte si se puede; si no, en el principal (camino anterior)
-  if(usarWorker()){ await wkModelos(); const bin = await wkRpc({cmd:"binario", device}); diagAnotar(null, `${que}: ${bin}`); await wkRpc({cmd, modelo, device, dtype}, prog); return {worker:true, modelo, device}; }
-  const tjs = await vozlLib();
-  if(que==="voz") return tjs.pipeline("automatic-speech-recognition", modelo, {device, dtype, progress_callback: prog});
-  if(que==="fotos") return tjs.pipeline("zero-shot-image-classification", modelo, {device, dtype, progress_callback: prog});
-  const model = await tjs.Florence2ForConditionalGeneration.from_pretrained(modelo, {dtype, device, progress_callback: prog}); return model;
-}
-async function aBlob(fuente){ if(typeof fuente==="string"){ const r = await fetch(fuente); return r.blob(); } return fuente; }
 async function ortLiberar(excepto){                             // v39: un solo modelo ORT (voz, fotos o libreta) en memoria a la vez; los demás quedan descargados y se recargan de la caché al usarlos
   const libres = [];
-  if(wk){ const habia = [vozl.pipe && "voz", (typeof fotol!=="undefined" && fotol.pipe) && "fotos", (typeof ocrl!=="undefined" && ocrl.model) && "libreta"].filter(Boolean); wkTerminar("para cargar " + excepto); if(habia.length) libres.push(...habia); }   // v41: el hilo se termina entero (memoria devuelta) y se vuelve a crear
   if(excepto!=="voz" && vozl.pipe){ try{ await vozl.pipe.dispose(); }catch(e){} vozl.pipe = null; if(vozl.estado==="listo") vozl.estado = "no"; libres.push("voz"); }
   if(excepto!=="fotos" && typeof fotol!=="undefined" && fotol.pipe){ try{ await fotol.pipe.dispose(); }catch(e){} fotol.pipe = null; if(fotol.estado==="listo") fotol.estado = "no"; libres.push("fotos"); }
   if(excepto!=="libreta" && typeof ocrl!=="undefined" && ocrl.model){ try{ await ocrl.model.dispose(); }catch(e){} ocrl.model = null; if(ocrl.estado==="listo") ocrl.estado = "no"; libres.push("libreta"); }
-  try{ if(esIPhone() && razl && razl.engine && (RAZL_MODELOS[razl.modelo]||{}).gpu){ await razlDescargarMotor("para cargar " + excepto + " en iPhone"); libres.push("razonador grande (se recarga al preguntar)"); } }catch(e){}   // v40: 1.5B + CLIP no caben juntos en el iPhone
   if(libres.length) diagAnotar(null, `liberados de memoria: ${libres.join(", ")} (para cargar ${excepto})`);
   return libres;
 }
@@ -3392,12 +3359,12 @@ async function vozlCargar(modelo){
   const m = VOZL_MODELOS[modelo] || VOZL_MODELOS.base; vozl.estado = "cargando"; vozl.progreso = 0; vozl.error = null; vozl.modelo = modelo; vozl.motor = vozlMotor(); renderSinSenal();
   await ortLiberar("voz");
   try{
-    if(!usarWorker()) await vozlLib(); const dtype = vozl.motor==="webgpu" ? {encoder_model:"fp32", decoder_model_merged:"q4"} : "q8";
+    const tjs = await vozlLib(); const dtype = vozl.motor==="webgpu" ? {encoder_model:"fp32", decoder_model_merged:"q4"} : "q8";
     const prog = p => { cargaProgreso(p); if(p && p.status==="progress"){ vozl.progreso = Math.round(p.progress || 0); vozl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
     let ok = false; vozl.diag = []; diagAnotar(vozl.diag, `voz: ${m.id} · motor ${vozl.motor}`);
     for(const device of motoresEnCascada()){ const dt = device==="webgpu" ? {encoder_model:"fp32", decoder_model_merged:"q4"} : "q8";
       for(const id of [m.id, m.alt]){ if(caidaDe("voz", id, device)){ diagAnotar(vozl.diag, `${id}/${device}: omitido (tumbó la app antes)`); continue; }
-        cargaGuard({que:"voz", modelo:id, device, dtype: dt}); try{ vozl.pipe = await cargarPipeline("voz", "cargar_voz", id, device, dt, prog); cargaFin(); vozl.motor = device; ok = true; diagAnotar(vozl.diag, `cargado ${id} con ${device}${vozl.pipe && vozl.pipe.worker ? " (hilo aparte)" : ""}`); break; } catch(e){ cargaFin(); diagAnotar(vozl.diag, `${id}/${device}: ${String(e && e.message || e).slice(0,160)}`); vozl.pipe = null; } }
+        cargaGuard({que:"voz", modelo:id, device, dtype: dt}); try{ vozl.pipe = await tjs.pipeline("automatic-speech-recognition", id, {device, dtype: dt, progress_callback: prog}); cargaFin(); vozl.motor = device; ok = true; diagAnotar(vozl.diag, `cargado ${id} con ${device}`); break; } catch(e){ cargaFin(); diagAnotar(vozl.diag, `${id}/${device}: ${String(e && e.message || e).slice(0,160)}`); vozl.pipe = null; } }
       if(ok) break; }
     if(!ok) throw new Error((caidaDe("voz", m.id) ? "este modelo tumbó la app en este teléfono (sin memoria); " : "") + vozl.diag.join(" | ").slice(0,300));
     vozl.estado = "listo"; vozl.progreso = 100; vozlGuardarConf({modelo, listo:true, motor: vozl.motor, fecha: new Date().toISOString()}); guardadoPermanente();
@@ -3426,7 +3393,7 @@ async function vozlTranscribir(blob, avisar){
   avisar("Cargando el modelo de voz en el teléfono…"); if(!(await vozlAsegurar())) throw new Error(vozl.error || "modelo de voz no disponible");
   avisar("Preparando el audio…"); const audio = await blobAFloat32(blob); const t0 = Date.now();
   const tick = setInterval(()=>avisar(`Transcribiendo en el teléfono… ${Math.round((Date.now()-t0)/1000)} s`), 500);
-  try{ const opts = {language:"spanish", task:"transcribe", chunk_length_s:30, stride_length_s:5, return_timestamps:true}; const out = vozl.pipe && vozl.pipe.worker ? await wkRpc({cmd:"transcribir", audio, opts}, null, [audio.buffer]) : await vozl.pipe(audio, opts);
+  try{ const out = await vozl.pipe(audio, {language:"spanish", task:"transcribe", chunk_length_s:30, stride_length_s:5, return_timestamps:true});
     const texto = String((out && out.text) || "").trim(); return {texto, lineas: chunksALineas(out && out.chunks, texto), segundos: Math.round((Date.now()-t0)/1000)}; }
   finally{ clearInterval(tick); }
 }
@@ -3514,7 +3481,7 @@ const RAZL_KEY = "engram-campo-razonlocal-v1";
 const RAZL_MODELOS = {
   qwen05: {id:"onnx-community/Qwen2.5-0.5B-Instruct", mlc:"Qwen2.5-0.5B-Instruct-q4f16_1-MLC", mb:300, txt:"Qwen2.5 0.5B · rápido"},   // WebLLM q4f16_1 ~300 MB · respaldo ORT: q8 ~510 MB / q4 ~750 MB
   qwen15: {id:"onnx-community/Qwen2.5-1.5B-Instruct", mlc:"Qwen2.5-1.5B-Instruct-q4f16_1-MLC", mb:900, txt:"Qwen2.5 1.5B · mejor", gpu:true},
-  llama1: {id:"onnx-community/Llama-3.2-1B-Instruct",  mlc:"Llama-3.2-1B-Instruct-q4f16_1-MLC",  mb:700, txt:"Llama 3.2 1B", gpu:true, oculto:true}   // v41: sin botón (en iPhone no terminaba de bajar); queda por si hay una conf guardada
+  llama1: {id:"onnx-community/Llama-3.2-1B-Instruct",  mlc:"Llama-3.2-1B-Instruct-q4f16_1-MLC",  mb:700, txt:"Llama 3.2 1B", gpu:true}
 };
 // v38: WebLLM (mlc.ai) = motor de lenguaje para WebGPU que sube los pesos a la GPU por tandas desde la caché del navegador (sin copiar el modelo
 // entero en memoria, que es lo que tumba la app en iPhone). Biblioteca del CDN (el service worker la guarda), pesos de huggingface.co/mlc-ai,
@@ -3544,13 +3511,8 @@ function razlConf(){ try{ return JSON.parse(localStorage.getItem(RAZL_KEY)) || {
 function razlGuardarConf(c){ try{ localStorage.setItem(RAZL_KEY, JSON.stringify(c)); }catch(e){} }
 function razlDisponible(){ return razl.estado==="listo" || !!razlConf().listo; }
 function razlNombre(){ const c = razlConf(); const m = RAZL_MODELOS[razl.modelo || c.modelo || "qwen05"]; return m ? m.txt.split(" · ")[0] : "modelo del teléfono"; }
-async function razlDescargarMotor(motivo){                   // v40: un solo motor de lenguaje en la GPU; se vuelve a cargar de la caché cuando haga falta
-  if(razl.engine){ try{ await razl.engine.unload(); }catch(e){} razl.engine = null; if(razl.estado==="listo") razl.estado = "no"; diagAnotar(razl.diag, `razonador descargado de la GPU (${motivo})`); return true; }
-  if(razl.pipe){ try{ await razl.pipe.dispose(); }catch(e){} razl.pipe = null; if(razl.estado==="listo") razl.estado = "no"; return true; }
-  return false;
-}
 async function razlCargar(modelo){
-  const m = RAZL_MODELOS[modelo] || RAZL_MODELOS.qwen05; await razlDescargarMotor("para cargar " + (m.txt||modelo)); if(esIPhone() && wk) wkTerminar("para cargar el razonador en iPhone"); razl.estado = "cargando"; razl.progreso = 0; razl.error = null; razl.modelo = modelo; razl.motor = vozlMotor(); renderSinSenal();
+  const m = RAZL_MODELOS[modelo] || RAZL_MODELOS.qwen05; razl.estado = "cargando"; razl.progreso = 0; razl.error = null; razl.modelo = modelo; razl.motor = vozlMotor(); renderSinSenal();
   razl.diag = []; diagAnotar(razl.diag, `razón: ${m.id} · ${navigator.userAgent.slice(0,80)} · gpu:${window.__gpuOK} · gpu iPhone:${gpuIOSActivo()}`);
   try{
     const tjs = await vozlLib(); diagAnotar(razl.diag, `biblioteca: ${vozl.lib || "?"}`);
@@ -3578,7 +3540,7 @@ async function razlProbar(){                                 // v32.1: "Probar":
   renderSinSenal();
 }
 function razlDiagTexto(){ const c = razlConf(); const e = window.__espacio; let inst = "?"; try{ inst = (navigator.standalone || matchMedia("(display-mode: standalone)").matches) ? "instalada" : "navegador"; }catch(x){}
-  return [`Engram Campo ${APP_VERSION} · ${inst}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · error: ${razl.error||"-"}`, `biblioteca: ${vozl.lib||"no cargada"} (${vozl.libUrl||"-"}) · gpu: ${window.__gpuOK} · gpu iPhone activado: ${gpuIOSActivo()} · memoria: ${navigator.deviceMemory||"?"} GB · núcleos: ${navigator.hardwareConcurrency||"?"} · espacio: ${e ? Math.round(e.usado/1048576) + " de " + Math.round(e.cuota/1048576) + " MB" : "?"} · permanente: ${window.__persistido}`, `ua: ${navigator.userAgent.slice(0,120)} · webllm cargado: ${!!window.__webllm} · motor razón: ${razl.motor||"-"}/${razl.dtype||"-"} · hilo de modelos: ${wk ? "vivo" : "no"} · cargados: ${[vozl.pipe && "voz", (typeof fotol!=="undefined" && fotol.pipe) && "fotos", (typeof ocrl!=="undefined" && ocrl.model) && "libreta"].filter(Boolean).join(",") || "ninguno"}`, `caídas: ${caidas().length ? caidas().slice(-4).map(caidaTxt).join(" || ") : "ninguna"}`, `voz: ${JSON.stringify(vozlConf())} · fotos: ${localStorage.getItem(FOTOL_KEY)||"{}"} · libreta: ${JSON.stringify(ocrlConf())} · clasificador: ${localStorage.getItem(CLASIF_KEY)||"{}"}`].concat(razl.diag || []).concat(vozl.diag || []).concat(["--- historial guardado (sobrevive a las caídas):"], diagGuardado().slice(-18)).join("\n"); }
+  return [`Engram Campo ${APP_VERSION} · ${inst}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · error: ${razl.error||"-"}`, `biblioteca: ${vozl.lib||"no cargada"} (${vozl.libUrl||"-"}) · gpu: ${window.__gpuOK} · gpu iPhone activado: ${gpuIOSActivo()} · memoria: ${navigator.deviceMemory||"?"} GB · núcleos: ${navigator.hardwareConcurrency||"?"} · espacio: ${e ? Math.round(e.usado/1048576) + " de " + Math.round(e.cuota/1048576) + " MB" : "?"} · permanente: ${window.__persistido}`, `ua: ${navigator.userAgent.slice(0,120)} · webllm cargado: ${!!window.__webllm} · motor razón: ${razl.motor||"-"}/${razl.dtype||"-"}`, `caídas: ${caidas().length ? caidas().slice(-4).map(caidaTxt).join(" || ") : "ninguna"}`, `voz: ${JSON.stringify(vozlConf())} · fotos: ${localStorage.getItem(FOTOL_KEY)||"{}"} · libreta: ${JSON.stringify(ocrlConf())} · clasificador: ${localStorage.getItem(CLASIF_KEY)||"{}"}`].concat(razl.diag || []).concat(vozl.diag || []).concat(["--- historial guardado (sobrevive a las caídas):"], diagGuardado().slice(-18)).join("\n"); }
 async function razlAsegurar(){ if(razl.estado==="listo" && (razl.pipe || razl.engine)) return true; const c = razlConf(); if(!c.listo) return false; return razlCargar(c.modelo || "qwen05"); }
 async function razlGenerar(messages, max, avisar, opts){
   if(!(await razlAsegurar())) throw new Error(razl.error || "modelo de razonamiento no disponible");
@@ -3586,7 +3548,7 @@ async function razlGenerar(messages, max, avisar, opts){
   razl.ocupado = true; const t0 = Date.now(); let n = 0;
   try{
     if(razl.engine){                                            // v38: WebLLM (API estilo chat.completions, con streaming); con opts.json, la gramática obliga a JSON válido
-      const pedir = async (conJson) => { const req = {messages, max_tokens: max || 200, temperature: 0, stream: true}; if(conJson) req.response_format = {type:"json_object", schema: JSON.stringify(RAZL_ESQUEMA_INTERP)}; const chunks = await razl.engine.chat.completions.create(req); let txt = "";
+      const pedir = async (conJson) => { const req = {messages, max_tokens: max || 200, temperature: 0, stream: true}; if(conJson) req.response_format = {type:"json_object"}; const chunks = await razl.engine.chat.completions.create(req); let txt = "";
         for await (const ch of chunks){ const d = ch && ch.choices && ch.choices[0] && ch.choices[0].delta ? ch.choices[0].delta.content : ""; if(d){ txt += d; n++; if(avisar && n % 4 === 0) avisar(`Pensando en el teléfono… ${n} palabras · ${Math.round((Date.now()-t0)/1000)} s`); } } return txt; };
       if(avisar) avisar("Pensando en el teléfono…"); let txt;
       try{ txt = await pedir(!!(opts && opts.json)); }catch(e){ if(!(opts && opts.json)) throw e; diagAnotar(razl.diag, `webllm json: ${String(e && e.message || e).slice(0,120)}; reintento sin gramática`); txt = await pedir(false); }
@@ -3627,7 +3589,6 @@ function razlSinProductos(texto){                              // ninguna frase 
 }
 // --- (1) entender notas: líneas -> registros (mismo formato que el lector y las reglas locales)
 const RAZL_UNIDADES = ["kg/ha","L/ha","g/ha","mL/ha","kg total","L total"], RAZL_CLASES = ["fungicida","fertilizante","insecticida","herbicida","bioestimulante","otro"], RAZL_METODOS = ["aspersión","goteo","gravedad","pivote"];
-const RAZL_ESQUEMA_INTERP = {type:"object", properties:{registros:{type:"array", items:{type:"object", properties:{linea:{type:"integer"}, tipo:{type:"string", enum:["riego","aplicacion","observacion","cosecha"]}, fecha:{type:"string"}, horas:{type:"number"}, metodo:{type:"string"}, que:{type:"string"}, donde:{type:"string"}, sev:{type:"integer"}, producto:{type:"string"}, dosis:{type:"number"}, unidad:{type:"string"}, clase:{type:"string"}, rend:{type:"number"}, perdida:{type:"number"}}, required:["linea","tipo","fecha"]}}, sin_interpretar:{type:"array", items:{type:"object", properties:{linea:{type:"integer"}, texto:{type:"string"}, motivo:{type:"string"}}, required:["linea","texto"]}}}, required:["registros","sin_interpretar"]};   // v40: esquema para la gramática de WebLLM (JSON válido garantizado)
 function razlPromptInterpretar(lineas, ctx){
   const ayer = localISO(new Date(new Date(hoyISO+"T12:00:00").getTime() - 86400000));
   const sys = `Eres el intérprete de notas de campo de Engram Campo. Convierte las frases de un productor en registros JSON. Responde SOLO con JSON válido, sin explicación.
@@ -3748,7 +3709,7 @@ $("#ss-razon-probar").addEventListener("click", razlProbar);
 $("#ss-razon-diag").addEventListener("click", async ()=>{ const t = razlDiagTexto(); try{ await navigator.clipboard.writeText(t); toast("Diagnóstico copiado: péguelo en el chat"); }catch(e){ prompt("Copie este diagnóstico:", t); } });
 $$("#ss-razon-btns button[data-razl]").forEach(b=>b.addEventListener("click", ()=>razlCargar(b.dataset.razl)));
 window.__engramRazl = {hechos: razlHechos, compuerta: razlCompuerta, sinProductos: razlSinProductos, json: razlJSON};   // para depurar en el teléfono (consola)
-window.__engramMotor = {motor: vozlMotor, intentos: razlIntentos, modelos: RAZL_MODELOS, caidas, diag: razlDiagTexto, webllmPosible, generar: razlGenerar, estado: ()=>razl, reducir: fotoReducida, liberar: ortLiberar, hechosTexto: razlHechosTexto, esFormato: razlEsFormatoDatos, redactar: razlRedactar, vozl: ()=>vozl, fotol: ()=>fotol, ocrl: ()=>ocrl, worker: ()=>wk, usarWorker, transcribir: vozlTranscribir, clasificar: fotolClasificar, leer: ocrlLeer, ocrTexto: ocrlTexto, lote: ()=>LOTES[lotIdx]};   // v37: motor elegido, intentos del razonador y caídas (consola/pruebas)
+window.__engramMotor = {motor: vozlMotor, intentos: razlIntentos, modelos: RAZL_MODELOS, caidas, diag: razlDiagTexto, webllmPosible, generar: razlGenerar, estado: ()=>razl, reducir: fotoReducida, liberar: ortLiberar, hechosTexto: razlHechosTexto, esFormato: razlEsFormatoDatos, redactar: razlRedactar, vozl: ()=>vozl, fotol: ()=>fotol};   // v37: motor elegido, intentos del razonador y caídas (consola/pruebas)
 $("#ss-razon-quitar").addEventListener("click", async ()=>{ razlGuardarConf({}); const eng = razl.engine; razl = {estado:"no", progreso:0, pipe:null, engine:null, modelo:null, motor:null, error:null, archivo:"", ocupado:false, ultimo:null}; renderSinSenal(); renderRazonHoy();
   try{ if(eng && eng.unload) await eng.unload(); }catch(e){}
   try{ const lib = window.__webllm || (navigator.onLine ? await webllmLib() : null); if(lib && lib.deleteModelAllInfoInCache){ for(const k of Object.keys(RAZL_MODELOS)){ try{ await lib.deleteModelAllInfoInCache(RAZL_MODELOS[k].mlc); }catch(e){} } } }catch(e){}   // v38: pesos de WebLLM fuera de la caché
@@ -3768,14 +3729,15 @@ async function ocrlCargar(){
   ocrl.estado = "cargando"; ocrl.progreso = 0; ocrl.error = null; ocrl.motor = vozlMotor(); renderSinSenal();
   await ortLiberar("libreta");
   try{
-    const tjs = usarWorker() ? null : await vozlLib();
+    const tjs = await vozlLib();
     const prog = p => { cargaProgreso(p); if(p && p.status==="progress"){ ocrl.progreso = Math.round(p.progress || 0); ocrl.archivo = (p.file || "").split("/").pop(); renderSinSenal(); } };
     let ok = false, errs = [];
     for(const device of motoresEnCascada()){ const dtype = device==="webgpu" ? {embed_tokens:"fp16", vision_encoder:"fp16", encoder_model:"q4", decoder_model_merged:"q4"} : {embed_tokens:"q8", vision_encoder:"q8", encoder_model:"q8", decoder_model_merged:"q8"};
       if(caidaDe("libreta", OCRL_MODELO, device)){ errs.push(`${device}: omitido (tumbó la app antes)`); continue; }
-      cargaGuard({que:"libreta", modelo: OCRL_MODELO, device, dtype}); try{ ocrl.model = await cargarPipeline("libreta", "cargar_libreta", OCRL_MODELO, device, dtype, prog); cargaFin(); ocrl.motor = device; ok = true; break; } catch(e){ cargaFin(); errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); ocrl.model = null; } }
+      cargaGuard({que:"libreta", modelo: OCRL_MODELO, device, dtype}); try{ ocrl.model = await tjs.Florence2ForConditionalGeneration.from_pretrained(OCRL_MODELO, {dtype, device, progress_callback: prog}); cargaFin(); ocrl.motor = device; ok = true; break; } catch(e){ cargaFin(); errs.push(`${device}: ${String(e && e.message || e).slice(0,160)}`); ocrl.model = null; } }
     if(!ok) throw new Error(errs.join(" | ").slice(0,300));
-    if(!(ocrl.model && ocrl.model.worker)){ ocrl.processor = await tjs.AutoProcessor.from_pretrained(OCRL_MODELO, {progress_callback: prog}); ocrl.tokenizer = await tjs.AutoTokenizer.from_pretrained(OCRL_MODELO, {progress_callback: prog}); }
+    ocrl.processor = await tjs.AutoProcessor.from_pretrained(OCRL_MODELO, {progress_callback: prog});
+    ocrl.tokenizer = await tjs.AutoTokenizer.from_pretrained(OCRL_MODELO, {progress_callback: prog});
     ocrl.estado = "listo"; ocrl.progreso = 100; ocrlGuardarConf({listo:true, motor: ocrl.motor, fecha: new Date().toISOString()}); guardadoPermanente();
   }catch(e){ ocrl.estado = "error"; ocrl.error = errorCarga(e).slice(0, 160); ocrl.model = null; }
   renderSinSenal(); return ocrl.estado==="listo";
@@ -3792,10 +3754,17 @@ function ocrlLineas(boxes, labels){                         // cajas (x1,y1,…,
 }
 async function ocrlLeer(file, avisar){
   avisar("Cargando el lector de libreta en el teléfono…"); if(!(await ocrlAsegurar())) throw new Error(ocrl.error || "lector de libreta no disponible");
-  const t0 = Date.now(); avisar("Leyendo la página en el teléfono…"); const task = "<OCR_WITH_REGION>";
+  const tjs = window.__tjs; const t0 = Date.now(); avisar("Leyendo la página en el teléfono…");
+  let image = await tjs.RawImage.fromBlob(file);
+  try{ const mx = Math.max(image.width||0, image.height||0); if(mx > 1280){ const s = 1280/mx; image = await image.resize(Math.round(image.width*s), Math.round(image.height*s)); } }catch(e){}
   const tick = setInterval(()=>avisar(`Leyendo la página en el teléfono… ${Math.round((Date.now()-t0)/1000)} s`), 500);
   try{
-    const o = await ocrlGenerar(file, task, 1280, 512); const gen = o.gen; const r = o.res || {}; let lineas = ocrlLineas(r.quad_boxes || [], r.labels || []);
+    const vision = await ocrl.processor(image); const task = "<OCR_WITH_REGION>";
+    const prompts = ocrl.processor.construct_prompts(task); const text = ocrl.tokenizer(prompts);
+    const ids = await ocrl.model.generate(Object.assign({}, text, vision, {max_new_tokens: 512}));
+    const gen = ocrl.tokenizer.batch_decode(ids, {skip_special_tokens:false})[0];
+    const res = ocrl.processor.post_process_generation(gen, task, image.size || [image.width, image.height]);
+    const r = (res && res[task]) || {}; let lineas = ocrlLineas(r.quad_boxes || [], r.labels || []);
     if(!lineas.length && typeof gen === "string"){ const plano = gen.replace(/<[^>]+>/g, "\n"); lineas = plano.split(/\n+/).map(s=>s.trim()).filter(s=>s.length>1).map(s=>({texto:s, confianza:.6, dudas:[]})); }
     ocrl.ultimo = {segundos: Math.round((Date.now()-t0)/1000), lineas: lineas.length}; return {lineas, segundos: ocrl.ultimo.segundos, modelo: `florence-2-base · teléfono (${ocrl.motor})`};
   } finally { clearInterval(tick); }
@@ -3923,18 +3892,13 @@ async function agujaLeer(file, cal){
           nota: valor==null ? "La aguja quedó fuera de la escala conocida: ajuste la escala tocando el 0 y el máximo en la foto, o teclee el valor." : `Aguja a ${best}° → ${valor} ${cal.unidad||"cb"} con la escala ${cal.v0}–${cal.vmax} (contraste ${contraste > .6 ? "alto" : contraste > .3 ? "medio" : "bajo"}). Si no coincide, ajuste la escala o teclee el valor.`};
 }
 // --- (3) pantalla digital: dígitos por OCR (lector de libreta)
-async function ocrlGenerar(file, task, max, max_new_tokens){                 // v41: Florence en el hilo aparte (o en el principal si no hay hilo); devuelve {gen, res, size}
-  if(ocrl.model && ocrl.model.worker) return wkRpc({cmd:"ocr", blob: await aBlob(file), task, max, max_new_tokens});
-  const tjs = window.__tjs; let image = await tjs.RawImage.fromBlob(file); try{ const mx = Math.max(image.width||0, image.height||0); if(mx > max){ const s = max/mx; image = await image.resize(Math.round(image.width*s), Math.round(image.height*s)); } }catch(e){}
-  const vision = await ocrl.processor(image); const text = ocrl.tokenizer(ocrl.processor.construct_prompts(task));
-  const ids = await ocrl.model.generate(Object.assign({}, text, vision, {max_new_tokens})); const gen = ocrl.tokenizer.batch_decode(ids, {skip_special_tokens:false})[0];
-  let res = null; try{ const pp = ocrl.processor.post_process_generation(gen, task, image.size || [image.width, image.height]); res = pp && pp[task] != null ? pp[task] : null; }catch(e){ res = null; }
-  return {gen, res, size:[image.width, image.height]};
-}
 async function ocrlTexto(file, avisar){
   if(!(await ocrlAsegurar())) throw new Error(ocrl.error || "lector de libreta no descargado (Más → Sin señal)");
+  const tjs = window.__tjs; let image = await tjs.RawImage.fromBlob(file); try{ const mx = Math.max(image.width||0, image.height||0); if(mx > 1024){ const s = 1024/mx; image = await image.resize(Math.round(image.width*s), Math.round(image.height*s)); } }catch(e){}
   if(avisar) avisar("Leyendo la pantalla en el teléfono…");
-  const o = await ocrlGenerar(file, "<OCR>", 1024, 64); const plano = o.res != null ? String(o.res) : String(o.gen || "");
+  const vision = await ocrl.processor(image); const task = "<OCR>"; const text = ocrl.tokenizer(ocrl.processor.construct_prompts(task));
+  const ids = await ocrl.model.generate(Object.assign({}, text, vision, {max_new_tokens: 64})); const gen = ocrl.tokenizer.batch_decode(ids, {skip_special_tokens:false})[0];
+  let plano = ""; try{ const res = ocrl.processor.post_process_generation(gen, task, image.size || [image.width, image.height]); plano = String((res && res[task]) || ""); }catch(e){ plano = String(gen||""); }
   return plano.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 function numeroDeTexto(t){ const m = String(t||"").replace(/,/g, ".").match(/-?\d+(?:\.\d+)?/); return m ? +m[0] : null; }
