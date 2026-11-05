@@ -2150,7 +2150,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "41 · 5 nov 2026";
+const APP_VERSION = "42 · 5 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3303,6 +3303,8 @@ function recoTag(x){ const r = x.cid ? recoDe(x.cid)[0] : null; if(!r) return ""
 const VOZL_KEY = "engram-campo-vozlocal-v1";
 const VOZL_MODELOS = { base: {id:"onnx-community/whisper-base", alt:"Xenova/whisper-base", mb:80, txt:"básico"}, small: {id:"onnx-community/whisper-small", alt:"Xenova/whisper-small", mb:250, txt:"mejor"} };
 const TJS_CDN = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.2/dist/transformers.min.js";
+const ORT_VER = "1.22.0-dev.20250409-89f8206ba4", ORT_DIST_CDN = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VER}/dist/`;   // v42: la versión exacta de ONNX Runtime que trae transformers.js 3.5.2 (ahí están los binarios sin JSEP)
+function ortBinarioSinJsep(tjs, base){ try{ tjs.env.backends.onnx.wasm.wasmPaths = {mjs: base + "ort-wasm-simd-threaded.mjs", wasm: base + "ort-wasm-simd-threaded.wasm"}; return true; }catch(e){ return false; } }   // v42: binario sin JSEP (ver worker_modelos.js: el JSEP tumba WebKit 26 en iPhone)
 let vozl = { estado:"no", progreso:0, pipe:null, modelo:null, motor:null, error:null, archivo:"" };   // estado: no | cargando | listo | error
 let vozlPend = null;                                                                                   // la nota entendida en el teléfono, esperando el "Guardar"
 function vozlConf(){ try{ return JSON.parse(localStorage.getItem(VOZL_KEY)) || {}; }catch(e){ return {}; } }
@@ -3343,7 +3345,8 @@ async function vozlLib(){
   if(window.ENGRAM_TJS_FAKE){ window.__tjs = window.ENGRAM_TJS_FAKE; return window.__tjs; }          // pruebas: transcriptor falso inyectado
   let tjs = null;
   for(const base of ["lib/", "../lib/"]){ try{ tjs = await import(new URL(base + "transformers.min.js", location.href).href); tjs.env.backends.onnx.wasm.wasmPaths = new URL(base, location.href).href; vozl.lib = base==="lib/" ? "local" : "raíz del sitio"; vozl.libUrl = new URL(base, location.href).href; break; }catch(e){ tjs = null; } }   // v37: también en la raíz del sitio
-  if(!tjs){ tjs = await import(TJS_CDN); vozl.lib = "cdn"; vozl.libUrl = TJS_CDN; }
+  if(!tjs){ tjs = await import(TJS_CDN); vozl.lib = "cdn"; vozl.libUrl = TJS_CDN; tjs.env.backends.onnx.wasm.wasmPaths = ORT_DIST_CDN; }
+  if(vozlMotor()==="wasm"){ ortBinarioSinJsep(tjs, vozl.lib==="cdn" ? ORT_DIST_CDN : vozl.libUrl); diagAnotar(null, "hilo principal: binario wasm sin JSEP"); }   // v42
   tjs.env.allowLocalModels = false; tjs.env.useBrowserCache = true; window.__tjs = tjs; return tjs;
 }
 function errorCarga(e){                                        // v39.1: "Load failed" sin señal = el modelo no está descargado en este teléfono; que lo diga claro
@@ -3358,7 +3361,7 @@ async function wkModelos(){
   const w = new Worker(new URL("worker_modelos.js", location.href).href, {type:"module"}); wk = w;
   w.onmessage = e => { const m = e.data || {}; const p = wkPend[m.id]; if(!p) return; if(m.tipo==="progreso"){ try{ p.prog && p.prog(m.p); }catch(x){} return; } delete wkPend[m.id]; if(m.tipo==="ok") p.ok(m.r); else p.no(new Error(m.error || "error en el hilo de modelos")); };
   w.onerror = e => { diagAnotar(null, "hilo de modelos: " + String(e && e.message || "error").slice(0,120)); };
-  try{ const bases = ["lib/", "../lib/"].map(b=>new URL(b, location.href).href); const r = await wkRpc({cmd:"lib", bases, cdn: TJS_CDN}); vozl.lib = r.lib; vozl.libUrl = r.url; diagAnotar(null, `hilo de modelos iniciado · biblioteca ${r.lib}`); }
+  try{ const bases = ["lib/", "../lib/"].map(b=>new URL(b, location.href).href); const r = await wkRpc({cmd:"lib", bases, cdn: TJS_CDN, ortDist: ORT_DIST_CDN}); vozl.lib = r.lib; vozl.libUrl = r.url; diagAnotar(null, `hilo de modelos iniciado · biblioteca ${r.lib}`); }
   catch(e){ wkTerminar("no arrancó"); window.__sinWorker = true; diagAnotar(null, "hilo de modelos no disponible (" + String(e && e.message || e).slice(0,80) + "): modelos en el hilo principal"); throw e; }
   return wk;
 }
@@ -3368,7 +3371,7 @@ function wkTerminar(motivo){
   diagAnotar(null, `hilo de modelos terminado (${motivo||""}): memoria devuelta`); return true;
 }
 async function cargarPipeline(que, cmd, modelo, device, dtype, prog){                 // en el hilo aparte si se puede; si no, en el principal (camino anterior)
-  if(usarWorker()){ await wkModelos(); await wkRpc({cmd, modelo, device, dtype}, prog); return {worker:true, modelo, device}; }
+  if(usarWorker()){ await wkModelos(); const bin = await wkRpc({cmd:"binario", device}); diagAnotar(null, `${que}: ${bin}`); await wkRpc({cmd, modelo, device, dtype}, prog); return {worker:true, modelo, device}; }
   const tjs = await vozlLib();
   if(que==="voz") return tjs.pipeline("automatic-speech-recognition", modelo, {device, dtype, progress_callback: prog});
   if(que==="fotos") return tjs.pipeline("zero-shot-image-classification", modelo, {device, dtype, progress_callback: prog});

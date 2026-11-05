@@ -2,11 +2,20 @@
 // Vive en un hilo aparte con su propia memoria. Cuando la app lo termina (worker.terminate), el sistema recupera TODA la memoria de los modelos:
 // en iPhone es la única forma segura de pasar de un modelo a otro (la memoria del motor ORT en el hilo principal nunca se devuelve).
 // Mensajes: {id, cmd, ...} -> {id, tipo:"progreso", p} ... {id, tipo:"ok", r} | {id, tipo:"error", error}
-let tjs = null, lib = {lib: "no cargada", url: ""}; const pipes = {};
-async function cargarLib(bases, cdn){
-  for(let i = 0; i < bases.length; i++){ const b = bases[i]; try{ tjs = await import(b + "transformers.min.js"); tjs.env.backends.onnx.wasm.wasmPaths = b; lib = {lib: i === 0 ? "local" : "raíz del sitio", url: b}; break; }catch(e){ tjs = null; } }
-  if(!tjs){ tjs = await import(cdn); lib = {lib: "cdn", url: cdn}; }
+let tjs = null, lib = {lib: "no cargada", url: ""}, ortBase = "", ortCdn = ""; const pipes = {};
+async function cargarLib(bases, cdn, ortDist){
+  ortCdn = ortDist || "";
+  for(let i = 0; i < bases.length; i++){ const b = bases[i]; try{ tjs = await import(b + "transformers.min.js"); ortBase = b; lib = {lib: i === 0 ? "local" : "raíz del sitio", url: b}; break; }catch(e){ tjs = null; } }
+  if(!tjs){ tjs = await import(cdn); ortBase = ortCdn; lib = {lib: "cdn", url: cdn}; }
   tjs.env.allowLocalModels = false; tjs.env.useBrowserCache = true; return lib;
+}
+// v42: con motor wasm se usa el binario de ONNX Runtime SIN JSEP (ort-wasm-simd-threaded.wasm). El binario JSEP (el que trae transformers.js por
+// defecto, con asyncify para WebGPU) dispara un error del compilador de WebKit 26 en iOS: CPU al 400 %, memoria que crece y la app muerta
+// (onnxruntime issue 26827). Con WebGPU hace falta el JSEP: queda el prefijo normal. Se decide por carga; este hilo nace nuevo para cada modelo.
+function elegirBinario(device){
+  const base = ortBase || ortCdn; if(!base) return "sin base";
+  if(device === "wasm"){ tjs.env.backends.onnx.wasm.wasmPaths = {mjs: base + "ort-wasm-simd-threaded.mjs", wasm: base + "ort-wasm-simd-threaded.wasm"}; return "wasm sin JSEP (" + base + ")"; }
+  tjs.env.backends.onnx.wasm.wasmPaths = base; return "JSEP (" + base + ")";
 }
 async function imagen(blob, max){
   let img = await tjs.RawImage.fromBlob(blob);
@@ -18,13 +27,14 @@ self.onmessage = async (e) => {
   const prog = p => { try{ self.postMessage({id, tipo:"progreso", p: {status: p && p.status, progress: p && p.progress, file: p && p.file}}); }catch(err){} };
   try{
     let r = true;
-    if(m.cmd === "lib") r = await cargarLib(m.bases || [], m.cdn);
+    if(m.cmd === "lib") r = await cargarLib(m.bases || [], m.cdn, m.ortDist);
     else if(!tjs) throw new Error("biblioteca no cargada en el hilo de modelos");
-    else if(m.cmd === "cargar_voz"){ pipes.voz = await tjs.pipeline("automatic-speech-recognition", m.modelo, {device: m.device, dtype: m.dtype, progress_callback: prog}); }
+    else if(m.cmd === "binario") r = elegirBinario(m.device);
+    else if(m.cmd === "cargar_voz"){ elegirBinario(m.device); pipes.voz = await tjs.pipeline("automatic-speech-recognition", m.modelo, {device: m.device, dtype: m.dtype, progress_callback: prog}); }
     else if(m.cmd === "transcribir"){ if(!pipes.voz) throw new Error("modelo de voz no cargado"); const out = await pipes.voz(m.audio, m.opts || {}); r = {text: out && out.text, chunks: (out && out.chunks || []).map(c=>({timestamp: c.timestamp, text: c.text}))}; }
-    else if(m.cmd === "cargar_fotos"){ pipes.fotos = await tjs.pipeline("zero-shot-image-classification", m.modelo, {device: m.device, dtype: m.dtype || "q8", progress_callback: prog}); }
+    else if(m.cmd === "cargar_fotos"){ elegirBinario(m.device); pipes.fotos = await tjs.pipeline("zero-shot-image-classification", m.modelo, {device: m.device, dtype: m.dtype || "q8", progress_callback: prog}); }
     else if(m.cmd === "clasificar"){ if(!pipes.fotos) throw new Error("modelo de fotos no cargado"); const img = await imagen(m.blob, m.max || 1280); const out = await pipes.fotos(img, m.etiquetas || []); r = (out || []).map(x=>({label: x.label, score: x.score})); }
-    else if(m.cmd === "cargar_libreta"){
+    else if(m.cmd === "cargar_libreta"){ elegirBinario(m.device);
       const model = await tjs.Florence2ForConditionalGeneration.from_pretrained(m.modelo, {dtype: m.dtype, device: m.device, progress_callback: prog});
       const processor = await tjs.AutoProcessor.from_pretrained(m.modelo, {progress_callback: prog}); const tokenizer = await tjs.AutoTokenizer.from_pretrained(m.modelo, {progress_callback: prog});
       pipes.libreta = {model, processor, tokenizer};
