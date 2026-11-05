@@ -1,6 +1,6 @@
 // Engram Campo — service worker: red primero (siempre la versión más nueva), caché de respaldo para abrir sin señal.
-const CACHE = "engram-campo-v14";
-const SHELL = ["./", "./index.html", "./manifest.json", "./leaflet.js", "./leaflet.css", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+const CACHE = "engram-campo-v15";
+const SHELL = ["./", "./index.html", "./manifest.json", "./leaflet.js", "./leaflet.css", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./worker_modelos.js"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {
   // v14: solo se borran las cachés viejas de la app (engram-campo-v*); las de modelos (transformers-cache) y del mapa (engram-tiles) se quedan: antes cada actualización obligaba a bajar los modelos de nuevo
