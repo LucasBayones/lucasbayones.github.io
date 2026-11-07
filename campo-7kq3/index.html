@@ -847,6 +847,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
           <div id="lib-rows" class="flow"></div>
           <div class="card" id="lib-unparsed" hidden><span class="eyebrow">No lo tomé como registro</span><div id="lib-unparsed-list" class="flow"></div></div>
           <button class="btn sec" id="lib-add">+ Agregar un registro que faltó</button>
+          <button class="inline-link" id="lib-mejorar" hidden>Mejorar con el modelo del teléfono</button>
           <p class="note">Los campos en ámbar se leyeron con duda o se supusieron: tóquelos para corregir. Lo que quite no se guarda.</p>
         </div>
       </div>
@@ -1447,7 +1448,15 @@ function openLote(){ initMap(); if(!map) return; setTimeout(()=>{ map.invalidate
 // Supabase por REST puro, sin librerías: Auth (código por correo), PostgREST (tablas con reglas por fila) y Storage (archivos).
 // La app solo lleva la dirección del proyecto y la clave pública (anon); la llave de servicio vive en el RIG. Sin configuración: modo demostración.
 const NUBE = { url: "https://lnwgbkdpylnyzuxvzzeg.supabase.co", anon: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxud2dia2RweWxueXp1eHZ6emVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMDMyMTIsImV4cCI6MjEwNzc3OTIxMn0.EkN8Kji6oll8lRYjm2X-pGGJRg3xcrO1wRwTIHx5BKg" };   // proyecto engram-campo; la anon key es pública por diseño (las reglas por fila protegen los datos)
+// v45 (RIG portátil): ?nube=https://192.168.4.1:8443&anon=... (el QR del stand) apunta la app a la nube local de la MacBook; ?nube=real vuelve a la nube real.
+// Queda guardado para esta app (mismo dominio que el ícono de inicio); hay que cerrar sesión y entrar de nuevo con el código del buzón local.
+try{ const qs = new URLSearchParams(location.search); const qn = qs.get("nube");
+  if(qn){ if(qn==="real"){ localStorage.removeItem("engram-campo-nube-url"); localStorage.removeItem("engram-campo-nube-anon"); } else { localStorage.setItem("engram-campo-nube-url", qn.replace(/\/+$/, "")); if(qs.get("anon")) localStorage.setItem("engram-campo-nube-anon", qs.get("anon")); }
+    localStorage.removeItem("engram-campo-sesion-v1"); localStorage.setItem("engram-campo-nube-aviso", qn==="real" ? "Nube real otra vez: inicie sesión con su correo." : "Nube local del stand configurada (" + qn + "): abra la app desde el ícono e inicie sesión; el código llega al buzón local de la MacBook.");
+    history.replaceState(null, "", location.pathname); }
+}catch(e){}
 try{ const u = localStorage.getItem("engram-campo-nube-url"), a = localStorage.getItem("engram-campo-nube-anon"); if(u) NUBE.url = u; if(a) NUBE.anon = a; }catch(e){}
+try{ const av = localStorage.getItem("engram-campo-nube-aviso"); if(av){ localStorage.removeItem("engram-campo-nube-aviso"); setTimeout(()=>{ try{ toast(av); }catch(e){} }, 1200); } }catch(e){}
 let MODO = "demo", sesion = null, perfil = null, estadoRig = null, vaciando = false, pendLotes = {};
 const SES_KEY = "engram-campo-sesion-v1", COLA_KEY = "engram-campo-cola-v1", LOGN_KEY = "engram-campo-bitacora-nube-v1", CACHE_KEY = "engram-campo-lotes-cache-v1", PEND_KEY = "engram-campo-pend-lotes-v1";
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x" ? r : (r&0x3|0x8)).toString(16); }));
@@ -2150,7 +2159,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "44 · 5 nov 2026";
+const APP_VERSION = "46 · 7 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2465,7 +2474,7 @@ let libLines = [], libProps = [], libUnparsed = [], libSim = true, libEdited = f
 
 function libShow(stage){ ["step1","reading","trans","review"].forEach(s=>{ $("#lib-"+s).hidden = s!==stage; }); $("#lib-interp").hidden = stage!=="trans"; $("#lib-save").hidden = stage!=="review"; $("#sheet-body").scrollTop = 0; }
 function libProgress(pasos){ libTimers.forEach(clearTimeout); libTimers = pasos.map(([t,msg,pct,fn])=>setTimeout(()=>{ $("#lib-status").textContent = msg; $("#lib-bar").style.width = pct+"%"; if(fn) fn(); }, t)); }
-function libReset(){ libTimers.forEach(clearTimeout); libTimers = []; libLines = []; libProps = []; libUnparsed = []; libEdited = false; libFuente = "libreta"; libTrans = null; { const ey = $("#lib-leido-eyebrow"); if(ey) ey.textContent = "Lo que leí"; const ay = $("#lib-leido-ayuda"); if(ay) ay.textContent = "Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada."; const sm = $("#lib-fuente-sum"); if(sm) sm.textContent = "Ver la página"; const im = $("#lib-img2"); if(im) im.hidden = false; const au = $("#lib-audio"); if(au){ au.hidden = true; au.removeAttribute("src"); } } $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-lines").innerHTML = ""; $("#lib-rows").innerHTML = ""; $("#lib-banner").textContent = ""; libShow("step1"); }
+function libReset(){ { const m = $("#lib-mejorar"); if(m) m.hidden = true; } libTimers.forEach(clearTimeout); libTimers = []; libLines = []; libProps = []; libUnparsed = []; libEdited = false; libFuente = "libreta"; libTrans = null; { const ey = $("#lib-leido-eyebrow"); if(ey) ey.textContent = "Lo que leí"; const ay = $("#lib-leido-ayuda"); if(ay) ay.textContent = "Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada."; const sm = $("#lib-fuente-sum"); if(sm) sm.textContent = "Ver la página"; const im = $("#lib-img2"); if(im) im.hidden = false; const au = $("#lib-audio"); if(au){ au.hidden = true; au.removeAttribute("src"); } } $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-lines").innerHTML = ""; $("#lib-rows").innerHTML = ""; $("#lib-banner").textContent = ""; libShow("step1"); }
 
 // --- motor remoto (opcional)
 function downscale(file, max=1600, q=.85){
@@ -2623,22 +2632,30 @@ function interpretLines(lines){
 }
 
 // --- etapa 3: lo que entendí (registros anclados a su línea)
-$("#lib-interp").addEventListener("click", async ()=>{
+$("#lib-interp").addEventListener("click", ()=>libInterpretar(false));
+$("#lib-mejorar").addEventListener("click", ()=>libInterpretar(true));
+async function libInterpretar(conModelo){
+  // v46: nunca se carga el modelo de lenguaje aquí adentro (con voz o libreta en memoria tumbaba la app en el iPhone). Orden: lo que ya propuso el
+  // motor → el motor (lector) si hay señal, también para lo oído/leído en el teléfono → el modelo del teléfono solo si ya está en memoria o si la
+  // persona lo pidió con el botón → reglas locales, que siempre responden.
   const lines = libLines.map(l=>l.texto.trim()); if(!lines.some(Boolean)) return;
   $("#lib-interp").disabled = true; $("#lib-interp").textContent = "Interpretando…";
-  let r = null;
-  if((LECTOR.url || libFuente==="voz") && !libEdited && libProps.length) r = {registros: libProps, sin: libUnparsed};
-  else if(LECTOR.url && navigator.onLine && libFuente!=="voz-local" && libFuente!=="video-local"){ try{ const res = await lectorInterpretar(lines); r = {registros: normRecs(res.registros), sin: normUnp(res.sin_interpretar)}; }catch(e){ r = null; } }
-  libRazon = null;
-  if(!r && razlDisponible() && (libFuente==="voz-local" || libFuente==="video-local" || !navigator.onLine || !LECTOR.url)){      // v31: el modelo chico del teléfono entiende antes que las reglas
-    try{ const l = LOTES[lotIdx]; const rr = await razlInterpretar(libLines, {cultivo: nombreCultivo(l.cultivo), lote: l.nombre}, m=>{ $("#lib-interp").textContent = m; });
+  let r = null; libRazon = null;
+  if(!conModelo && (LECTOR.url || libFuente==="voz") && !libEdited && libProps.length) r = {registros: libProps, sin: libUnparsed};
+  else if(!conModelo && LECTOR.url && navigator.onLine){ try{ const res = await lectorInterpretar(lines); r = {registros: normRecs(res.registros), sin: normUnp(res.sin_interpretar)}; libRazon = {origen:"lector"}; }catch(e){ r = null; diagAnotar(null, `lector interpretar: ${String(e && e.message || e).slice(0,100)}`); } }
+  if(!r && razlDisponible() && (conModelo || razlResidente())){
+    try{ if(conModelo && !razlResidente()){ $("#lib-interp").textContent = "Cargando el modelo del teléfono…"; try{ wkTerminar("razonador a pedido"); await ortLiberar(); }catch(e){} }
+      const l = LOTES[lotIdx]; const rr = await razlInterpretar(libLines, {cultivo: nombreCultivo(l.cultivo), lote: l.nombre}, m=>{ $("#lib-interp").textContent = m; });
       if(rr.registros.length || rr.sin.length){ r = rr; libRazon = {modelo: rr.modelo, segundos: rr.segundos, origen:"llm"}; } }
     catch(e){ libRazon = {error: String(e.message||e).slice(0,120)}; }
   }
-  if(!r) r = interpretLines(libLines);
+  if(!r){ r = interpretLines(libLines); if(!(libRazon && libRazon.error)) libRazon = {origen:"reglas"}; }
   libProps = r.registros; libUnparsed = r.sin; libEdited = false; libPropsOrig = JSON.parse(JSON.stringify(libProps)); renderLibRows(); libShow("review");
-  const fb = $("#lib-found"); if(fb && libRazon && libRazon.modelo) fb.textContent += ` · entendidos por ${libRazon.modelo} en el teléfono (${libRazon.segundos} s)`;
-});
+  const fb = $("#lib-found");
+  if(fb && libRazon){ if(libRazon.modelo) fb.textContent += ` · entendidos por ${libRazon.modelo} en el teléfono (${libRazon.segundos} s)`; else if(libRazon.origen==="lector") fb.textContent += " · entendidos por el motor"; else if(libRazon.origen==="reglas") fb.textContent += " · entendidos por reglas en el teléfono"; else if(libRazon.error) fb.textContent += ` · el modelo del teléfono no pudo (${libRazon.error.slice(0,60)}); reglas`; }
+  const mej = $("#lib-mejorar"); if(mej){ const puede = razlDisponible() && !(libRazon && libRazon.modelo); mej.hidden = !puede; mej.textContent = razlResidente() ? "Volver a interpretar con el modelo del teléfono" : "Mejorar con el modelo del teléfono (lo carga; tarda y cierra los otros modelos)"; }
+  $("#lib-interp").disabled = false;
+}
 let libRazon = null;
 $("#lib-backlines").addEventListener("click", ()=>{ renderLibLines(); libShow("trans"); });
 function sel(k, opts, val){ return `<select data-k="${k}">${opts.map(o=>`<option${o===val?" selected":""}>${esc(o)}</option>`).join("")}</select>`; }
@@ -3254,6 +3271,25 @@ async function fotolClasificar2(fuente, l){
   const mejor = top[0] || {}; const porPlaga = {}; top.forEach(t=>{ if(t.plaga) porPlaga[t.plaga] = (porPlaga[t.plaga]||0) + t.score; });
   return {plaga: mejor.plaga, estadio: mejor.estadio, general: mejor.general, confianza: mejor.score, top, modelo:"clip-vit-base-patch32 · teléfono" + (conPrior ? " + priors del cerebro" : ""), cerebro: conPrior ? (CEREBRO && CEREBRO.version) : null, segundos: Math.round((Date.now()-t0)/100)/10, preliminar:true};
 }
+const GENERAL_TXT = {hoja_sana:"una hoja sana", trampa:"una trampa", suelo:"suelo", fruto:"un fruto sin plaga", otro:"algo que no es planta"};
+const ESTADIO_TXT = {huevo:"huevos", ninfa:"ninfas", larva:"larvas", adulto:"adultos", lesion:"lesiones"};
+function veredictoHTML(r, l, ctx){                       // v46: una frase, con lo seguro adelante y el resto plegado en "detalles"
+  if(!r) return ""; ctx = ctx || {}; const p = r.propio; const top = r.top || []; const t0 = top[0] || null;
+  const nomGen = t => t.plaga ? plNombre(l, t.plaga) + (t.estadio ? ` (${ESTADIO_TXT[t.estadio]||t.estadio})` : "") : (GENERAL_TXT[t.general] || t.general || "?");
+  const det = [];
+  if(p && p.top) det.push(`clasificador propio ${p.version||""}: ${p.top.slice(0,3).map(t=>`${t.nombre || plNombre(l, t.clave||t.plaga)} ${Math.round(t.score*100)} %`).join(" · ")}`);
+  if(top.length) det.push(`modelo general: ${top.slice(0,3).map(t=>`${nomGen(t)} ${Math.round(t.score*100)} %`).join(" · ")}`);
+  if(r.segundos!=null) det.push(`${r.segundos} s en el teléfono`);
+  let principal = "", clave = null;
+  if(p && p.confianza >= 0.70){ principal = `<b>${esc(plNombre(l, p.plaga))}</b> · ${Math.round(p.confianza*100)} %`; clave = p.plaga; }
+  else if(p && p.confianza >= 0.40){ const s2 = p.top && p.top[1]; principal = `posiblemente <b>${esc(plNombre(l, p.plaga))}</b> (${Math.round(p.confianza*100)} %)${s2 && s2.score >= 0.25 ? ` o ${esc(s2.nombre || plNombre(l, s2.clave))} (${Math.round(s2.score*100)} %)` : ""}`; clave = p.plaga; }
+  else if(t0 && t0.general && t0.score >= 0.45){ principal = `no veo una plaga: parece ${esc(GENERAL_TXT[t0.general] || t0.general)}`; }
+  else if(t0 && t0.plaga && t0.score >= 0.50){ principal = `puede ser <b>${esc(nomGen(t0))}</b> (${Math.round(t0.score*100)} %, modelo general)`; clave = t0.plaga; }
+  else principal = "no reconozco una plaga con confianza";
+  const aviso = ctx.contando && clave && clave !== ctx.contando ? ` <b>Ojo:</b> usted está contando ${esc(plNombre(l, ctx.contando))}.` : "";
+  const donde = r.cuadros ? ` en ${r.cuadros} cuadros del video` : "";
+  return `El teléfono ve${donde}: ${principal}.${aviso} <span class="muted">PRELIMINAR; el motor y su agrónomo confirman.</span> <details class="small muted" style="display:inline-block"><summary style="cursor:pointer">detalles</summary>${esc(det.join(" · "))}</details>`;
+}
 function fotolTexto(r, l){
   if(!r) return ""; const nombre = r.plaga ? plNombre(l, r.plaga) : ({hoja_sana:"una hoja sana", trampa:"una trampa", suelo:"suelo", fruto:"un fruto sin plaga", otro:"algo que no es planta"})[r.general] || "no se distingue";
   const est = r.estadio ? ({huevo:"huevos", ninfa:"ninfas", larva:"larvas", adulto:"adultos", lesion:"lesiones"})[r.estadio] || r.estadio : "";
@@ -3270,7 +3306,7 @@ async function fotolVideo(file, l){
   const cuadros = await cuadrosDeVideo(file, 3); const res = []; for(const c of cuadros){ try{ res.push(await fotolClasificar(c, l)); }catch(e){ throw e; } }
   const acum = {}; res.forEach(r=>r.top.forEach(t=>{ const k = (t.plaga||("gen:"+t.general)) + "|" + (t.estadio||""); acum[k] = Math.max(acum[k]||0, t.score); }));
   const orden = Object.entries(acum).sort((a,b)=>b[1]-a[1]).map(([k,s])=>{ const [p, e] = k.split("|"); return p.startsWith("gen:") ? {plaga:null, general:p.slice(4), estadio:null, score:+s.toFixed(3)} : {plaga:p, estadio:e||null, general:null, score:+s.toFixed(3)}; });
-  const m = orden[0] || {}; return {plaga:m.plaga||null, estadio:m.estadio||null, general:m.general||null, confianza:m.score||0, top:orden.slice(0,4), cuadros:cuadros.length, modelo:"clip-vit-base-patch32 · teléfono (video)", segundos: res.reduce((a,r)=>a+r.segundos,0), preliminar:true};
+  const m = orden[0] || {}; return {plaga:m.plaga||null, estadio:m.estadio||null, general:m.general||null, confianza:m.score||0, top:orden.slice(0,4), cuadros:cuadros.length, cuadro: cuadros[Math.floor(cuadros.length/2)] || null, modelo:"clip-vit-base-patch32 · teléfono (video)", segundos: +res.reduce((a,r)=>a+r.segundos,0).toFixed(1), preliminar:true};
 }
 // ganchos: "Vi algo" (plaga/enfermedad), foto del punto de monitoreo y video
 let viReco = null, plReco = null, vidReco = null;
@@ -3279,17 +3315,17 @@ async function fotolEnVi(){
   const que = ($$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true")||{}).textContent || ""; if(!f || !/plaga|enfermedad/.test(que)) return;
   if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Más → Sin señal, con wifi, ~150 MB). Con señal, el motor la lee igual."; return; }   // v39.1
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
-  try{ const fr = await fotoReducida(f, 1280); viReco = await fotolClasificar(fr, LOTES[lotIdx]); box.textContent = fotolTexto(viReco, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(viReco, fr, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
+  try{ const fr = await fotoReducida(f, 1280); viReco = await fotolClasificar(fr, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(viReco, fr, null); box.innerHTML = veredictoHTML(viReco, LOTES[lotIdx], {}); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
 }
 async function fotolEnPunto(f){
   plReco = null; const box = $("#pl-foto-reco"); if(!box) return; box.hidden = true; if(!f) return; if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Más → Sin señal, con wifi). Con señal, el motor la lee igual."; return; }
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
-  try{ const fr = await fotoReducida(f, 1280); plReco = await fotolClasificar(fr, LOTES[lotIdx]); box.textContent = fotolTexto(plReco, LOTES[lotIdx]) + (pl && plReco.plaga && plReco.plaga!==pl.plaga ? ` Ojo: usted está contando ${plNombre(LOTES[lotIdx], pl.plaga)}.` : ""); if(typeof clasifAnexar==="function") await clasifAnexar(plReco, fr, box); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
+  try{ const fr = await fotoReducida(f, 1280); plReco = await fotolClasificar(fr, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(plReco, fr, null); box.innerHTML = veredictoHTML(plReco, LOTES[lotIdx], {contando: pl ? pl.plaga : null}); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
 }
 async function fotolEnVideo(f){
   vidReco = null; const box = $("#vid-reco"); if(!box) return; box.hidden = true; if(!f || !fotolDisponible()) return;
   box.hidden = false; box.textContent = "Mirando 3 cuadros del video en el teléfono…";
-  try{ vidReco = await fotolVideo(f, LOTES[lotIdx]); box.textContent = fotolTexto(vidReco, LOTES[lotIdx]).replace("El teléfono ve", `El teléfono ve en ${vidReco.cuadros} cuadros`); }catch(e){ box.textContent = "No se pudo mirar el video en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor lo lee con señal."; }
+  try{ vidReco = await fotolVideo(f, LOTES[lotIdx]); if(typeof clasifAnexar==="function" && vidReco.cuadro) await clasifAnexar(vidReco, vidReco.cuadro, null); box.innerHTML = veredictoHTML(vidReco, LOTES[lotIdx], {}); }catch(e){ box.textContent = "No se pudo mirar el video en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor lo lee con señal."; }
 }
 $("#ss-foto-cargar").addEventListener("click", fotolCargar);
 $("#ss-foto-quitar").addEventListener("click", async ()=>{ try{ localStorage.removeItem(FOTOL_KEY); }catch(e){} fotol = {estado:"no", progreso:0, pipe:null, error:null, archivo:""}; renderSinSenal(); toast("Modelo de fotos quitado (la caché se limpia con el de voz)"); });
@@ -3415,7 +3451,8 @@ async function vozlAsegurar(){ if(vozl.estado==="listo" && vozl.pipe) return tru
 async function blobAFloat32(blob){
   const ab = await blob.arrayBuffer(); const AC = window.AudioContext || window.webkitAudioContext; let ac;
   try{ ac = new AC({sampleRate:16000}); }catch(e){ ac = new AC(); }
-  const buf = await new Promise((ok, no)=>{ const r = ac.decodeAudioData(ab, ok, no); if(r && r.then) r.then(ok, no); });
+  const buf = await Promise.race([new Promise((ok, no)=>{ try{ const r = ac.decodeAudioData(ab, ok, no); if(r && r.then) r.then(ok, no); }catch(e){ no(e); } }),
+                                  new Promise((_, no)=>setTimeout(()=>no(new Error("no pude separar el audio de este archivo (formato)")), 30000))]);   // v46: antes podía quedarse en "Preparando el audio…" para siempre
   let data = buf.getChannelData(0);
   if(buf.numberOfChannels > 1){ const n = buf.length, out = new Float32Array(n); for(let c=0;c<buf.numberOfChannels;c++){ const d = buf.getChannelData(c); for(let i=0;i<n;i++) out[i] += d[i]/buf.numberOfChannels; } data = out; }
   if(buf.sampleRate !== 16000){ const ratio = buf.sampleRate/16000, n = Math.floor(data.length/ratio), out = new Float32Array(n); for(let i=0;i<n;i++){ const x = i*ratio, i0 = Math.floor(x), f = x-i0; out[i] = data[i0]*(1-f) + (data[Math.min(i0+1, data.length-1)]||0)*f; } data = out; }
@@ -3552,6 +3589,7 @@ let razl = { estado:"no", progreso:0, pipe:null, modelo:null, motor:null, error:
 function razlConf(){ try{ return JSON.parse(localStorage.getItem(RAZL_KEY)) || {}; }catch(e){ return {}; } }
 function razlGuardarConf(c){ try{ localStorage.setItem(RAZL_KEY, JSON.stringify(c)); }catch(e){} }
 function razlDisponible(){ return razl.estado==="listo" || !!razlConf().listo; }
+function razlResidente(){ return razl.estado==="listo" && !!(razl.engine || razl.pipe); }   // v46: ya cargado en memoria (no solo descargado)
 function razlNombre(){ const c = razlConf(); const m = RAZL_MODELOS[razl.modelo || c.modelo || "qwen05"]; return m ? m.txt.split(" · ")[0] : "modelo del teléfono"; }
 async function razlDescargarMotor(motivo){                   // v40: un solo motor de lenguaje en la GPU; se vuelve a cargar de la caché cuando haga falta
   if(razl.engine){ try{ await razl.engine.unload(); }catch(e){} razl.engine = null; if(razl.estado==="listo") razl.estado = "no"; diagAnotar(razl.diag, `razonador descargado de la GPU (${motivo})`); return true; }
@@ -3831,7 +3869,7 @@ async function vozlEnVideo(f){
     if(!r.lineas.length){ box.textContent = "No se oyó nada reconocible en el video (si habló, el motor lo vuelve a oír con señal)."; return; }
     vidVoz = {texto: r.texto, lineas: r.lineas, segundos: r.segundos, modelo: `whisper-${vozl.modelo||"base"} · teléfono (${vozl.motor}, video)`};
     box.textContent = `Lo que dijo en el video (oído en el teléfono, ${r.segundos} s): «${r.texto.slice(0,160)}${r.texto.length>160?"…":""}». Al guardar, podrá convertirlo en registros.`;
-  }catch(e){ box.textContent = "No se pudo escuchar el video en el teléfono (" + String(e.message||e).slice(0,70) + "); el motor lo oye con señal."; }
+  }catch(e){ box.textContent = "No pude escuchar el video en el teléfono (" + String(e.message||e).slice(0,70) + "). Si dijo algo importante, grábelo como nota de voz; con señal el motor oye el video igual."; }
 }
 let vidPendCid = null;
 function vidlRevisar(cid, voz){                              // después de guardar el video: lo dicho -> revisión -> registros (fuente video)
@@ -3895,44 +3933,154 @@ function abrir3(mask, w, h){                                    // apertura morf
 function dibujar(c, fn){ const ctx = c.canvas.getContext("2d"); ctx.save(); fn(ctx); ctx.restore(); return c.canvas.toDataURL("image/jpeg", .7); }
 // --- (1) trampa adhesiva: fondo amarillo o azul, insectos = manchas oscuras dentro de la trampa
 async function trampaContar(file){
+  // v46: una trampa es un fondo amarillo o azul SATURADO que llena la foto y sin verde; una hoja (verde, textura) no es una trampa aunque tenga tonos
+  // amarillentos. En la hoja se cuentan manchas oscuras como posible daño o enfermedad, sin proponerlas como insectos de trampa.
   const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const hsvH = new Float32Array(n), hsvS = new Float32Array(n), hsvV = new Float32Array(n);
-  const hist = new Uint32Array(36); for(let i=0;i<n;i++){ const [hh, s, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); hsvH[i] = hh; hsvS[i] = s; hsvV[i] = v; if(s > .35 && v > .35) hist[Math.floor(hh/10) % 36]++; }
-  let best = 0; for(let k=1;k<36;k++) if(hist[k] > hist[best]) best = k; const hueFondo = best*10 + 5; const fondo = (hueFondo >= 35 && hueFondo <= 75) ? "amarillo" : (hueFondo >= 190 && hueFondo <= 260) ? "azul" : "otro";
-  const esFondo = i => hsvS[i] > .25 && hsvV[i] > .35 && Math.min(Math.abs(hsvH[i]-hueFondo), 360-Math.abs(hsvH[i]-hueFondo)) <= 20;
+  let nAm = 0, nAz = 0, nVe = 0; const hist = new Uint32Array(36);
+  for(let i=0;i<n;i++){ const [hh, s_, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); hsvH[i] = hh; hsvS[i] = s_; hsvV[i] = v;
+    if(hh >= 42 && hh <= 66 && s_ > .45 && v > .5) nAm++; else if(hh >= 195 && hh <= 250 && s_ > .35 && v > .3) nAz++; else if(hh > 66 && hh <= 165 && s_ > .2 && v > .15) nVe++;
+    if(s_ > .35 && v > .35) hist[Math.floor(hh/10) % 36]++; }
+  const fAm = nAm/n, fAz = nAz/n, fVe = nVe/n;
+  const fondo = (fAm >= .25 && fAm > fAz && fVe < .2) ? "amarillo" : (fAz >= .25 && fVe < .2) ? "azul" : fVe >= .2 ? "hoja" : "otro";
+  if(fondo === "hoja" || fondo === "otro"){
+    // manchas oscuras dentro de lo verde: posible daño, hongo o suciedad (no es un conteo de trampa)
+    let manchas = 0, dataURL = null;
+    if(fondo === "hoja"){ const fg = new Uint8Array(n); for(let i=0;i<n;i++){ if(hsvV[i] < .3 && !(hsvH[i] > 66 && hsvH[i] <= 165 && hsvS[i] > .3 && hsvV[i] > .2)) fg[i] = 1; }
+      const escala = w/1024; const comps = componentes(abrir3(fg, w, h), w, h, Math.max(6, 8*escala), n*0.05); manchas = comps.length;
+      dataURL = dibujar(c, ctx=>{ ctx.strokeStyle = "#ffd60a"; ctx.lineWidth = 2; comps.forEach(b_=>{ const r = Math.max(5, Math.sqrt(b_.area)); ctx.beginPath(); ctx.arc(b_.cx, b_.cy, r+3, 0, 2*Math.PI); ctx.stroke(); }); }); }
+    return {conteo:null, fondo, manchas_hoja: fondo === "hoja" ? manchas : null, cobertura_pct: Math.round(Math.max(fAm, fAz)*100), confianza: 0, modelo:"visión clásica · teléfono", preliminar:true, dataURL,
+            motivo: fondo === "hoja" ? "parece una hoja, no una trampa" : "no se distingue una trampa amarilla o azul que llene la foto",
+            nota: fondo === "hoja" ? `Esto parece una hoja, no una trampa: no cuento insectos de trampa. Veo ${manchas} mancha${manchas===1?"":"s"} oscura${manchas===1?"":"s"} en la hoja (pueden ser daño, hongos o suciedad; el agrónomo confirma). Si es una trampa, acérquese y que el fondo amarillo o azul llene la foto.`
+                                    : "No se distingue una trampa amarilla o azul que llene la foto: acérquese y que la trampa ocupe casi todo el cuadro."};
+  }
+  const hueFondo = fondo === "amarillo" ? 54 : 222;
+  const esFondo = i => hsvS[i] > .3 && hsvV[i] > .35 && Math.min(Math.abs(hsvH[i]-hueFondo), 360-Math.abs(hsvH[i]-hueFondo)) <= (fondo === "amarillo" ? 14 : 30);
   const fm = new Uint8Array(n); let cob = 0; for(let i=0;i<n;i++){ if(esFondo(i)){ fm[i] = 1; cob++; } }
-  const cobertura = cob / n; if(fondo === "otro" || cobertura < .15) return {conteo:null, fondo, cobertura_pct: Math.round(cobertura*100), confianza:0, motivo:"no se distingue una trampa amarilla o azul que llene la foto: acérquese y que la trampa ocupe casi todo el cuadro", modelo:"visión clásica · teléfono", preliminar:true};
+  const cobertura = cob / n;
   // caja de la trampa: el componente de fondo más grande (en una versión reducida x4)
   const w4 = Math.floor(w/4), h4 = Math.floor(h/4), m4 = new Uint8Array(w4*h4); for(let y=0;y<h4;y++) for(let x=0;x<w4;x++){ m4[y*w4+x] = fm[(y*4)*w + x*4]; }
-  const comps = componentes(m4, w4, h4, 50, w4*h4); comps.sort((a,b)=>b.area-a.area); const t = comps[0]; const pad = 6;
+  const comps = componentes(m4, w4, h4, 50, w4*h4); comps.sort((a_,b_)=>b_.area-a_.area); const t = comps[0]; const pad = 6;
   const bx0 = t ? Math.max(0, t.minx*4 + pad) : 0, by0 = t ? Math.max(0, t.miny*4 + pad) : 0, bx1 = t ? Math.min(w-1, t.maxx*4 + 3 - pad) : w-1, by1 = t ? Math.min(h-1, t.maxy*4 + 3 - pad) : h-1;
   const areaTrampa = (bx1-bx0+1)*(by1-by0+1);
   const fg = new Uint8Array(n); for(let y=by0;y<=by1;y++) for(let x=bx0;x<=bx1;x++){ const i = y*w+x; if(!fm[i] && (hsvV[i] < .6 || (hsvS[i] < .22 && hsvV[i] < .8))) fg[i] = 1; }
   const ab = abrir3(fg, w, h); const escala = w/1024; const bichos = componentes(ab, w, h, Math.max(4, 5*escala), Math.max(50, areaTrampa*0.02));
-  const chicos = bichos.filter(b=>b.area < 35*escala).length, grandes = bichos.filter(b=>b.area > 150*escala).length, medianos = bichos.length - chicos - grandes;
-  const dataURL = dibujar(c, ctx=>{ ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 2; ctx.strokeRect(bx0, by0, bx1-bx0, by1-by0); ctx.strokeStyle = "#00e5ff"; bichos.forEach(b=>{ const r = Math.max(5, Math.sqrt(b.area)); ctx.beginPath(); ctx.arc(b.cx, b.cy, r+3, 0, 2*Math.PI); ctx.stroke(); }); });
+  const chicos = bichos.filter(b_=>b_.area < 35*escala).length, grandes = bichos.filter(b_=>b_.area > 150*escala).length, medianos = bichos.length - chicos - grandes;
+  const dataURL = dibujar(c, ctx=>{ ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 2; ctx.strokeRect(bx0, by0, bx1-bx0, by1-by0); ctx.strokeStyle = "#00e5ff"; bichos.forEach(b_=>{ const r = Math.max(5, Math.sqrt(b_.area)); ctx.beginPath(); ctx.arc(b_.cx, b_.cy, r+3, 0, 2*Math.PI); ctx.stroke(); }); });
   const confianza = bichos.length ? (cobertura > .45 ? .55 : .4) : .3;
   return {conteo: bichos.length, chicos, medianos, grandes, fondo, cobertura_pct: Math.round(cobertura*100), confianza, modelo:"visión clásica · teléfono", preliminar:true, dataURL,
-          nota: `${bichos.length} mancha${bichos.length===1?"":"s"} oscura${bichos.length===1?"":"s"} sobre la trampa ${fondo} (${chicos} chicas · ${medianos} medianas · ${grandes} grandes). Cuenta manchas, no especies: el modelo de fotos dice qué parece y el motor confirma con señal.`};
+          nota: `${bichos.length} insecto${bichos.length===1?"":"s"} (manchas oscuras) sobre la trampa ${fondo} (${chicos} chicas · ${medianos} medianas · ${grandes} grandes). Cuenta manchas, no especies: el modelo de fotos dice qué parece y el motor confirma con señal.`};
 }
 // --- (2) tensiómetro de aguja: ángulo de la aguja (línea oscura desde el centro) sobre la escala
-const AGUJA_KEY = "engram-campo-aguja-v1";
-function agujaCal(sensorId){ try{ const all = JSON.parse(localStorage.getItem(AGUJA_KEY)) || {}; return Object.assign({v0:0, vmax:100, a0:225, a1:135, cx:.5, cy:.5, r:.38}, all[sensorId] || {}); }catch(e){ return {v0:0, vmax:100, a0:225, a1:135, cx:.5, cy:.5, r:.38}; } }   // a: grados en sentido horario desde arriba; escala típica Irrometer: 0 abajo-izquierda, 100 abajo-derecha (270°)
+const AGUJA_KEY = "engram-campo-aguja-v2";
+// Escala por defecto: tensiómetro (manómetro de vacío, p. ej. Irrometer): 0 abajo a la derecha (135° horario desde arriba), 100 abajo a la izquierda (225°),
+// creciendo en sentido ANTIHORARIO (50 arriba). v45 y anteriores la tenían espejada (sentido horario, como un manómetro de presión).
+const AGUJA_DEF = {v0:0, vmax:100, a0:135, a1:225, sentido:"antihorario", cx:null, cy:null, r:null};
+function agujaCal(sensorId){ try{ const all = JSON.parse(localStorage.getItem(AGUJA_KEY)) || {}; return Object.assign({}, AGUJA_DEF, all[sensorId] || {}); }catch(e){ return Object.assign({}, AGUJA_DEF); } }
 function agujaGuardarCal(sensorId, cal){ try{ const all = JSON.parse(localStorage.getItem(AGUJA_KEY)) || {}; all[sensorId] = cal; localStorage.setItem(AGUJA_KEY, JSON.stringify(all)); }catch(e){} }
 function anguloHorario(cx, cy, x, y){ return (Math.atan2(x-cx, -(y-cy))*180/Math.PI + 360) % 360; }           // 0 arriba, 90 derecha, 180 abajo, 270 izquierda
-function valorDeAngulo(a, cal){ const sweep = ((cal.a1 - cal.a0) % 360 + 360) % 360 || 270; let d = ((a - cal.a0) % 360 + 360) % 360; if(d > sweep + 12) return null; d = Math.min(d, sweep); return Math.round((cal.v0 + d/sweep*(cal.vmax-cal.v0))*10)/10; }
+function agujaSweep(cal){ const cw = ((cal.a1 - cal.a0) % 360 + 360) % 360, ccw = ((cal.a0 - cal.a1) % 360 + 360) % 360; return (cal.sentido === "horario" ? cw : ccw) || 270; }
+function valorDeAngulo(a, cal){ const sweep = agujaSweep(cal); let d = cal.sentido === "horario" ? ((a - cal.a0) % 360 + 360) % 360 : ((cal.a0 - a) % 360 + 360) % 360; if(d > sweep + 12) return null; d = Math.min(d, sweep); return Math.round((cal.v0 + d/sweep*(cal.vmax-cal.v0))*10)/10; }
+function anguloDeValor(v, cal){ const sweep = agujaSweep(cal); const d = (v - cal.v0)/((cal.vmax - cal.v0) || 1)*sweep; return ((cal.sentido === "horario" ? cal.a0 + d : cal.a0 - d) % 360 + 360) % 360; }
+function agujaCentro(data, w, h){                             // la carátula: el componente claro más grande que no toca el borde de la foto
+  const n = w*h, m = new Uint8Array(n); for(let i=0;i<n;i++){ const r = data[i*4], g = data[i*4+1], b_ = data[i*4+2]; const mx = Math.max(r,g,b_), mn = Math.min(r,g,b_); if(mx > 178 && (mx ? (mx-mn)/mx : 0) < .3) m[i] = 1; }
+  const comps = componentes(m, w, h, Math.round(n*0.02), n).filter(c_=>c_.minx > 0 && c_.miny > 0 && c_.maxx < w-1 && c_.maxy < h-1).sort((a_,b_)=>b_.area-a_.area);
+  const c_ = comps[0]; if(!c_) return null; const R = Math.max(c_.maxx-c_.minx, c_.maxy-c_.miny)/2*0.98; if(R < 0.12*Math.min(w, h)) return null;
+  return {cx: c_.cx, cy: c_.cy, R, mask: m};
+}
+// v46: el cubo (el eje de la aguja) es una isla clara encerrada por el anillo oscuro, cerca del centro de la carátula; desde ahí se miden los ángulos
+function agujaCubo(gris, w, h, cx, cy, R, umbral){
+  const L = Math.round(0.22*R); const x0 = Math.max(0, Math.round(cx-L)), y0 = Math.max(0, Math.round(cy-L)), x1 = Math.min(w, Math.round(cx+L)), y1 = Math.min(h, Math.round(cy+L)); const ww = x1-x0, hh = y1-y0; if(ww < 8 || hh < 8) return null;
+  const m = new Uint8Array(ww*hh); for(let y=0;y<hh;y++) for(let x=0;x<ww;x++) m[y*ww+x] = gris[(y+y0)*w + (x+x0)] <= umbral ? 1 : 0;
+  const comps = componentes(m, ww, hh, Math.max(4, Math.PI*(0.02*R)*(0.02*R)*0.2), ww*hh); let mejor = null;
+  for(const c_ of comps){ if(c_.minx <= 0 || c_.miny <= 0 || c_.maxx >= ww-1 || c_.maxy >= hh-1) continue; const bw = c_.maxx-c_.minx+1, bh = c_.maxy-c_.miny+1, rb = (bw+bh)/4;
+    if(rb < 0.02*R || rb > 0.12*R || bw/bh < .6 || bw/bh > 1.6 || c_.area/(bw*bh) < .2) continue; const hx = x0 + (c_.minx+c_.maxx)/2, hy = y0 + (c_.miny+c_.maxy)/2; if(Math.hypot(hx-cx, hy-cy) > 0.12*R) continue;
+    if(!mejor || rb > mejor.r) mejor = {cx: hx, cy: hy, r: rb}; }
+  return mejor;
+}
+// v46: cadena de marcas con espaciado regular (tolera una faltante, p. ej. la que tapa la aguja); devuelve las marcas en sentido horario desde el hueco
+function cadenaMarcas(angs, fusion){
+  if(angs.length < 4) return null; const norm = a_ => ((a_ % 360) + 360) % 360; const difs = arr => arr.map((a_, i)=>norm(arr[(i+1) % arr.length] - a_)); const med = arr => { const s = arr.slice().sort((a_,b_)=>a_-b_); return s[s.length>>1]; };
+  let t = angs.map(norm).sort((a_,b_)=>a_-b_); let S = med(difs(t)); if(!(S > 0)) return null;
+  if(fusion){ const out = []; for(const a_ of t){ if(out.length && norm(a_ - out[out.length-1]) < fusion*S) out[out.length-1] = (out[out.length-1] + a_)/2; else out.push(a_); } t = out; S = med(difs(t)); }
+  const n = t.length, d = difs(t); const ok = d.map(x=>(x > .75*S && x < 1.3*S) || (x > 1.75*S && x < 2.3*S)); if(n < 4 || ok.every(x=>x)) return null;
+  let mejor = [0, 0]; for(let ini=0; ini<n; ini++){ if(ok[(ini-1+n) % n]) continue; let k = 0; while(k < n && ok[(ini+k) % n]) k++; if(k > mejor[0]) mejor = [k, ini]; }
+  const [k, ini] = mejor; if(k < 3) return null; const marcas = [], pos = [0]; for(let j=0;j<=k;j++) marcas.push(t[(ini+j) % n]); for(let j=0;j<k;j++) pos.push(pos[j] + (d[(ini+j) % n] > 1.5*S ? 2 : 1));
+  return {marcas, pos, N: pos[k], S};
+}
+// v46: valor de un ángulo según la escala leída en la foto (interpolación entre las dos marcas que lo encierran)
+function valorEnEscala(ang, esc, cal){
+  const m = esc.marcas, pos = esc.pos, N = esc.N; if(!m || m.length < 2 || !N) return null; const norm = a_ => ((a_ % 360) + 360) % 360;
+  const offs = m.map(a_=>norm(a_ - m[0])); let off = norm(ang - m[0]); const fin = offs[offs.length-1];
+  if(off > fin + 1.3*esc.S && off < 360 - 1.3*esc.S) return null;                     // fuera de la escala (en el hueco)
+  if(off > fin + 1.3*esc.S) off -= 360;                                                // un poco antes de la primera marca (se extrapola y se acota)
+  let k = 0; while(k < m.length-2 && off > offs[k+1]) k++; const f = (off - offs[k])/((offs[k+1]-offs[k]) || 1); let p = pos[k] + f*(pos[k+1]-pos[k]); p = Math.max(0, Math.min(N, p));
+  const frac = cal.sentido === "horario" ? p/N : (N-p)/N; return Math.round((cal.v0 + frac*(cal.vmax-cal.v0))*2)/2;     // al medio centibar: la aguja no da para más
+}
 async function agujaLeer(file, cal){
-  const c = await imgACanvas(file, 800); const {w, h, data} = c; const cx = cal.cx*w, cy = cal.cy*h, R = cal.r*Math.min(w, h);
+  const t0 = Date.now(); const c = await imgACanvas(file, 800); const {w, h, data} = c;
+  const auto = (cal.cx == null || cal.cy == null) ? agujaCentro(data, w, h) : null;
+  let cx = cal.cx != null ? cal.cx*w : auto ? auto.cx : w/2, cy = cal.cy != null ? cal.cy*h : auto ? auto.cy : h/2; const R = cal.r != null ? cal.r*Math.min(w, h) : auto ? auto.R : 0.38*Math.min(w, h);
   const gris = new Float32Array(w*h); for(let i=0;i<w*h;i++) gris[i] = 255 - (0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2]);
-  const osc = new Float32Array(360);
-  for(let a=0;a<360;a++){ const th = a*Math.PI/180; let s = 0, k = 0; for(let r=0.18*R; r<0.72*R; r+=2){ const x = Math.round(cx + r*Math.sin(th)), y = Math.round(cy - r*Math.cos(th)); if(x<0||y<0||x>=w||y>=h) continue; s += gris[y*w+x]; k++; } osc[a] = k ? s/k : 0; }
-  const suave = new Float32Array(360); for(let a=0;a<360;a++) suave[a] = (osc[(a+359)%360] + osc[a] + osc[(a+1)%360]) / 3;
-  let best = 0; for(let a=1;a<360;a++) if(suave[a] > suave[best]) best = a;
-  const ord = Array.from(suave).sort((a,b)=>a-b); const mediana = ord[180]; const contraste = (suave[best] - mediana) / (mediana + 1);
-  const valor = valorDeAngulo(best, cal); const confianza = contraste > .6 ? .6 : contraste > .3 ? .4 : .2;
-  const dataURL = dibujar(c, ctx=>{ ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2*Math.PI); ctx.stroke(); const th = best*Math.PI/180; ctx.strokeStyle = "#00e5ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 0.8*R*Math.sin(th), cy - 0.8*R*Math.cos(th)); ctx.stroke();
-    [[cal.a0, "0"], [cal.a1, String(cal.vmax)]].forEach(([a, t])=>{ const tt = a*Math.PI/180; ctx.fillStyle = "#ffd60a"; ctx.font = "bold 16px sans-serif"; ctx.fillText(t, cx + 0.9*R*Math.sin(tt) - 6, cy - 0.9*R*Math.cos(tt) + 6); }); });
-  return {valor, angulo: best, contraste: Math.round(contraste*100)/100, confianza, modelo:"aguja por geometría · teléfono", preliminar:true, dataURL,
-          nota: valor==null ? "La aguja quedó fuera de la escala conocida: ajuste la escala tocando el 0 y el máximo en la foto, o teclee el valor." : `Aguja a ${best}° → ${valor} ${cal.unidad||"cb"} con la escala ${cal.v0}–${cal.vmax} (contraste ${contraste > .6 ? "alto" : contraste > .3 ? "medio" : "bajo"}). Si no coincide, ajuste la escala o teclee el valor.`};
+  let fondo = []; for(let y=Math.max(0, Math.round(cy-R*.5)); y<Math.min(h, Math.round(cy+R*.5)); y+=3) for(let x=Math.max(0, Math.round(cx-R*.5)); x<Math.min(w, Math.round(cx+R*.5)); x+=3) fondo.push(gris[y*w+x]);
+  fondo.sort((a_,b_)=>a_-b_); const umbral = (fondo[Math.floor(fondo.length/2)] || 0) + 70;        // "oscuro" = bastante más oscuro que la carátula
+  // el cubo: si el centro no fue marcado a mano, el eje de la aguja manda sobre el centro geométrico de la carátula
+  const cubo = (cal.cx == null || cal.cy == null) ? agujaCubo(gris, w, h, cx, cy, R, umbral) : null; if(cubo){ cx = cubo.cx; cy = cubo.cy; }
+  const oscuro = (x, y) => { if(x<1||y<1||x>=w-1||y>=h-1) return false; const i = y*w+x; return Math.max(gris[i], gris[i-1], gris[i+1], gris[i-w], gris[i+w]) > umbral; };
+  const racha = th => { let run = 0, gap = 0; for(let r = 0.10*R; r < 0.9*R; r += 1){ const x = Math.round(cx + r*Math.sin(th)), y = Math.round(cy - r*Math.cos(th)); if(x<1||y<1||x>=w-1||y>=h-1) break; if(oscuro(x, y)){ run++; gap = 0; } else if(++gap > 3) break; } return run; };
+  const ancho = (th, rf) => { const r = rf*R, px = cx + r*Math.sin(th), py = cy - r*Math.cos(th), tx = Math.cos(th), ty = Math.sin(th); let k = 0; for(let t=-12; t<=12; t+=.5){ const x = Math.round(px + t*tx), y = Math.round(py + t*ty); if(x>=0&&y>=0&&x<w&&y<h && gris[y*w+x] > umbral) k++; } return k*.5; };
+  const N = 720, runs = new Float32Array(N); for(let i=0;i<N;i++) runs[i] = racha(i/2*Math.PI/180);
+  const idx = Array.from(runs.keys()).sort((a_,b_)=>runs[b_]-runs[a_]); const cand = [];
+  for(const i of idx){ if(cand.every(c_=>Math.min(Math.abs(i-c_), N-Math.abs(i-c_)) > 40)) cand.push(i); if(cand.length >= 3) break; }
+  let elegido = cand[0], motivo = "la racha oscura más larga desde el centro";
+  if(cand.length >= 2 && runs[cand[1]] >= 0.35*R && runs[cand[0]] >= 0.35*R){ const sep = Math.abs(cand[0]-cand[1])/2; const opuestos = Math.abs(((sep % 360) + 360) % 360 - 180) <= 25;
+    if(opuestos){ const w0 = ancho(cand[0]/2*Math.PI/180, .5) + ancho(cand[0]/2*Math.PI/180, .65), w1 = ancho(cand[1]/2*Math.PI/180, .5) + ancho(cand[1]/2*Math.PI/180, .65); elegido = w1 < w0 ? cand[1] : cand[0]; motivo = "de las dos puntas opuestas, la más fina (la cola es un bloque ancho)"; } }
+  let best = elegido/2, bestRun = runs[elegido]; for(let d=-1.5; d<=1.5; d+=.25){ const a_ = ((elegido/2 + d) % 360 + 360) % 360; const r_ = racha(a_*Math.PI/180); if(r_ > bestRun){ bestRun = r_; best = a_; } }
+  // afinar con el eje de la aguja: punto medio del tramo oscuro en varios radios (mediana, robusta a los números que cruza)
+  const medios = []; for(let rf=0.35; rf<0.70; rf+=0.05){ const r = rf*R, d = [], angs = []; for(let a_=best-8; a_<=best+8.001; a_+=0.2){ const th = a_*Math.PI/180; const x = Math.round(cx + r*Math.sin(th)), y = Math.round(cy - r*Math.cos(th)); d.push(x>=0&&y>=0&&x<w&&y<h && gris[y*w+x] > umbral); angs.push(a_); }
+    const ic = Math.floor(d.length/2); let i, j; if(d[ic]){ i = ic; while(i > 0 && d[i-1]) i--; j = ic; while(j < d.length-1 && d[j+1]) j++; } else { let bi = -1, bj = -1, bl = 0; for(let k=0;k<d.length;){ if(d[k]){ let e = k; while(e < d.length && d[e]) e++; if(e-k > bl){ bl = e-k; bi = k; bj = e-1; } k = e; } else k++; } if(!bl) continue; i = bi; j = bj; }
+    if(i === 0 || j === d.length-1) continue; medios.push((angs[i]+angs[j])/2); }
+  if(medios.length >= 4){ const ms = medios.slice().sort((a_,b_)=>a_-b_); const mm = ms[ms.length>>1]; if(Math.abs(mm-best) < 3) best = mm; }
+  best = Math.round(((best % 360) + 360) % 360*10)/10;
+  const largo = bestRun / R;
+  // la escala en la foto: marcas oscuras radiales en el anillo 0.80–0.93 R; largas = grandes (cada 10), cortas = chicas
+  const dAng = (a_, b_) => Math.abs(((a_-b_) % 360 + 540) % 360 - 180);
+  const NP = 720, perfil = new Float32Array(NP); for(let i=0;i<NP;i++){ const th = i/2*Math.PI/180, s = Math.sin(th), co = Math.cos(th); let sum = 0, k = 0; for(let r=0.80*R; r<0.93*R; r+=1){ const x = Math.round(cx + r*s), y = Math.round(cy - r*co); if(x>=0&&y>=0&&x<w&&y<h){ sum += gris[y*w+x]; k++; } } perfil[i] = k ? sum/k : 0; }
+  const ps = Array.from(perfil).sort((a_,b_)=>a_-b_); const medP = ps[NP>>1]; const madP = Array.from(perfil, v=>Math.abs(v-medP)).sort((a_,b_)=>a_-b_)[NP>>1] + 1; const umbP = medP + 4*madP;
+  let k0 = 0; for(let i=1;i<NP;i++) if(perfil[i] < perfil[k0]) k0 = i;
+  const segs = []; for(let i=0;i<NP;){ if(perfil[(k0+i) % NP] > umbP){ let j = i, sx = 0, sy = 0, mx = 0; while(j < NP && perfil[(k0+j) % NP] > umbP){ const q = (k0+j) % NP, pw = perfil[q]-umbP, th = q/2*Math.PI/180; sx += pw*Math.sin(th); sy += pw*Math.cos(th); mx = Math.max(mx, perfil[q]); j++; } segs.push({ang: (Math.atan2(sx, sy)*180/Math.PI + 360) % 360, ancho: (j-i)/2, max: mx}); i = j; } else i++; }
+  const largoDe = ang => { let b_ = 0; for(const da of [-0.5, 0, 0.5]){ const th = (ang+da)*Math.PI/180, s = Math.sin(th), co = Math.cos(th); let k = 0; for(let r=0.66*R; r<0.95*R; r+=1){ const x = Math.round(cx + r*s), y = Math.round(cy - r*co); if(x>=0&&y>=0&&x<w&&y<h && gris[y*w+x] > umbral) k++; } b_ = Math.max(b_, k); } return b_/R; };
+  segs.forEach(s_=>{ s_.largo = largoDe(s_.ang); });
+  const rayas = segs.filter(s_=>dAng(s_.ang, best) > 2.5 && s_.ancho <= 6 && s_.largo >= 0.03);
+  const finosL = rayas.filter(s_=>s_.ancho <= 3).map(s_=>s_.largo).sort((a_,b_)=>a_-b_); const Lm = finosL.length ? finosL[finosL.length>>1] : 0;
+  const mayores = Lm ? rayas.filter(s_=>s_.largo >= 1.6*Lm && s_.largo <= 4*Lm) : [], menores = Lm ? rayas.filter(s_=>s_.largo >= 0.5*Lm && s_.largo < 1.6*Lm && s_.ancho <= 3) : [];
+  let esc = null, valor = null, metodo = "";
+  if(!cal.escalaManual){
+    const bonitos = [0.5, 1, 2, 2.5, 4, 5, 10, 20, 25, 50, 100]; const bonito = u => bonitos.some(b_=>Math.abs(u-b_) <= 0.02*b_);
+    const cm = cadenaMarcas(mayores.map(s_=>s_.ang), 0);
+    if(cm && cm.N >= 4){                                        // ¿falta la marca grande de un extremo (p. ej. el 0 tapado por el "WET")? se busca una raya larga donde debería estar
+      const buscar = esperado => { const cs = rayas.filter(s_=>dAng(s_.ang, esperado) < 0.3*cm.S && s_.largo >= 1.4*Lm && s_.ancho <= 5 && !cm.marcas.some(m_=>dAng(m_, s_.ang) < 1)).sort((p_,q_)=>dAng(p_.ang, esperado)-dAng(q_.ang, esperado));
+        if(cs.length) return cs[0]; return dAng(best, esperado) < 0.3*cm.S ? {ang: ((esperado % 360) + 360) % 360, virtual: true} : null; };   // o la tapa la aguja: marca virtual
+      const antes = buscar(cm.marcas[0] - cm.S), despues = buscar(cm.marcas[cm.marcas.length-1] + cm.S);
+      const variantes = [[antes, despues], [null, despues], [antes, null], [null, null]];
+      for(const [a_, d_] of variantes){ const marcas = cm.marcas.slice(), pos = cm.pos.slice(); let Nn = cm.N; if(a_){ marcas.unshift(a_.ang); for(let i=0;i<pos.length;i++) pos[i]++; pos.unshift(0); Nn++; } if(d_){ marcas.push(d_.ang); pos.push(Nn+1); Nn++; }
+        const span = ((marcas[marcas.length-1] - marcas[0]) % 360 + 360) % 360; if(span < 240 || span > 300) continue; /* un tensiómetro barre ~270°: una cadena parcial no sirve para rotular */ const unidad = (cal.vmax - cal.v0)/Nn; if(bonito(unidad)){ esc = {marcas, pos, N: Nn, S: cm.S, unidad, tipo:"grandes"}; break; } }
+    }
+    if(!esc){ const cn = cadenaMarcas(menores.concat(mayores).map(s_=>s_.ang), 0.6); if(cn && cn.N >= 20){ const span = ((cn.marcas[cn.marcas.length-1] - cn.marcas[0]) % 360 + 360) % 360; if(span >= 240 && span <= 300) esc = Object.assign(cn, {unidad: (cal.vmax-cal.v0)/cn.N, tipo:"chicas"}); } }
+    if(esc){ valor = valorEnEscala(best, esc, cal); metodo = esc.tipo === "grandes" ? `leí ${esc.marcas.length} marcas grandes de la escala en la foto` : `leí ${esc.marcas.length} marcas chicas de la escala en la foto`; if(valor == null) esc.fuera = true; }
+  }
+  if(valor == null){ valor = valorDeAngulo(best, cal); metodo = (esc && esc.fuera ? "la punta queda fuera de las marcas leídas; " : "no distinguí las marcas de la escala; ") + (cal.escalaManual ? "usé el 0 y el máximo que usted marcó" : "usé la escala de fábrica (0 abajo a la derecha, 100 abajo a la izquierda)"); }
+  const confianza = esc && !esc.fuera ? (esc.tipo === "grandes" ? .75 : .55) : (largo > .55 ? .45 : largo > .35 ? .3 : .15);
+  const a0 = esc && !esc.fuera ? (cal.sentido === "horario" ? esc.marcas[0] : esc.marcas[esc.marcas.length-1]) : cal.a0, a1 = esc && !esc.fuera ? (cal.sentido === "horario" ? esc.marcas[esc.marcas.length-1] : esc.marcas[0]) : cal.a1;
+  const dataURL = dibujar(c, ctx=>{ ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2*Math.PI); ctx.stroke(); ctx.fillStyle = "#ff2d55"; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, 2*Math.PI); ctx.fill();
+    if(esc && !esc.fuera){ ctx.fillStyle = esc.tipo === "grandes" ? "#ffd60a" : "#ffffff"; esc.marcas.forEach(a_=>{ const tt = a_*Math.PI/180; ctx.beginPath(); ctx.arc(cx + 0.965*R*Math.sin(tt), cy - 0.965*R*Math.cos(tt), esc.tipo === "grandes" ? 4 : 2.5, 0, 2*Math.PI); ctx.fill(); }); }
+    const th = best*Math.PI/180; ctx.strokeStyle = "#00e5ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 0.8*R*Math.sin(th), cy - 0.8*R*Math.cos(th)); ctx.stroke();
+    ctx.fillStyle = "#ffd60a"; ctx.font = "bold 16px sans-serif"; [[a0, String(cal.v0)], [a1, String(cal.vmax)]].forEach(([a_, t])=>{ const tt = a_*Math.PI/180; ctx.fillText(t, cx + 1.06*R*Math.sin(tt) - 8, cy - 1.06*R*Math.cos(tt) + 6); }); });
+  const u = cal.unidad || "cb";
+  return {valor, angulo: best, largo: Math.round(largo*100)/100, confianza, centro:{cx: Math.round(cx/w*1000)/1000, cy: Math.round(cy/h*1000)/1000, r: Math.round(R/Math.min(w, h)*1000)/1000, auto: !!auto, cubo: !!cubo},
+          escala: esc ? {tipo: esc.tipo, N: esc.N, a0: Math.round(a0*10)/10, a1: Math.round(a1*10)/10, S: Math.round(esc.S*100)/100, marcas: esc.marcas.map(a_=>Math.round(a_*10)/10), pos: esc.pos, fuera: !!esc.fuera} : null, marcas_vistas: {grandes: mayores.length, chicas: menores.length},
+          ms: Date.now()-t0, modelo:"aguja y escala por geometría · teléfono", preliminar:true, dataURL,
+          nota: valor==null ? `Aguja a ${best}°, fuera de la escala (${cal.v0} a ${Math.round(a0)}°, ${cal.vmax} a ${Math.round(a1)}°): toque el 0 y el máximo en la foto para enseñarle la escala, o teclee el valor.`
+                            : `Aguja a ${best}° → ${valor} ${u} (${metodo}; ${cubo ? "eje de la aguja encontrado" : auto ? "centro de la carátula" : "centro marcado por usted"}). Si no coincide, toque la punta de la aguja en la foto o teclee el valor.`};
 }
 // --- (3) pantalla digital: dígitos por OCR (lector de libreta)
 async function ocrlGenerar(file, task, max, max_new_tokens){                 // v41: Florence en el hilo aparte (o en el principal si no hay hilo); devuelve {gen, res, size}
@@ -3957,12 +4105,14 @@ function numeroDeTexto(t){ const m = String(t||"").replace(/,/g, ".").match(/-?\
 async function floresEstimar(file){
   const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const am = new Uint8Array(n), caf = new Uint8Array(n);
   for(let i=0;i<n;i++){ const [hh, s, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); if(hh >= 40 && hh <= 72 && s > .35 && v > .45) am[i] = 1; else if(hh >= 8 && hh <= 45 && s > .3 && v < .5) caf[i] = 1; }
-  const escala = w/1024; const flores = componentes(abrir3(am, w, h), w, h, 120*escala, n*0.25); let marcadas = 0;
-  flores.forEach(f=>{ let k = 0; for(let y=f.miny;y<=f.maxy;y++) for(let x=f.minx;x<=f.maxx;x++) if(caf[y*w+x]) k++; f.marca = k / f.area; if(f.marca > .035) { f.conMarca = true; marcadas++; } });
+  const escala = w/1024; const flores = componentes(abrir3(am, w, h), w, h, 120*escala, n*0.92); let marcadas = 0;   // v46: una flor grande de cerca también cuenta
+  flores.forEach(f=>{ let k = 0, kc = 0; const mx0 = f.minx + (f.maxx-f.minx)*.2, mx1 = f.maxx - (f.maxx-f.minx)*.2, my0 = f.miny + (f.maxy-f.miny)*.2, my1 = f.maxy - (f.maxy-f.miny)*.2;
+    for(let y=f.miny;y<=f.maxy;y++) for(let x=f.minx;x<=f.maxx;x++) if(caf[y*w+x]){ k++; if(x>=mx0 && x<=mx1 && y>=my0 && y<=my1) kc++; }
+    f.marca = k / f.area; f.marcaCentro = kc / f.area; if(f.marcaCentro > .02 || f.marca > .035) { f.conMarca = true; marcadas++; } });   // v46: la mordida del abejorro es una mancha café chica en el cono de anteras (centro de la flor)
   const pct = flores.length ? Math.round(1000*marcadas/flores.length)/10 : null;
   const dataURL = dibujar(c, ctx=>{ ctx.lineWidth = 2; flores.forEach(f=>{ ctx.strokeStyle = f.conMarca ? "#ff2d55" : "#00e5ff"; ctx.strokeRect(f.minx, f.miny, f.maxx-f.minx+1, f.maxy-f.miny+1); }); });
   return {flores: flores.length, con_marca: marcadas, pct, confianza: flores.length ? .35 : .1, modelo:"color y forma · teléfono", preliminar:true, dataURL,
-          nota: flores.length ? `${flores.length} flor${flores.length===1?"":"es"} amarilla${flores.length===1?"":"s"} y ${marcadas} con mancha café (${pct} %). Es una ayuda para contar, no un conteo: corrija lo que vea distinto.` : "No se distinguen flores amarillas de cerca: acérquese con las anteras visibles."};
+          nota: flores.length ? `${flores.length} flor${flores.length===1?"":"es"} amarilla${flores.length===1?"":"s"} y ${marcadas} con mancha café en las anteras (${pct} %). Es una ayuda para contar, no un conteo: corrija lo que vea distinto.` : "No distingo flores amarillas: acérquese con las anteras visibles y buena luz, o teclee el conteo."};
 }
 // --- ganchos en la app: lectura de sensor (trampa / aguja / pantalla), polinización (flores), punto de monitoreo (trampa)
 let leTel = null, poTel = null, plTelTrampa = null;
@@ -3976,25 +4126,41 @@ async function leAnalizar(f){
     let r = null, usar = null;
     if(s.tipo === "trampa"){ r = await trampaContar(f); if(r.conteo!=null){ usar = `Usar ${r.conteo}`; r.valor = r.conteo; } }
     else if(s.digital || !["tensiometro"].includes(s.tipo)){ const t = await ocrlTexto(f, m=>{ box.innerHTML = `<p class="small muted">${esc(m)}</p>`; }); const v = numeroDeTexto(t); r = {valor: v, texto: t, modelo:"dígitos por OCR · teléfono", preliminar:true, confianza: v!=null ? .5 : .1, nota: v!=null ? `Leí «${t.slice(0,40)}» → ${v}.` : `No encontré un número en la pantalla (leí «${t.slice(0,40)}»). Teclee el valor.`}; if(v!=null) usar = `Usar ${v}`; }
-    else { const cal = agujaCal(s.id); cal.unidad = s.unidad || "cb"; r = await agujaLeer(f, cal); r.cal = {v0:cal.v0, vmax:cal.vmax, a0:cal.a0, a1:cal.a1}; if(r.valor!=null) usar = `Usar ${r.valor}`; }
+    else { const cal = agujaCal(s.id); cal.unidad = s.unidad || "cb"; r = await agujaLeer(f, cal); r.cal = {v0:cal.v0, vmax:cal.vmax, a0:cal.a0, a1:cal.a1, sentido:cal.sentido, manual: !!cal.escalaManual}; if(r.valor!=null){ usar = `Usar ${r.valor}`; if(r.confianza >= .4 && !$("#le-valor").value){ $("#le-valor").value = String(r.valor); } } }
     leTel = r; visTarjeta(box, r, usar);
-    if(s.tipo === "tensiometro" && !s.digital) box.insertAdjacentHTML("beforeend", `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="inline-link" data-aguja="punta">Marcar la punta de la aguja</button><button class="inline-link" data-aguja="escala">Marcar el 0 y el máximo</button><button class="inline-link" data-aguja="centro">Marcar el centro</button></div><p class="small muted" id="le-aguja-ayuda"></p>`);
+    if(s.tipo === "tensiometro" && !s.digital) box.insertAdjacentHTML("beforeend", `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="inline-link" data-aguja="punta">Marcar la punta de la aguja</button><button class="inline-link" data-aguja="escala">Marcar el 0 y el máximo</button><button class="inline-link" data-aguja="centro">Marcar el centro</button><button class="inline-link" data-aguja="reiniciar">Escala de fábrica</button></div><p class="small muted" id="le-aguja-ayuda"></p>`);
   }catch(e){ box.innerHTML = `<p class="small muted">No se pudo leer en el teléfono (${esc(String(e.message||e).slice(0,90))}); el motor la lee con señal.</p>`; }
 }
 let agujaModo = null, agujaPuntos = [];
+function leMostrarValor(v, a){                                // v46: el valor marcado a mano se ve en la tarjeta, en el campo y en el botón "Usar"
+  if(leTel){ leTel.valor = v; leTel.manual = "punta"; leTel.angulo = a; }
+  $("#le-valor").value = String(v); const box = $("#le-foto-reco"); const p = box.querySelector("p.small"); if(p) p.innerHTML = `<b>Usted marcó:</b> aguja a ${Math.round(a)}° → <b>${v}</b> ${esc((leSensor()||{}).unidad || "cb")}. Ya quedó en el campo Valor.`;
+  let btn = box.querySelector("[data-usar]"); if(!btn){ const row = document.createElement("div"); row.className = "row"; row.style.cssText = "gap:8px;margin-top:6px"; row.innerHTML = `<button class="btn sec sm" data-usar>Usar ${esc(String(v))}</button>`; const img = box.querySelector("img"); if(img) img.insertAdjacentElement("afterend", row); else box.appendChild(row); } else btn.textContent = `Usar ${v}`;
+}
 $("#le-foto-reco").addEventListener("click", async e=>{
   const u = e.target.closest("[data-usar]"); if(u && leTel && leTel.valor!=null){ $("#le-valor").value = String(leTel.valor); toast("Valor tomado de la foto: revíselo antes de guardar"); return; }
-  const a = e.target.closest("[data-aguja]"); if(a){ agujaModo = a.dataset.aguja; agujaPuntos = []; $("#le-aguja-ayuda").textContent = agujaModo==="punta" ? "Toque la punta de la aguja en la foto." : agujaModo==="escala" ? "Toque el 0 de la escala y después el máximo." : "Toque el centro del cuadrante."; return; }
-  const img = e.target.closest("img"); if(img && agujaModo && leFoto){ const s = leSensor(); if(!s) return; const rect = img.getBoundingClientRect(); const fx = (e.clientX - rect.left)/rect.width, fy = (e.clientY - rect.top)/rect.height; const cal = agujaCal(s.id);
-    if(agujaModo==="centro"){ cal.cx = fx; cal.cy = fy; agujaGuardarCal(s.id, cal); agujaModo = null; toast("Centro marcado; vuelvo a leer"); }
-    else if(agujaModo==="punta"){ const a = anguloHorario(cal.cx*rect.width, cal.cy*rect.height, fx*rect.width, fy*rect.height); const v = valorDeAngulo(a, cal); if(v!=null){ $("#le-valor").value = String(v); toast(`Aguja a ${Math.round(a)}° → ${v}`); if(leTel) { leTel.valor = v; leTel.manual = "punta"; } } else toast("Esa punta queda fuera de la escala: marque el 0 y el máximo"); agujaModo = null; return; }
-    else { agujaPuntos.push(anguloHorario(cal.cx*rect.width, cal.cy*rect.height, fx*rect.width, fy*rect.height)); if(agujaPuntos.length < 2){ $("#le-aguja-ayuda").textContent = "Ahora toque el máximo de la escala."; return; } cal.a0 = Math.round(agujaPuntos[0]); cal.a1 = Math.round(agujaPuntos[1]); agujaGuardarCal(s.id, cal); agujaModo = null; toast(`Escala guardada para ${s.nombre}: 0 a ${cal.a0}°, ${cal.vmax} a ${cal.a1}°`); }
-    leAnalizar(leFoto); }
+  const a = e.target.closest("[data-aguja]"); if(a){ agujaModo = a.dataset.aguja; agujaPuntos = []; $("#le-aguja-ayuda").textContent = agujaModo==="punta" ? "Toque la punta de la aguja en la foto." : agujaModo==="escala" ? "Toque el 0 de la escala y después el máximo." : agujaModo==="reiniciar" ? "" : "Toque el centro del cuadrante.";
+    if(agujaModo==="reiniciar"){ const s_ = leSensor(); if(s_){ agujaGuardarCal(s_.id, Object.assign({}, AGUJA_DEF)); toast("Escala del tensiómetro restablecida; vuelvo a leer"); agujaModo = null; if(leFoto) leAnalizar(leFoto); } } return; }
+  const img = e.target.closest("img"); if(img && agujaModo && leFoto){ const s_ = leSensor(); if(!s_) return; const rect = img.getBoundingClientRect(); const fx = (e.clientX - rect.left)/rect.width, fy = (e.clientY - rect.top)/rect.height; const cal = agujaCal(s_.id);
+    const cen = leTel && leTel.centro ? leTel.centro : {cx:.5, cy:.5}; const ccx = (cal.cx != null ? cal.cx : cen.cx)*rect.width, ccy = (cal.cy != null ? cal.cy : cen.cy)*rect.height;
+    if(agujaModo==="centro"){ cal.cx = fx; cal.cy = fy; agujaGuardarCal(s_.id, cal); agujaModo = null; toast("Centro marcado; vuelvo a leer"); leAnalizar(leFoto); return; }
+    if(agujaModo==="punta"){ const ang = anguloHorario(ccx, ccy, fx*rect.width, fy*rect.height); const v = (leTel && leTel.escala && !leTel.escala.fuera && !cal.escalaManual) ? valorEnEscala(ang, Object.assign({}, leTel.escala, {S: leTel.escala.S || 5}), cal) : valorDeAngulo(ang, cal); if(v!=null){ leMostrarValor(v, ang); toast(`Aguja a ${Math.round(ang)}° → ${v}`); } else toast("Esa punta queda fuera de la escala: marque el 0 y el máximo"); agujaModo = null; return; }
+    agujaPuntos.push(anguloHorario(ccx, ccy, fx*rect.width, fy*rect.height)); if(agujaPuntos.length < 2){ $("#le-aguja-ayuda").textContent = "Ahora toque el máximo de la escala."; return; }
+    cal.a0 = Math.round(agujaPuntos[0]); cal.a1 = Math.round(agujaPuntos[1]);
+    { const cw = ((cal.a1 - cal.a0) % 360 + 360) % 360, ccw = ((cal.a0 - cal.a1) % 360 + 360) % 360; const okcw = cw >= 150 && cw <= 330, okccw = ccw >= 150 && ccw <= 330;   // un cuadrante barre 180–300°
+      if(okcw && !okccw) cal.sentido = "horario"; else if(okccw && !okcw) cal.sentido = "antihorario"; else if(leTel && leTel.angulo != null){ const dcw = ((leTel.angulo - cal.a0) % 360 + 360) % 360; cal.sentido = dcw <= cw ? "horario" : "antihorario"; } }
+    cal.escalaManual = true; agujaGuardarCal(s_.id, cal); agujaModo = null; toast(`Escala guardada para ${s_.nombre}: ${cal.v0} a ${cal.a0}°, ${cal.vmax} a ${cal.a1}° (${cal.sentido})`); leAnalizar(leFoto); }
 });
 async function poAnalizar(f){
   poTel = null; const box = $("#po-foto-reco"); if(!box || !f) return; box.hidden = false; box.innerHTML = `<p class="small muted">Mirando las flores en el teléfono…</p>`;
-  try{ const r = await floresEstimar(f); poTel = r; visTarjeta(box, r, r.pct!=null ? `Usar ${r.flores} flores · ${r.con_marca} con marca` : null); }
-  catch(e){ box.innerHTML = `<p class="small muted">No se pudo mirar en el teléfono (${esc(String(e.message||e).slice(0,80))}).</p>`; }
+  try{ const r = await floresEstimar(f);
+    // v46: si el modelo de fotos está, confirma que la foto es una flor (y no una hoja o un fruto) antes de proponer el conteo
+    if(fotolDisponible()){ try{ const fr = await fotoReducida(f, 1024); const et = ["a close-up photo of a yellow tomato flower with visible anthers", "a green leaf of a plant", "a tomato fruit", "a person, tool or object, not a plant"];
+        const res = fotol.pipe && fotol.pipe.worker ? await wkRpc({cmd:"clasificar", blob: await aBlob(fr), etiquetas: et, max:1024}) : await fotol.pipe(typeof fr==="string" ? fr : URL.createObjectURL(fr), et);
+        const pf = (res||[]).find(x=>x.label===et[0]); r.es_flor = pf ? +pf.score.toFixed(2) : null; if(r.es_flor != null && r.es_flor < 0.35){ r.nota = `No parece una flor (el modelo de fotos ve ${(res||[]).sort((a_,b_)=>b_.score-a_.score)[0].label.replace(/^a /,"")}, ${Math.round(r.es_flor*100)} % de flor). ` + r.nota; r.pct = null; } }catch(e){} }
+    poTel = r; visTarjeta(box, r, r.pct!=null ? `Usar ${r.flores} flores · ${r.con_marca} con marca` : null);
+    if(r.pct!=null && r.flores >= 1){ $("#po-flores").value = String(r.flores); $("#po-marca").value = String(r.con_marca); $("#po-flores").dispatchEvent(new Event("input")); $("#po-marca").dispatchEvent(new Event("input")); toast(`Conteo tomado de la foto: ${r.flores} flores, ${r.con_marca} con marca. Corríjalo si no coincide.`); }
+  }catch(e){ box.innerHTML = `<p class="small muted">No se pudo mirar en el teléfono (${esc(String(e.message||e).slice(0,80))}).</p>`; }
 }
 $("#po-foto-reco").addEventListener("click", e=>{ const u = e.target.closest("[data-usar]"); if(u && poTel && poTel.pct!=null){ $("#po-flores").value = String(poTel.flores); $("#po-marca").value = String(poTel.con_marca); $("#po-flores").dispatchEvent(new Event("input")); $("#po-marca").dispatchEvent(new Event("input")); toast("Conteo tomado de la foto: revíselo"); } });
 async function plAnalizarTrampa(f){
@@ -4005,7 +4171,8 @@ async function plAnalizarTrampa(f){
   catch(e){ box.innerHTML = `<p class="small muted">No se pudo contar en el teléfono (${esc(String(e.message||e).slice(0,80))}).</p>`; }
 }
 $("#pl-foto-trampa").addEventListener("click", e=>{ const u = e.target.closest("[data-usar]"); if(u && plTelTrampa && plTelTrampa.conteo!=null){ const inp = $(`#pl-medidas input[data-plk="${plTelTrampa.medida}"]`); if(inp){ inp.value = String(plTelTrampa.conteo); inp.dispatchEvent(new Event("input")); toast("Conteo de la trampa tomado de la foto: revíselo"); } } });
-window.__engramVision = {trampaContar, agujaLeer, floresEstimar, valorDeAngulo, anguloHorario};
+window.__engramVision = {trampaContar, agujaLeer, floresEstimar, valorDeAngulo, anguloHorario, anguloDeValor, agujaCentro, agujaCubo, cadenaMarcas, valorEnEscala, veredictoHTML, AGUJA_DEF};
+window.__engramLib = {show: libShow, lineas: ()=>libLines, fuente: f=>{ libFuente = f; }, interpretar: libInterpretar, razon: ()=>libRazon};   // v46: ganchos de prueba de la libreta (consola)
 // ---------------------------------------------------------------- clasificador propio en el teléfono (ONNX entrenado en el RIG) · visión v1 · PRELIMINAR
 // El cerebro (tabla `cerebro`, fotos.clasificador) dice si hay un clasificador propio publicado: su URL (modelos/plagas_v1.onnx en la misma carpeta
 // de la app), sus clases y su preprocesado. La app lo baja una vez (con señal), lo guarda (el service worker cachea lo propio) y lo corre con
@@ -4062,7 +4229,7 @@ async function clasifPredecir(fuente){
 function clasifTxt(r){ return `Clasificador propio ${r.version}: ${r.nombre} ${Math.round(r.confianza*100)} %` + (r.top[1] ? ` · o ${r.top[1].nombre} ${Math.round(r.top[1].score*100)} %` : "") + ` (${r.segundos} s; entrenado en su RIG, PRELIMINAR).`; }
 async function clasifAnexar(reco, fuente, box){           // al lado de la sospecha del modelo general: lo que dice el clasificador propio (si hay)
   if(!reco || !clasifDisponible()) return reco;
-  try{ const r = await clasifPredecir(fuente); reco.propio = {plaga: r.plaga, confianza: r.confianza, top: r.top, version: r.version}; if(box) box.textContent += " " + clasifTxt(r); }
+  try{ const r = await clasifPredecir(fuente); reco.propio = {plaga: r.plaga, confianza: r.confianza, top: r.top, version: r.version, segundos: r.segundos}; if(box) box.textContent += " " + clasifTxt(r); }
   catch(e){ if(box) box.textContent += ` (clasificador propio: ${String(e.message||e).slice(0,60)})`; }
   return reco;
 }
