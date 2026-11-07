@@ -644,7 +644,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="kv" id="ss-razon-kv"></div>
     <div class="progress" id="ss-razon-prog" hidden><i></i></div>
     <p class="small muted" id="ss-razon-txt"></p>
-    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~300 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~900 MB)</button><button class="btn sec" data-razl="qwen15f32">Qwen2.5 1.5B estable · f32 (~1 GB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
+    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~300 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~900 MB)</button><button class="btn sec" data-razl="qwen15f32">Qwen2.5 1.5B estable · f32 (~1 GB)</button><button class="btn sec" data-razl="qwen3_17">Qwen3 1.7B · nuevo (~1.1 GB)</button><button class="btn sec" data-razl="qwen25_3b">Qwen2.5 3B · potente, experimental (~1.9 GB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
     <p class="small" id="ss-razon-prueba" hidden></p>
     <p class="note">Descárguelo desde la app instalada en la pantalla de inicio (no desde el navegador: son memorias separadas). Corre en el procesador gráfico del teléfono (WebGPU, con el motor WebLLM, que sube los pesos por tandas): iPhone 15 Pro o más nuevo con iOS 26, Android con Chrome al día y procesador gráfico compatible, y computadoras con Chrome. Sin procesador gráfico no hay razonador en el teléfono (el camino por WASM pide demasiada memoria y suele cerrar la app): las notas se entienden por reglas, sin señal, y el motor las entiende con señal. Si el sistema cierra la app mientras carga, la app lo recuerda y no vuelve a intentarlo sola. Después de descargar, toque <b>Probar</b>: si responde, ya funciona sin señal.</p>
     <p class="note">Un modelo de lenguaje chico que vive en el teléfono: entiende las notas de voz y de libreta en registros (mejor que las reglas), resume el recorrido de plagas y responde preguntas sobre el lote con lo que la app tiene guardado (Hoy → "Pregúntele al teléfono"). Dos compuertas siempre: ningún número que no esté en los datos y nunca productos ni dosis. Con señal, el motor vuelve a entender cada nota con el modelo grande y mide el acuerdo: así se sabe cuánto confiar en el teléfono. PRELIMINAR.</p>
@@ -2159,7 +2159,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "46 · 7 nov 2026";
+const APP_VERSION = "47 · 7 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2239,7 +2239,7 @@ function renderVozPend(){
   $("#voz-pend-list").innerHTML = lst.map(t=>{
     const l = LOTES.find(x=>idLote(x)===t.lote_id); const cuando = fmtDT(t.creado_en); const np = (t.registros_propuestos||[]).length;
     if(t.estado==="error") return `<div class="unp"><span class="ln">!</span><div><div>Nota de voz del ${cuando}${l ? " · " + esc(l.nombre) : ""}: no se pudo transcribir.</div><div class="m">${esc(t.error||"")} · <button class="inline-link" data-tdesc="${esc(t.id)}">quitar</button></div></div></div>`;
-    return `<button class="optrow" data-trans="${esc(t.id)}"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>${/whatsapp/i.test(t.modelo||"") ? "WhatsApp" : "Nota"} del ${cuando}${l ? " · " + esc(l.nombre) : ""}</b><span class="s">«${esc((t.texto||"").slice(0,90))}${(t.texto||"").length>90?"…":""}»${np ? ` · ${np} registro${np===1?"":"s"} propuesto${np===1?"":"s"}` : ""}</span></span><span class="chev">›</span></button>`;
+    return `<button class="optrow" data-trans="${esc(t.id)}"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>${/whatsapp/i.test(t.modelo||"") ? "WhatsApp" : /video/i.test(t.modelo||"") ? "Video" : "Nota"} del ${cuando}${l ? " · " + esc(l.nombre) : ""}</b><span class="s">«${esc((t.texto||"").slice(0,90))}${(t.texto||"").length>90?"…":""}»${np ? ` · ${np} registro${np===1?"":"s"} propuesto${np===1?"":"s"}` : ""}</span></span><span class="chev">›</span></button>`;
   }).join("");
 }
 function abrirTranscripcion(id){
@@ -2250,8 +2250,8 @@ function abrirTranscripcion(id){
   libLines = normLines(t.lineas); libProps = normRecs(t.registros_propuestos); libUnparsed = normUnp(t.sin_interpretar); libModelo = t.modelo || "whisper";
   libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = JSON.parse(JSON.stringify(libProps));
   const porTexto = !t.archivo && /whatsapp texto/i.test(t.modelo || "");
-  $("#sheet-title").textContent = porTexto ? "Mensaje de WhatsApp" : "Nota de voz";
-  $("#lib-banner").textContent = porTexto ? `Lo que escribió por WhatsApp el ${fmtDT(t.creado_en)}. Corrija lo que haga falta y luego "Interpretar".` : `Lo que oí en su nota del ${fmtDT(t.creado_en)}${t.duracion_s ? ` (${fmtT(t.duracion_s)})` : ""}. Corrija lo que no coincida con lo que dijo y luego "Interpretar".`;
+  const deVideo = /video/i.test(t.modelo || ""); $("#sheet-title").textContent = porTexto ? "Mensaje de WhatsApp" : deVideo ? "Lo que dijo en el video" : "Nota de voz";
+  $("#lib-banner").textContent = porTexto ? `Lo que escribió por WhatsApp el ${fmtDT(t.creado_en)}. Corrija lo que haga falta y luego "Interpretar".` : `Lo que oí en su ${deVideo ? "video" : "nota"} del ${fmtDT(t.creado_en)}${t.duracion_s ? ` (${fmtT(t.duracion_s)})` : ""}. Corrija lo que no coincida con lo que dijo y luego "Interpretar".`;
   $("#lib-fuente-sum").textContent = porTexto ? "El mensaje" : "Escuchar la nota"; $("#lib-img2").hidden = true; const au = $("#lib-audio"); au.hidden = porTexto; au.removeAttribute("src");
   $("#lib-leido-eyebrow").textContent = "Lo que oí"; $("#lib-leido-ayuda").textContent = "Corrija cualquier palabra mal oída antes de interpretar. El punto ámbar marca un tramo poco claro; al editar una frase, queda confirmada.";
   if(t.archivo && MODO==="nube"){ urlFirmada(t.archivo).then(u=>{ au.src = u; }).catch(()=>{ au.hidden = true; }); }
@@ -2533,6 +2533,24 @@ $("#lib-addline").addEventListener("click", ()=>{ libLines.push({texto:"", confi
 
 // --- intérprete local por reglas (respaldo sin lector / sin señal)
 const normTxt = s => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+// v47: vocabulario del campo (sin acentos). Lo que el oído del teléfono escribe parecido (tison, pulgones, paratriosa) se corrige por distancia de edición
+// antes de interpretar; solo palabras de 5+ letras y a distancia 1 (2 si tienen 9+ letras), nunca una palabra que ya es del vocabulario o que ya clasifica.
+const VOCAB_CAMPO = ["tizon","tizon tardio","mildiu","roya","alternaria","rizoctonia","erwinia","fusarium","botrytis","antracnosis","cenicilla","oidio","bacteriosis","virosis","nematodos","pudricion","marchitez","sarna","costra",
+  "pulgon","pulgones","paratrioza","psilido","trips","minador","palomilla","mosquita","mosca blanca","arana roja","acaros","chicharrita","gusano","gusanos","picudo","larvas","trozador","barrenador","babosa","caracol","chinche","gallina ciega","diabrotica","hormigas","tuza",
+  "helada","granizo","encharcamiento","sequia","floracion","brotacion","tuberizacion","emergencia","madurez","senescencia","cosecha","riego","goteo","aspersion","gravedad","pivote","fertilizante","fungicida","insecticida","herbicida","bioestimulante",
+  "esquina","orilla","cabecera","manchon","severidad","sudeste","sureste","noreste","noroeste","suroeste","sudoeste","norte","parcela","lote","hectarea","quintales","toneladas","surcos","camas","plantas","hojas","frutos","tallo","raices"];
+const VOCAB_SET = new Set(VOCAB_CAMPO.flatMap(v=>v.split(" ")).flatMap(v=>[v, v.endsWith("s") ? v : (/[aeiou]$/.test(v) ? v + "s" : v + "es")]));
+// palabras corrientes que nunca se "corrigen" (horas no es hojas)
+const VOCAB_STOP = new Set("horas hora litros kilos gramos metros hectareas sacos bultos bolsas cajas semana semanas meses ayer manana tarde noche lluvia llovio llueve agua viento calor tierra suelo campo siembra sembre sembramos trabajo gente compre pague falta tengo tenemos hicimos pusimos estaba estan estuvo todas todos mucho mucha poco poquito bastante grande grandes chico chicos nuevo nueva viejo otra otro parte lado medio mitad arriba abajo dentro fuera cerca lejos antes despues luego cuando donde porque entonces tambien ahora siempre nunca verde verdes amarillo amarilla blanco negro rojo marron cafe seco secos mojado humedo humeda fuerte fuertes leve leves grave bueno buena malo mala quedo quedaron salio salieron empezo termino hecho hecha veces primera segunda tercera ultima proxima misma mismo sobre entre hasta desde contra tambien gracias hombre mujer senor dona hijos padre madre dinero pesos dolares camion tractor bomba manguera tubos riegos rieguen plantas planta surco camas tomate tomates papa papas maiz frijol chile cebolla fresa fresas aguacate limon trigo cebada sorgo soja soya alfalfa pasto avena".split(" "));
+function distEdicion(a, b){ if(Math.abs(a.length-b.length) > 2) return 9; const m = a.length, n = b.length; let prev = Array.from({length:n+1}, (_, j)=>j), cur = new Array(n+1);
+  for(let i=1;i<=m;i++){ cur[0] = i; for(let j=1;j<=n;j++){ cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1]===b[j-1] ? 0 : 1)); } [prev, cur] = [cur, prev]; } return prev[n]; }
+function corregirVocab(t){
+  const cambios = []; const out = t.replace(/[a-z]{5,}/g, w => { if(VOCAB_SET.has(w) || VOCAB_STOP.has(w)) return w; let mejor = null, md = 9;
+    for(const v of VOCAB_SET){ if(v.length < 5) continue; const d = distEdicion(w, v); if(d < md){ md = d; mejor = v; } }
+    if(mejor && md <= (w.length >= 9 ? 2 : 1)){ cambios.push([w, mejor]); return mejor; } return w; });
+  return {texto: out, cambios};
+}
+
 // Números y unidades dichos de palabra (notas de voz): "seis horas" -> "6 h", "dos litros por hectárea" -> "2 l/ha", "hora y media" -> "1.5 h",
 // "ciento veinte kilos" -> "120 kg", "veinticinco por ciento" -> "25 %", "dos punto cinco" -> "2.5". Se aplica antes de interpretar; "lo leído" conserva el texto original.
 const NUM_UNI = {cero:0, uno:1, dos:2, tres:3, cuatro:4, cinco:5, seis:6, siete:7, ocho:8, nueve:9, diez:10, once:11, doce:12, trece:13, catorce:14, quince:15, dieciseis:16, diecisiete:17, dieciocho:18, diecinueve:19, veinte:20, veintiun:21, veintiuno:21, veintiuna:21, veintidos:22, veintitres:23, veinticuatro:24, veinticinco:25, veintiseis:26, veintisiete:27, veintiocho:28, veintinueve:29, treinta:30, cuarenta:40, cincuenta:50, sesenta:60, setenta:70, ochenta:80, noventa:90, cien:100, ciento:100, doscientos:200, doscientas:200, trescientos:300, trescientas:300, cuatrocientos:400, cuatrocientas:400, quinientos:500, quinientas:500, seiscientos:600, seiscientas:600, setecientos:700, setecientas:700, ochocientos:800, ochocientas:800, novecientos:900, novecientas:900};
@@ -2578,17 +2596,17 @@ function parseFecha(t){
   if((m = t.match(/\b(\d{1,2})\s*(?:de\s*)?(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*\b/))){ return {iso: `${hoy.getFullYear()}-${String(MESES[m[2]]).padStart(2,"0")}-${String(+m[1]).padStart(2,"0")}`, duda:null}; }
   return {iso:null, duda:"sin fecha: se usó la de hoy"};
 }
-const OBS_MAP = [[/tizon|manch|hongo|enferm|roya|alternaria|rizoc|erwinia|pudric|mildiu/,"enfermedad"],[/plaga|gusano|mosca|pulg|paratrioza|trips|minador|palomilla|arana|acaro|chicharr|larva|picudo/,"plaga"],[/helad|hielo|escarcha/,"helada"],[/graniz/,"granizo"],[/charco|encharc|inund|anegad|agua estancada/,"encharcamiento"],[/falta de agua|\bseca\b|sequia|estres hidrico|marchit/,"falta de agua"],[/emerg|nacen|florac|\bflor\b|tuberiz|senesc|brot|amacoll|espig|llenado|madur/,"fenología"]];
+const OBS_MAP = [[/tizon|manchas?\b|manchad|hongo|enferm|roya|alternaria|rizoc|erwinia|pudric|mildiu|fusari|botryt|moho|antracn|cenicilla|oidio|bacteri|virus|viros|sarna|costra|pata negra|pie negro|damping|necros|quemad|clorosis|amarillam|manchon\w* amarill/,"enfermedad"],[/plaga|gusano|mosca|mosquita|pulg|paratrioza|psilid|trips|minador|palomilla|arana|acaro|chicharr|larva|picudo|trozador|barrenador|babosa|caracol|chinche|gallina ciega|diabrotica|hormiga|nematod|tuza|raton|rata\b|conejo|pajaro|venado|jabali/,"plaga"],[/helad|hielo|escarcha/,"helada"],[/graniz/,"granizo"],[/charco|encharc|inund|anegad|agua estancada/,"encharcamiento"],[/falta de agua|\bseca\b|sequia|estres hidrico|marchit/,"falta de agua"],[/emerg|nacen|florac|\bflor\b|tuberiz|senesc|brot|amacoll|espig|llenado|madur|cuaj|fructific/,"fenología"]];   // v47: más enfermedades, plagas y daños
 const RE_HORAS = /(\d+(?:[.,]\d+)?)\s*(hs?|hrs?|horas?)\b/, RE_DOSIS = /(\d+(?:[.,]\d+)?)\s*(kg\/ha|l\/ha|lt\/ha|g\/ha|ml\/ha|kg|lts?|l)\b/, RE_FECHA = /\b\d{1,2}[\/\-.]\d{1,2}(?:[\/\-.]\d{2,4})?\b/, RE_LOTE = /\b(?:p|l|lote|parcela)\s?-?(\d{1,3})\b/;
 function eventClass(t){ if(/cosech|\brend|t\/ha|\bton\b|tonelad|\bsacos|\bbultos/.test(t)) return "cosecha"; if(/\bfert|\bfung|\binsect|\bherb|\bbioest|\baplic|kg\/ha|l\/ha|lt\/ha|g\/ha|ml\/ha|\bdosis|\bkg\b|\blts?\b|\burea\b|\babono/.test(t)) return "aplic"; if(/\brieg|\brego\b|\bregue\b|\basp\b|aspersion|goteo|gravedad|pivote/.test(t) || RE_HORAS.test(t)) return "riego"; if(/siembra|sembr|trasplant|plant[eo]\b/.test(t)) return "siembra"; if(OBS_MAP.some(([re])=>re.test(t))) return "obs"; return null; }
 function splitEvents(raw){           // "13/10 riego 6 hs y fert 50 kg/ha" -> dos eventos de tipo distinto; "manchas y gusanos" se queda junto
   const prot = raw.replace(/(\d),(\d)/g, "$1§$2");   // protege la coma decimal (0,5) antes de separar
   const parts = prot.split(/\s*(?:;|\+|,|\by\b)\s*/i).map(x=>x.replace(/§/g, ",").trim()).filter(Boolean); if(parts.length < 2) return [raw];
-  const classes = parts.map(x=>eventClass(normTxt(x))); if(classes.some(c=>!c) || new Set(classes).size !== classes.length) return [raw];
+  const classes = parts.map(x=>eventClass(corregirVocab(normTxt(x)).texto)); if(classes.some(c=>!c) || new Set(classes).size !== classes.length) return [raw];
   const date = (raw.match(RE_FECHA)||[""])[0]; return parts.map((x,i)=> i===0 || RE_FECHA.test(x) || !date ? x : `${date} ${x}`);
 }
 function interpretOne(raw, n, l, leidoFull){
-  const t = normTxt(raw), dudasLinea = l.dudas.slice(), low = l.confianza < .8;
+  const corr = corregirVocab(normTxt(raw)); const t = corr.texto, dudasLinea = l.dudas.slice(), low = l.confianza < .8;   // v47: "tison" -> "tizon" antes de clasificar
   const esRecordatorio = /^(ver|revisar|checar|chequear|pendiente|comprar|pedir|llamar|recordar|ojo|falta|hay que|preguntar)\b/.test(t) || /la otra semana|la proxima|\bmanana\b|proxim/.test(t);
   const fecha = parseFecha(t), cls = eventClass(t), obs = OBS_MAP.find(([re])=>re.test(t));
   const esRiego = cls==="riego" || /\brieg|\brego\b|\bregue\b|\basp\b|aspersion|goteo|gravedad|pivote/.test(t) || RE_HORAS.test(t);
@@ -2617,10 +2635,12 @@ function interpretOne(raw, n, l, leidoFull){
     if(esSiembra && !obs){ base.que = "fenología"; base.donde = "toda la parcela"; base.sev = "0"; notas.push("siembra o trasplante: fija el inicio de la etapa del lote"); }
     else {
       base.que = obs ? obs[1] : "fenología";
-      if(/orilla|borde|cabecera|esquina/.test(t)) base.donde = "la orilla"; else if(/toda|todo el lote|general|parej/.test(t)) base.donde = "toda la parcela"; else if(/manch/.test(t)) base.donde = "un manchón"; else { base.donde = "un manchón"; base.dudas.push("donde"); notas.push("no dice dónde: se supuso un manchón"); }
-      const sv = t.match(/sev(?:eridad)?\s*[:.]?\s*(\d)/); if(sv) base.sev = sv[1]; else if(/fuerte|grave|severo|mucho/.test(t)) base.sev = "4"; else if(/leve|poco|incipiente/.test(t)) base.sev = "1"; else { base.sev = "1"; base.dudas.push("sev"); notas.push("no dice la severidad: se puso 1"); }
+      if(/orilla|borde|cabecera|esquina|rincon|\bpunta\b|cabezal/.test(t)) base.donde = "la orilla"; else if(/toda|todo el lote|general|parej/.test(t)) base.donde = "toda la parcela"; else if(/manch/.test(t)) base.donde = "un manchón"; else { base.donde = "un manchón"; base.dudas.push("donde"); notas.push("no dice dónde: se supuso un manchón"); }
+      const sv = t.match(/sev(?:eridad)?\s*[:.]?\s*(\d)/); if(sv) base.sev = sv[1]; else if(/fuerte|grave|severo|mucho|muchisim|lleno|plagado|invadid/.test(t)) base.sev = "4"; else if(/bastante|regular|\bmedi[oa]\b|varios|varias/.test(t)) base.sev = "3"; else if(/leve|poco|poqu|apenas|incipiente|unos cuantos|unas cuantas|aislad/.test(t)) base.sev = "1"; else { base.sev = "1"; base.dudas.push("sev"); notas.push("no dice la severidad: se puso 1"); }
     }
   }
+  if(corr.cambios.length) notas.push("entendí " + corr.cambios.map(([a_, b_])=>`«${a_}» como «${b_}»`).join(", "));
+  { const lugar = t.match(/\b(esquina|rincon|orilla|borde|cabecera|cabezal|lado|punta|centro|mitad|parte|zona|sector)\b[^,.;]{0,12}?\b(sudeste|sureste|suroeste|sudoeste|noreste|noroeste|norte|sur|este|oeste|alta|baja|de arriba|de abajo|izquierd\w*|derech\w*)\b/); if(lugar && base.tipo === "observacion") notas.push(`lugar dicho: ${lugar[0]}`); }
   if(dudasLinea.length) notas.push(...dudasLinea);
   if(base.lote){ const cur = (LOTES[lotIdx].nombre.match(/\d+/)||[""])[0], ln = (base.lote.match(/\d+/)||[""])[0]; if(cur && ln && cur!==ln) notas.push(`la línea dice ${base.lote}: se guardaría en el lote actual (${LOTES[lotIdx].nombre})`); }
   base.nota = notas.join(" · "); return {reg: withDefaults(base)};
@@ -3285,10 +3305,10 @@ function veredictoHTML(r, l, ctx){                       // v46: una frase, con 
   else if(p && p.confianza >= 0.40){ const s2 = p.top && p.top[1]; principal = `posiblemente <b>${esc(plNombre(l, p.plaga))}</b> (${Math.round(p.confianza*100)} %)${s2 && s2.score >= 0.25 ? ` o ${esc(s2.nombre || plNombre(l, s2.clave))} (${Math.round(s2.score*100)} %)` : ""}`; clave = p.plaga; }
   else if(t0 && t0.general && t0.score >= 0.45){ principal = `no veo una plaga: parece ${esc(GENERAL_TXT[t0.general] || t0.general)}`; }
   else if(t0 && t0.plaga && t0.score >= 0.50){ principal = `puede ser <b>${esc(nomGen(t0))}</b> (${Math.round(t0.score*100)} %, modelo general)`; clave = t0.plaga; }
-  else principal = "no reconozco una plaga con confianza";
+  else { principal = "no reconozco una plaga con confianza"; det.length = 0; }                    // v47: sin reconocimiento no hay porcentajes que mostrar (ruido)
   const aviso = ctx.contando && clave && clave !== ctx.contando ? ` <b>Ojo:</b> usted está contando ${esc(plNombre(l, ctx.contando))}.` : "";
   const donde = r.cuadros ? ` en ${r.cuadros} cuadros del video` : "";
-  return `El teléfono ve${donde}: ${principal}.${aviso} <span class="muted">PRELIMINAR; el motor y su agrónomo confirman.</span> <details class="small muted" style="display:inline-block"><summary style="cursor:pointer">detalles</summary>${esc(det.join(" · "))}</details>`;
+  return `El teléfono ve${donde}: ${principal}.${aviso} <span class="muted">PRELIMINAR; el motor y su agrónomo confirman.</span>` + (det.length ? ` <details class="small muted" style="display:inline-block"><summary style="cursor:pointer">detalles</summary>${esc(det.join(" · "))}</details>` : "");
 }
 function fotolTexto(r, l){
   if(!r) return ""; const nombre = r.plaga ? plNombre(l, r.plaga) : ({hoja_sana:"una hoja sana", trampa:"una trampa", suelo:"suelo", fruto:"un fruto sin plaga", otro:"algo que no es planta"})[r.general] || "no se distingue";
@@ -3560,7 +3580,9 @@ const RAZL_MODELOS = {
   qwen05: {id:"onnx-community/Qwen2.5-0.5B-Instruct", mlc:"Qwen2.5-0.5B-Instruct-q4f16_1-MLC", mb:300, txt:"Qwen2.5 0.5B · rápido"},   // WebLLM q4f16_1 ~300 MB · respaldo ORT: q8 ~510 MB / q4 ~750 MB
   qwen15: {id:"onnx-community/Qwen2.5-1.5B-Instruct", mlc:"Qwen2.5-1.5B-Instruct-q4f16_1-MLC", mb:900, txt:"Qwen2.5 1.5B · mejor", gpu:true},
   qwen15f32: {id:"onnx-community/Qwen2.5-1.5B-Instruct", mlc:"Qwen2.5-1.5B-Instruct-q4f32_1-MLC", mb:1000, txt:"Qwen2.5 1.5B · estable (f32)", gpu:true, f32:true},   // v43: sin aritmética de 16 bits -> sin los "!!!!!" por desborde
-  llama1: {id:"onnx-community/Llama-3.2-1B-Instruct",  mlc:"Llama-3.2-1B-Instruct-q4f16_1-MLC",  mb:700, txt:"Llama 3.2 1B", gpu:true, oculto:true}   // v41: sin botón (en iPhone no terminaba de bajar); queda por si hay una conf guardada
+  llama1: {id:"onnx-community/Llama-3.2-1B-Instruct",  mlc:"Llama-3.2-1B-Instruct-q4f16_1-MLC",  mb:700, txt:"Llama 3.2 1B", gpu:true, oculto:true},   // v41: sin botón (en iPhone no terminaba de bajar); queda por si hay una conf guardada
+  qwen3_17: {id:"Qwen3-1.7B-q4f16_1-MLC", mlc:"Qwen3-1.7B-q4f16_1-MLC", mb:1100, txt:"Qwen3 1.7B · nuevo (razona mejor)", gpu:true, qwen3:true},          // v47: generación siguiente, mismo tamaño que el 1.5B; sin el "pensamiento" largo
+  qwen25_3b: {id:"Qwen2.5-3B-Instruct-q4f16_1-MLC", mlc:"Qwen2.5-3B-Instruct-q4f16_1-MLC", mb:1900, txt:"Qwen2.5 3B · potente (experimental)", gpu:true, experimental:true}   // v47: el doble de pesos; en iPhone puede quedarse sin memoria (queda anotado y no se repite)
 };
 // v38: WebLLM (mlc.ai) = motor de lenguaje para WebGPU que sube los pesos a la GPU por tandas desde la caché del navegador (sin copiar el modelo
 // entero en memoria, que es lo que tumba la app en iPhone). Biblioteca del CDN (el service worker la guarda), pesos de huggingface.co/mlc-ai,
@@ -3576,7 +3598,9 @@ async function razlCargarWebLLM(m, avisarProg){
     cargaGuard({que:"razon", modelo: id, device:"webllm", dtype: id.includes("q4f32") ? "q4f32_1" : "q4f16_1"});
     try{
       const engine = await lib.CreateMLCEngine(id, {initProgressCallback: r => { const pr = Math.round((r && r.progress || 0)*100); avisarProg(pr, (r && r.text || "").slice(0,70)); cargaProgreso({status: pr >= 100 ? "done" : "progress", progress: pr, file:"webllm"}); }, logLevel:"WARN"});
-      cargaFin(); razl.engine = engine; razl.pipe = null; razl.motor = "webllm"; razl.dtype = id.includes("q4f32") ? "q4f32_1" : "q4f16_1"; razl.mlc = id; diagAnotar(razl.diag, `cargado con webllm (${id})`); return true;
+      razl.engine = engine; razl.pipe = null; razl.motor = "webllm"; razl.dtype = id.includes("q4f32") ? "q4f32_1" : "q4f16_1"; razl.mlc = id; diagAnotar(razl.diag, `cargado con webllm (${id})`);
+      try{ avisarProg(100, "preparando el modelo para este teléfono (primera respuesta)…"); cargaGuard({que:"razon", modelo: id, device:"webllm", dtype: razl.dtype, fase:"calentando"}); const req = {messages:[{role:"user", content:"hola"}], max_tokens: 1, temperature: 0}; if(/^Qwen3/i.test(id)) req.extra_body = {enable_thinking: false}; await engine.chat.completions.create(req); diagAnotar(razl.diag, "calentamiento OK"); }catch(e){ diagAnotar(razl.diag, `calentamiento: ${String(e && e.message || e).slice(0,100)}`); }   // v47
+      cargaFin(); return true;
     }catch(e){ cargaFin(); const msg = (e && e.message ? e.message : String(e)); diagAnotar(razl.diag, `webllm ${id}: ${msg.slice(0, 220)}`); razl.engine = null; if(!/f16|feature|shader/i.test(msg)) return false; }
   }
   return false;
@@ -3634,11 +3658,11 @@ async function razlGenerar(messages, max, avisar, opts){
   razl.ocupado = true; const t0 = Date.now(); let n = 0;
   try{
     if(razl.engine){                                            // v38: WebLLM (API estilo chat.completions, con streaming); con opts.json, la gramática obliga a JSON válido
-      const pedir = async (conJson) => { const req = {messages, max_tokens: max || 200, temperature: 0, stream: true}; if(conJson) req.response_format = {type:"json_object", schema: JSON.stringify(RAZL_ESQUEMA_INTERP)}; const chunks = await razl.engine.chat.completions.create(req); let txt = "";
+      const pedir = async (conJson) => { const req = {messages, max_tokens: max || 200, temperature: 0, stream: true}; if(/^Qwen3/i.test(razl.mlc || "")) req.extra_body = {enable_thinking: false}; if(conJson) req.response_format = {type:"json_object", schema: JSON.stringify(RAZL_ESQUEMA_INTERP)}; const chunks = await razl.engine.chat.completions.create(req); let txt = "";
         for await (const ch of chunks){ const d = ch && ch.choices && ch.choices[0] && ch.choices[0].delta ? ch.choices[0].delta.content : ""; if(d){ txt += d; n++; if(avisar && n % 4 === 0) avisar(`Pensando en el teléfono… ${n} palabras · ${Math.round((Date.now()-t0)/1000)} s`); } } return txt; };
       if(avisar) avisar("Pensando en el teléfono…"); let txt;
       try{ txt = await pedir(!!(opts && opts.json)); }catch(e){ if(!(opts && opts.json)) throw e; diagAnotar(razl.diag, `webllm json: ${String(e && e.message || e).slice(0,120)}; reintento sin gramática`); txt = await pedir(false); }
-      razl.ultimo = {segundos: Math.round((Date.now()-t0)/1000), tokens: n}; return String(txt || "").trim();
+      razl.ultimo = {segundos: Math.round((Date.now()-t0)/1000), tokens: n}; return String(txt || "").replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/^<think>[\s\S]*$/i, "").trim();   // v47: Qwen3 sin razonamiento visible
     }
     const tjs = window.__tjs; let streamer = null;
     try{ if(tjs && tjs.TextStreamer && razl.pipe && razl.pipe.tokenizer) streamer = new tjs.TextStreamer(razl.pipe.tokenizer, {skip_prompt:true, skip_special_tokens:true, callback_function: ()=>{ n++; if(avisar && n % 4 === 0) avisar(`Pensando en el teléfono… ${n} palabras · ${Math.round((Date.now()-t0)/1000)} s`); }}); }catch(e){ streamer = null; }
@@ -3790,7 +3814,7 @@ function renderRazonSinSenal(){
   const filas = [["Modelo de razonamiento", est]]; if(c.fecha) filas.push(["Descargado el", fmtD(c.fecha.slice(0,10))]); if(razl.ultimo) filas.push(["Última respuesta", `${razl.ultimo.segundos} s`]);
   kvEl.innerHTML = kv(filas);
   const pr = $("#ss-razon-prog"); pr.hidden = razl.estado!=="cargando"; pr.querySelector("i").style.width = razl.progreso + "%";
-  $("#ss-razon-txt").textContent = razl.estado==="error" ? "No se pudo cargar: " + razl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : razl.estado==="listo" ? "Las notas se entienden y las preguntas se responden en este teléfono, sin internet." : c.listo ? "Listo para usarse sin señal." : (caidaDe("razon") && !webllmPosible(RAZL_MODELOS.qwen05) ? "Este teléfono cerró la app cargando el modelo de razonamiento (sin memoria). Las notas se siguen entendiendo por reglas sin señal, y con señal las entiende el motor." : navigator.gpu ? "Con wifi, descargue un modelo una vez: corre en el procesador gráfico (WebLLM), que carga por tandas y cabe en este teléfono." : "Este navegador no tiene WebGPU: el razonador no corre aquí. Las notas se entienden por reglas sin señal y con el motor cuando hay señal.");
+  $("#ss-razon-txt").textContent = razl.estado==="error" ? "No se pudo cargar: " + razl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : razl.estado==="listo" ? "Las notas se entienden y las preguntas se responden en este teléfono, sin internet. La primera vez después de descargar, el teléfono compila el modelo: puede tardar y hasta cerrar la app; si pasa, ábrala de nuevo y pruebe otra vez (la segunda arranca)." : c.listo ? "Listo para usarse sin señal (si la app se cerró al probarlo recién descargado, vuelva a probar: la primera vez compila)." : (caidaDe("razon") && !webllmPosible(RAZL_MODELOS.qwen05) ? "Este teléfono cerró la app cargando el modelo de razonamiento (sin memoria). Las notas se siguen entendiendo por reglas sin señal, y con señal las entiende el motor." : navigator.gpu ? "Con wifi, descargue un modelo una vez: corre en el procesador gráfico (WebLLM), que carga por tandas y cabe en este teléfono." : "Este navegador no tiene WebGPU: el razonador no corre aquí. Las notas se entienden por reglas sin señal y con el motor cuando hay señal.");
   $$("#ss-razon-btns button[data-razl]").forEach(b=>{ const m = RAZL_MODELOS[b.dataset.razl] || {}; const sinGpu = !!m.gpu && !webllmPosible(m) && !razlIntentos(m).length; b.disabled = razl.estado==="cargando" || sinGpu; b.title = sinGpu ? "necesita el procesador gráfico (WebGPU)" : (caidaDe("razon", m.id) || caidaDe("razon", m.mlc)) ? "ya tumbó la app en este teléfono" : ""; }); $("#ss-razon-quitar").hidden = !c.listo;
   $("#ss-razon-probar").hidden = !c.listo && razl.estado!=="listo"; $("#ss-razon-diag").hidden = false;   // v37.1: siempre (tras una caída el historial guardado es lo que importa)
 }
@@ -3869,11 +3893,12 @@ async function vozlEnVideo(f){
     if(!r.lineas.length){ box.textContent = "No se oyó nada reconocible en el video (si habló, el motor lo vuelve a oír con señal)."; return; }
     vidVoz = {texto: r.texto, lineas: r.lineas, segundos: r.segundos, modelo: `whisper-${vozl.modelo||"base"} · teléfono (${vozl.motor}, video)`};
     box.textContent = `Lo que dijo en el video (oído en el teléfono, ${r.segundos} s): «${r.texto.slice(0,160)}${r.texto.length>160?"…":""}». Al guardar, podrá convertirlo en registros.`;
-  }catch(e){ box.textContent = "No pude escuchar el video en el teléfono (" + String(e.message||e).slice(0,70) + "). Si dijo algo importante, grábelo como nota de voz; con señal el motor oye el video igual."; }
+  }catch(e){ const msg = String(e.message||e).slice(0,70); vidVoz = {fallo: msg, lineas: []}; box.textContent = navigator.onLine ? `El teléfono no pudo separar el audio de este video (${msg}): al guardar, el motor lo escucha y le propone los registros en Registrar (unos minutos). Si quiere, diga lo mismo en una nota de voz.`
+                                                                                              : `El teléfono no pudo separar el audio de este video (${msg}). Se guarda igual: con señal el motor lo escucha y le propone los registros. Si dijo algo importante, grábelo también como nota de voz.`; }
 }
 let vidPendCid = null;
 function vidlRevisar(cid, voz){                              // después de guardar el video: lo dicho -> revisión -> registros (fuente video)
-  const v = voz || vidVoz; if(!v || !v.lineas.length) return; vidVoz = null; vidPendCid = cid || null;
+  const v = voz || vidVoz; if(!v || !v.lineas || !v.lineas.length) return; vidVoz = null; vidPendCid = cid || null;
   openFlow("libreta", null); libReset();
   libFuente = "video-local"; libTrans = null; libFile = null; libSim = false; libEdited = false; libModelo = v.modelo;
   libLines = normLines(v.lineas); libProps = []; libUnparsed = []; libLinesOrig = JSON.parse(JSON.stringify(libLines)); libPropsOrig = [];
@@ -4016,13 +4041,50 @@ function valorEnEscala(ang, esc, cal){
   let k = 0; while(k < m.length-2 && off > offs[k+1]) k++; const f = (off - offs[k])/((offs[k+1]-offs[k]) || 1); let p = pos[k] + f*(pos[k+1]-pos[k]); p = Math.max(0, Math.min(N, p));
   const frac = cal.sentido === "horario" ? p/N : (N-p)/N; return Math.round((cal.v0 + frac*(cal.vmax-cal.v0))*2)/2;     // al medio centibar: la aguja no da para más
 }
+// v47: la carátula por transformada de Hough circular sobre los bordes (gradiente), en una copia chica (≤320 px). Devuelve {cx, cy, r, score} en píxeles de la foto.
+function agujaDial(gris, w, h){
+  const s = Math.min(1, 320/Math.max(w, h)); const sw = Math.max(16, Math.round(w*s)), sh = Math.max(16, Math.round(h*s)); const bx = w/sw, by = h/sh;
+  const g = new Float32Array(sw*sh);
+  for(let y=0;y<sh;y++){ const y0 = Math.floor(y*by), y1 = Math.min(h, Math.max(y0+1, Math.ceil((y+1)*by))); for(let x=0;x<sw;x++){ const x0 = Math.floor(x*bx), x1 = Math.min(w, Math.max(x0+1, Math.ceil((x+1)*bx))); let sum = 0, k = 0; for(let yy=y0;yy<y1;yy++) for(let xx=x0;xx<x1;xx++){ sum += gris[yy*w+xx]; k++; } g[y*sw+x] = k ? sum/k : 0; } }
+  const mag = new Float32Array(sw*sh), gxA = new Float32Array(sw*sh), gyA = new Float32Array(sw*sh); const vals = [];
+  for(let y=1;y<sh-1;y++) for(let x=1;x<sw-1;x++){ const i = y*sw+x; const gx = (g[i-sw+1]+2*g[i+1]+g[i+sw+1]) - (g[i-sw-1]+2*g[i-1]+g[i+sw-1]); const gy = (g[i+sw-1]+2*g[i+sw]+g[i+sw+1]) - (g[i-sw-1]+2*g[i-sw]+g[i-sw+1]); gxA[i] = gx; gyA[i] = gy; mag[i] = Math.hypot(gx, gy); if(mag[i] > 0) vals.push(mag[i]); }
+  if(vals.length < 200) return null; vals.sort((a_,b_)=>a_-b_); const thr = Math.max(12, vals[Math.floor(vals.length*0.90)]);
+  const cell = 2, aw = Math.ceil(sw/cell), ah = Math.ceil(sh/cell); const rmin = Math.round(0.12*Math.min(sw, sh)), rmax = Math.round(0.49*Math.min(sw, sh)), rstep = 2, nr = Math.floor((rmax-rmin)/rstep)+1;
+  const acc = new Uint16Array(nr*aw*ah);
+  for(let y=1;y<sh-1;y++) for(let x=1;x<sw-1;x++){ const i = y*sw+x; if(mag[i] < thr) continue; const ux = gxA[i]/mag[i], uy = gyA[i]/mag[i];
+    for(let k=0;k<nr;k++){ const r = rmin + k*rstep; for(let sg=-1; sg<=1; sg+=2){ const cx = Math.floor((x + sg*r*ux)/cell), cy = Math.floor((y + sg*r*uy)/cell); if(cx<0||cy<0||cx>=aw||cy>=ah) continue; acc[k*aw*ah + cy*aw + cx]++; } } }
+  let best = {score:0, cx:0, cy:0, r:0};
+  for(let k=0;k<nr;k++){ const r = rmin + k*rstep, base = k*aw*ah, circ = 2*Math.PI*r; for(let y=1;y<ah-1;y++) for(let x=1;x<aw-1;x++){ let v = 0; for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) v += acc[base+(y+dy)*aw+(x+dx)]; const sc = v/circ; if(sc > best.score) best = {score: sc, cx: (x+0.5)*cell, cy: (y+0.5)*cell, r}; } }
+  if(best.score < 0.22) return null;                              // menos de ~un cuarto de la circunferencia con borde: no es un círculo
+  return {cx: best.cx/s, cy: best.cy/s, r: best.r/s, score: Math.round(best.score*100)/100};
+}
+// v47: desde el centro del dial, el radio de la carátula = hasta donde la mediana angular del gris sigue siendo "cara clara"
+function agujaRadioCara(gris, w, h, cx, cy, rh){
+  const med = r => { const v = []; for(let i=0;i<72;i++){ const th = i*5*Math.PI/180; const x = Math.round(cx + r*Math.sin(th)), y = Math.round(cy - r*Math.cos(th)); if(x>=0&&y>=0&&x<w&&y<h) v.push(gris[y*w+x]); } if(v.length < 24) return null; v.sort((a_,b_)=>a_-b_); return v[v.length>>1]; };
+  const base = []; for(let f=0.30; f<=0.60; f+=0.05){ const m = med(f*rh); if(m != null) base.push(m); } if(!base.length) return null; base.sort((a_,b_)=>a_-b_); const cara = base[base.length>>1];
+  if(cara > 120) return null;                                      // el interior no es claro: no parece una carátula
+  let R = rh; for(let f=0.62; f<=1.30; f+=0.02){ const m = med(f*rh); if(m == null || m > cara + 45){ R = (f-0.02)*rh; break; } R = f*rh; }
+  return {R: R*0.985, cara};
+}
+// v47: umbral de tinta por Otsu sobre una muestra de la carátula (separa tinta negra de fondo claro aunque haya moiré o sombras); nunca menor que mediana+45
+function umbralTinta(muestra){
+  if(!muestra.length) return 70; const hist = new Uint32Array(256); muestra.forEach(v=>{ hist[Math.max(0, Math.min(255, Math.round(v)))]++; }); const n = muestra.length;
+  let sum = 0; for(let i=0;i<256;i++) sum += i*hist[i]; let sb = 0, wb = 0, best = 0, thr = 128;
+  for(let t=0;t<256;t++){ wb += hist[t]; if(!wb) continue; const wf = n - wb; if(!wf) break; sb += t*hist[t]; const mb = sb/wb, mf = (sum-sb)/wf, v = wb*wf*(mb-mf)*(mb-mf); if(v > best){ best = v; thr = t; } }
+  const sorted = muestra.slice().sort((a_,b_)=>a_-b_); const mediana = sorted[sorted.length>>1];
+  return Math.max(thr, mediana + 45);
+}
 async function agujaLeer(file, cal){
   const t0 = Date.now(); const c = await imgACanvas(file, 800); const {w, h, data} = c;
-  const auto = (cal.cx == null || cal.cy == null) ? agujaCentro(data, w, h) : null;
+  const gris0 = new Float32Array(w*h); for(let i=0;i<w*h;i++) gris0[i] = 255 - (0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2]);
+  const gris = new Float32Array(w*h); for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i = y*w+x; if(x<1||y<1||x>=w-1||y>=h-1){ gris[i] = gris0[i]; continue; } gris[i] = (gris0[i-w-1]+gris0[i-w]+gris0[i-w+1]+gris0[i-1]+gris0[i]+gris0[i+1]+gris0[i+w-1]+gris0[i+w]+gris0[i+w+1])/9; }   // v47: suavizado 3×3 (moiré de pantallas, grano)
+  // v47: la carátula por círculos (Hough); si no aparece, el componente claro; si tampoco, el centro de la foto
+  let modoCentro = "foto"; let dial = (cal.cx == null || cal.cy == null) ? agujaDial(gris, w, h) : null; let cara = dial ? agujaRadioCara(gris, w, h, dial.cx, dial.cy, dial.r) : null;
+  if(dial && !cara){ dial = null; }
+  const auto = (cal.cx == null || cal.cy == null) ? (dial ? {cx: dial.cx, cy: dial.cy, R: cara.R, hough: true} : agujaCentro(data, w, h)) : null; if(auto) modoCentro = dial ? "hough" : "claro";
   let cx = cal.cx != null ? cal.cx*w : auto ? auto.cx : w/2, cy = cal.cy != null ? cal.cy*h : auto ? auto.cy : h/2; const R = cal.r != null ? cal.r*Math.min(w, h) : auto ? auto.R : 0.38*Math.min(w, h);
-  const gris = new Float32Array(w*h); for(let i=0;i<w*h;i++) gris[i] = 255 - (0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2]);
-  let fondo = []; for(let y=Math.max(0, Math.round(cy-R*.5)); y<Math.min(h, Math.round(cy+R*.5)); y+=3) for(let x=Math.max(0, Math.round(cx-R*.5)); x<Math.min(w, Math.round(cx+R*.5)); x+=3) fondo.push(gris[y*w+x]);
-  fondo.sort((a_,b_)=>a_-b_); const umbral = (fondo[Math.floor(fondo.length/2)] || 0) + 70;        // "oscuro" = bastante más oscuro que la carátula
+  let fondo = []; for(let y=Math.max(0, Math.round(cy-R*.9)); y<Math.min(h, Math.round(cy+R*.9)); y+=3) for(let x=Math.max(0, Math.round(cx-R*.9)); x<Math.min(w, Math.round(cx+R*.9)); x+=3){ if(Math.hypot(x-cx, y-cy) <= 0.9*R) fondo.push(gris[y*w+x]); }
+  const umbral = umbralTinta(fondo);                                                                 // v47: Otsu (tinta vs. cara), nunca menor que mediana+45
   // el cubo: si el centro no fue marcado a mano, el eje de la aguja manda sobre el centro geométrico de la carátula
   const cubo = (cal.cx == null || cal.cy == null) ? agujaCubo(gris, w, h, cx, cy, R, umbral) : null; if(cubo){ cx = cubo.cx; cy = cubo.cy; }
   const oscuro = (x, y) => { if(x<1||y<1||x>=w-1||y>=h-1) return false; const i = y*w+x; return Math.max(gris[i], gris[i-1], gris[i+1], gris[i-w], gris[i+w]) > umbral; };
@@ -4044,11 +4106,11 @@ async function agujaLeer(file, cal){
   const largo = bestRun / R;
   // la escala en la foto: marcas oscuras radiales en el anillo 0.80–0.93 R; largas = grandes (cada 10), cortas = chicas
   const dAng = (a_, b_) => Math.abs(((a_-b_) % 360 + 540) % 360 - 180);
-  const NP = 720, perfil = new Float32Array(NP); for(let i=0;i<NP;i++){ const th = i/2*Math.PI/180, s = Math.sin(th), co = Math.cos(th); let sum = 0, k = 0; for(let r=0.80*R; r<0.93*R; r+=1){ const x = Math.round(cx + r*s), y = Math.round(cy - r*co); if(x>=0&&y>=0&&x<w&&y<h){ sum += gris[y*w+x]; k++; } } perfil[i] = k ? sum/k : 0; }
+  const NP = 720, perfil = new Float32Array(NP); for(let i=0;i<NP;i++){ const th = i/2*Math.PI/180, s = Math.sin(th), co = Math.cos(th); let sum = 0, k = 0; for(let r=0.80*R; r<0.93*R; r+=1){ const x = Math.round(cx + r*s), y = Math.round(cy - r*co); if(x>=0&&y>=0&&x<w&&y<h){ sum += gris0[y*w+x]; k++; } } perfil[i] = k ? sum/k : 0; }
   const ps = Array.from(perfil).sort((a_,b_)=>a_-b_); const medP = ps[NP>>1]; const madP = Array.from(perfil, v=>Math.abs(v-medP)).sort((a_,b_)=>a_-b_)[NP>>1] + 1; const umbP = medP + 4*madP;
   let k0 = 0; for(let i=1;i<NP;i++) if(perfil[i] < perfil[k0]) k0 = i;
   const segs = []; for(let i=0;i<NP;){ if(perfil[(k0+i) % NP] > umbP){ let j = i, sx = 0, sy = 0, mx = 0; while(j < NP && perfil[(k0+j) % NP] > umbP){ const q = (k0+j) % NP, pw = perfil[q]-umbP, th = q/2*Math.PI/180; sx += pw*Math.sin(th); sy += pw*Math.cos(th); mx = Math.max(mx, perfil[q]); j++; } segs.push({ang: (Math.atan2(sx, sy)*180/Math.PI + 360) % 360, ancho: (j-i)/2, max: mx}); i = j; } else i++; }
-  const largoDe = ang => { let b_ = 0; for(const da of [-0.5, 0, 0.5]){ const th = (ang+da)*Math.PI/180, s = Math.sin(th), co = Math.cos(th); let k = 0; for(let r=0.66*R; r<0.95*R; r+=1){ const x = Math.round(cx + r*s), y = Math.round(cy - r*co); if(x>=0&&y>=0&&x<w&&y<h && gris[y*w+x] > umbral) k++; } b_ = Math.max(b_, k); } return b_/R; };
+  const largoDe = ang => { let b_ = 0; for(const da of [-0.5, 0, 0.5]){ const th = (ang+da)*Math.PI/180, s = Math.sin(th), co = Math.cos(th); let k = 0; for(let r=0.66*R; r<0.95*R; r+=1){ const x = Math.round(cx + r*s), y = Math.round(cy - r*co); if(x>=0&&y>=0&&x<w&&y<h && gris0[y*w+x] > umbral) k++; } b_ = Math.max(b_, k); } return b_/R; };
   segs.forEach(s_=>{ s_.largo = largoDe(s_.ang); });
   const rayas = segs.filter(s_=>dAng(s_.ang, best) > 2.5 && s_.ancho <= 6 && s_.largo >= 0.03);
   const finosL = rayas.filter(s_=>s_.ancho <= 3).map(s_=>s_.largo).sort((a_,b_)=>a_-b_); const Lm = finosL.length ? finosL[finosL.length>>1] : 0;
@@ -4076,11 +4138,11 @@ async function agujaLeer(file, cal){
     const th = best*Math.PI/180; ctx.strokeStyle = "#00e5ff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 0.8*R*Math.sin(th), cy - 0.8*R*Math.cos(th)); ctx.stroke();
     ctx.fillStyle = "#ffd60a"; ctx.font = "bold 16px sans-serif"; [[a0, String(cal.v0)], [a1, String(cal.vmax)]].forEach(([a_, t])=>{ const tt = a_*Math.PI/180; ctx.fillText(t, cx + 1.06*R*Math.sin(tt) - 8, cy - 1.06*R*Math.cos(tt) + 6); }); });
   const u = cal.unidad || "cb";
-  return {valor, angulo: best, largo: Math.round(largo*100)/100, confianza, centro:{cx: Math.round(cx/w*1000)/1000, cy: Math.round(cy/h*1000)/1000, r: Math.round(R/Math.min(w, h)*1000)/1000, auto: !!auto, cubo: !!cubo},
+  return {valor, angulo: best, largo: Math.round(largo*100)/100, confianza, centro:{cx: Math.round(cx/w*1000)/1000, cy: Math.round(cy/h*1000)/1000, r: Math.round(R/Math.min(w, h)*1000)/1000, auto: !!auto, cubo: !!cubo, modo: modoCentro, umbral: Math.round(umbral)},
           escala: esc ? {tipo: esc.tipo, N: esc.N, a0: Math.round(a0*10)/10, a1: Math.round(a1*10)/10, S: Math.round(esc.S*100)/100, marcas: esc.marcas.map(a_=>Math.round(a_*10)/10), pos: esc.pos, fuera: !!esc.fuera} : null, marcas_vistas: {grandes: mayores.length, chicas: menores.length},
           ms: Date.now()-t0, modelo:"aguja y escala por geometría · teléfono", preliminar:true, dataURL,
           nota: valor==null ? `Aguja a ${best}°, fuera de la escala (${cal.v0} a ${Math.round(a0)}°, ${cal.vmax} a ${Math.round(a1)}°): toque el 0 y el máximo en la foto para enseñarle la escala, o teclee el valor.`
-                            : `Aguja a ${best}° → ${valor} ${u} (${metodo}; ${cubo ? "eje de la aguja encontrado" : auto ? "centro de la carátula" : "centro marcado por usted"}). Si no coincide, toque la punta de la aguja en la foto o teclee el valor.`};
+                            : `Aguja a ${best}° → ${valor} ${u} (${metodo}; ${cubo ? "eje de la aguja encontrado" : auto ? (modoCentro === "hough" ? "carátula encontrada" : "centro de la carátula") : "centro marcado por usted"}). Si no coincide, toque la punta de la aguja en la foto o teclee el valor.`};
 }
 // --- (3) pantalla digital: dígitos por OCR (lector de libreta)
 async function ocrlGenerar(file, task, max, max_new_tokens){                 // v41: Florence en el hilo aparte (o en el principal si no hay hilo); devuelve {gen, res, size}
@@ -4102,17 +4164,44 @@ async function ocrlTexto(file, avisar){
 }
 function numeroDeTexto(t){ const m = String(t||"").replace(/,/g, ".").match(/-?\d+(?:\.\d+)?/); return m ? +m[0] : null; }
 // --- (4) flores de tomate con marca de abejorro: flor = mancha amarilla; marca = café oscuro dentro de la flor
-async function floresEstimar(file){
-  const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const am = new Uint8Array(n), caf = new Uint8Array(n);
-  for(let i=0;i<n;i++){ const [hh, s, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); if(hh >= 40 && hh <= 72 && s > .35 && v > .45) am[i] = 1; else if(hh >= 8 && hh <= 45 && s > .3 && v < .5) caf[i] = 1; }
-  const escala = w/1024; const flores = componentes(abrir3(am, w, h), w, h, 120*escala, n*0.92); let marcadas = 0;   // v46: una flor grande de cerca también cuenta
-  flores.forEach(f=>{ let k = 0, kc = 0; const mx0 = f.minx + (f.maxx-f.minx)*.2, mx1 = f.maxx - (f.maxx-f.minx)*.2, my0 = f.miny + (f.maxy-f.miny)*.2, my1 = f.maxy - (f.maxy-f.miny)*.2;
-    for(let y=f.miny;y<=f.maxy;y++) for(let x=f.minx;x<=f.maxx;x++) if(caf[y*w+x]){ k++; if(x>=mx0 && x<=mx1 && y>=my0 && y<=my1) kc++; }
-    f.marca = k / f.area; f.marcaCentro = kc / f.area; if(f.marcaCentro > .02 || f.marca > .035) { f.conMarca = true; marcadas++; } });   // v46: la mordida del abejorro es una mancha café chica en el cono de anteras (centro de la flor)
+function dilatar(mask, w, h, k){                                 // dilatación por caja (separable), radio k
+  const a = new Uint8Array(w*h), b = new Uint8Array(w*h);
+  for(let y=0;y<h;y++){ let cnt = 0; const row = y*w; for(let x=-k;x<w;x++){ if(x+k < w && mask[row+x+k]) cnt++; if(x-k-1 >= 0 && mask[row+x-k-1]) cnt--; if(x >= 0) a[row+x] = cnt > 0 ? 1 : 0; } }
+  for(let x=0;x<w;x++){ let cnt = 0; for(let y=-k;y<h;y++){ if(y+k < h && a[(y+k)*w+x]) cnt++; if(y-k-1 >= 0 && a[(y-k-1)*w+x]) cnt--; if(y >= 0) b[y*w+x] = cnt > 0 ? 1 : 0; } }
+  return b;
+}
+function erosionar(mask, w, h, k){ const inv = new Uint8Array(w*h); for(let i=0;i<w*h;i++) inv[i] = mask[i] ? 0 : 1; const d = dilatar(inv, w, h, k); const out = new Uint8Array(w*h); for(let i=0;i<w*h;i++) out[i] = d[i] ? 0 : 1; return out; }
+async function clipEtiquetas(blob, etiquetas){                     // v47: el modelo de fotos sobre un recorte, con las etiquetas que se le den
+  if(fotol.pipe && fotol.pipe.worker) return wkRpc({cmd:"clasificar", blob, etiquetas, max:512});
+  const url = URL.createObjectURL(blob); try{ return await fotol.pipe(url, etiquetas); } finally{ URL.revokeObjectURL(url); }
+}
+// --- (4) flores de tomate: flor = mancha amarilla (pétalos y cono de anteras unidos por cierre); marca = café oscuro en el centro de la flor
+async function floresEstimar(file, opts){
+  opts = opts || {}; const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const am = new Uint8Array(n), caf = new Uint8Array(n);
+  for(let i=0;i<n;i++){ const [hh, s_, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); if(hh >= 30 && hh <= 60 && s_ > .40 && v > .50) am[i] = 1; else if(hh >= 8 && hh <= 45 && s_ > .3 && v < .5) caf[i] = 1; }
+  const k = Math.max(2, Math.round(0.012*w)); const cerrado = erosionar(dilatar(abrir3(am, w, h), w, h, k), w, h, k);          // v47: cierre: une pétalos separados por sombras o tallos
+  let flores = componentes(cerrado, w, h, Math.round(n*0.0015), n*0.92).sort((a_,b_)=>b_.area-a_.area);
+  const mayor = flores.length ? flores[0].area : 0; flores = flores.filter(f=>f.area >= 0.12*mayor).slice(0, 12);                  // v47: lo mucho más chico que la flor grande es fondo
+  let abejorro = false, confirmadas = null;
+  if(opts.clip && flores.length && fotolDisponible()){                                                                         // v47: cada candidata se confirma con el modelo de fotos
+    const et = ["a yellow tomato flower", "a bumblebee or bee on a flower", "green leaves and stems", "blurry green background"]; const keep = []; confirmadas = 0;
+    for(let i=0;i<Math.min(flores.length, 6);i++){ const f = flores[i]; if(opts.avisar) opts.avisar(`Confirmando flores en el teléfono… ${i+1}/${Math.min(flores.length, 6)}`);
+      const mx = (f.maxx-f.minx+1)*.25, my = (f.maxy-f.miny+1)*.25; const x0 = Math.max(0, Math.round(f.minx-mx)), y0 = Math.max(0, Math.round(f.miny-my)), x1 = Math.min(w, Math.round(f.maxx+mx+1)), y1 = Math.min(h, Math.round(f.maxy+my+1));
+      const cv = document.createElement("canvas"); cv.width = x1-x0; cv.height = y1-y0; cv.getContext("2d").drawImage(c.canvas, x0, y0, x1-x0, y1-y0, 0, 0, x1-x0, y1-y0); const blob = await new Promise(ok=>cv.toBlob(ok, "image/jpeg", .85));
+      try{ const res = await clipEtiquetas(blob, et); const sc = l_ => ((res||[]).find(x=>x.label===l_)||{}).score || 0; f.flor = +sc(et[0]).toFixed(2); f.abeja = +sc(et[1]).toFixed(2);
+        if(f.abeja >= .3) abejorro = true; if(f.flor >= .35 || f.flor + f.abeja >= .55){ keep.push(f); confirmadas++; } }
+      catch(e){ keep.push(f); } }
+    flores.slice(6).forEach(f=>keep.push(f)); flores = keep;
+  }
+  let marcadas = 0;
+  flores.forEach(f=>{ let kk = 0, kc = 0; const mx0 = f.minx + (f.maxx-f.minx)*.2, mx1 = f.maxx - (f.maxx-f.minx)*.2, my0 = f.miny + (f.maxy-f.miny)*.2, my1 = f.maxy - (f.maxy-f.miny)*.2;
+    for(let y=f.miny;y<=f.maxy;y++) for(let x=f.minx;x<=f.maxx;x++) if(caf[y*w+x]){ kk++; if(x>=mx0 && x<=mx1 && y>=my0 && y<=my1) kc++; }
+    f.marca = kk / f.area; f.marcaCentro = kc / f.area; if(f.marcaCentro > .02 || f.marca > .035){ f.conMarca = true; marcadas++; } });
   const pct = flores.length ? Math.round(1000*marcadas/flores.length)/10 : null;
-  const dataURL = dibujar(c, ctx=>{ ctx.lineWidth = 2; flores.forEach(f=>{ ctx.strokeStyle = f.conMarca ? "#ff2d55" : "#00e5ff"; ctx.strokeRect(f.minx, f.miny, f.maxx-f.minx+1, f.maxy-f.miny+1); }); });
-  return {flores: flores.length, con_marca: marcadas, pct, confianza: flores.length ? .35 : .1, modelo:"color y forma · teléfono", preliminar:true, dataURL,
-          nota: flores.length ? `${flores.length} flor${flores.length===1?"":"es"} amarilla${flores.length===1?"":"s"} y ${marcadas} con mancha café en las anteras (${pct} %). Es una ayuda para contar, no un conteo: corrija lo que vea distinto.` : "No distingo flores amarillas: acérquese con las anteras visibles y buena luz, o teclee el conteo."};
+  const dataURL = dibujar(c, ctx=>{ ctx.lineWidth = 3; flores.forEach(f=>{ ctx.strokeStyle = f.conMarca ? "#ff2d55" : "#00e5ff"; ctx.strokeRect(f.minx, f.miny, f.maxx-f.minx+1, f.maxy-f.miny+1); if(f.abeja >= .3){ ctx.fillStyle = "#ffd60a"; ctx.font = "bold 18px sans-serif"; ctx.fillText("abejorro", f.minx+4, f.miny+20); } }); });
+  const nota = flores.length ? `${flores.length} flor${flores.length===1?"":"es"} y ${marcadas} con mancha café en las anteras (${pct} %).${abejorro ? " Hay un abejorro trabajando en la flor." : ""}${confirmadas != null ? " Cada flor la confirmó el modelo de fotos." : ""} Es una ayuda para contar, no un conteo: corrija lo que vea distinto.`
+                              : "No distingo flores amarillas: acérquese con las anteras visibles y buena luz, o teclee el conteo.";
+  return {flores: flores.length, con_marca: marcadas, pct, abejorro, confianza: flores.length ? (confirmadas != null ? .5 : .35) : .1, modelo: confirmadas != null ? "color y forma + modelo de fotos · teléfono" : "color y forma · teléfono", preliminar:true, dataURL, nota};
 }
 // --- ganchos en la app: lectura de sensor (trampa / aguja / pantalla), polinización (flores), punto de monitoreo (trampa)
 let leTel = null, poTel = null, plTelTrampa = null;
@@ -4153,11 +4242,11 @@ $("#le-foto-reco").addEventListener("click", async e=>{
 });
 async function poAnalizar(f){
   poTel = null; const box = $("#po-foto-reco"); if(!box || !f) return; box.hidden = false; box.innerHTML = `<p class="small muted">Mirando las flores en el teléfono…</p>`;
-  try{ const r = await floresEstimar(f);
+  try{ const r = await floresEstimar(f, {clip: true, avisar: m=>{ box.innerHTML = `<p class="small muted">${esc(m)}</p>`; }});
     // v46: si el modelo de fotos está, confirma que la foto es una flor (y no una hoja o un fruto) antes de proponer el conteo
     if(fotolDisponible()){ try{ const fr = await fotoReducida(f, 1024); const et = ["a close-up photo of a yellow tomato flower with visible anthers", "a green leaf of a plant", "a tomato fruit", "a person, tool or object, not a plant"];
         const res = fotol.pipe && fotol.pipe.worker ? await wkRpc({cmd:"clasificar", blob: await aBlob(fr), etiquetas: et, max:1024}) : await fotol.pipe(typeof fr==="string" ? fr : URL.createObjectURL(fr), et);
-        const pf = (res||[]).find(x=>x.label===et[0]); r.es_flor = pf ? +pf.score.toFixed(2) : null; if(r.es_flor != null && r.es_flor < 0.35){ r.nota = `No parece una flor (el modelo de fotos ve ${(res||[]).sort((a_,b_)=>b_.score-a_.score)[0].label.replace(/^a /,"")}, ${Math.round(r.es_flor*100)} % de flor). ` + r.nota; r.pct = null; } }catch(e){} }
+        const pf = (res||[]).find(x=>x.label===et[0]); r.es_flor = pf ? +pf.score.toFixed(2) : null; if(r.es_flor != null && r.es_flor < 0.35 && !r.abejorro && !/confirmó/.test(r.nota||"")){ r.nota = `No parece una flor (el modelo de fotos ve ${(res||[]).sort((a_,b_)=>b_.score-a_.score)[0].label.replace(/^a /,"")}, ${Math.round(r.es_flor*100)} % de flor). ` + r.nota; r.pct = null; } }catch(e){} }
     poTel = r; visTarjeta(box, r, r.pct!=null ? `Usar ${r.flores} flores · ${r.con_marca} con marca` : null);
     if(r.pct!=null && r.flores >= 1){ $("#po-flores").value = String(r.flores); $("#po-marca").value = String(r.con_marca); $("#po-flores").dispatchEvent(new Event("input")); $("#po-marca").dispatchEvent(new Event("input")); toast(`Conteo tomado de la foto: ${r.flores} flores, ${r.con_marca} con marca. Corríjalo si no coincide.`); }
   }catch(e){ box.innerHTML = `<p class="small muted">No se pudo mirar en el teléfono (${esc(String(e.message||e).slice(0,80))}).</p>`; }
@@ -4171,8 +4260,8 @@ async function plAnalizarTrampa(f){
   catch(e){ box.innerHTML = `<p class="small muted">No se pudo contar en el teléfono (${esc(String(e.message||e).slice(0,80))}).</p>`; }
 }
 $("#pl-foto-trampa").addEventListener("click", e=>{ const u = e.target.closest("[data-usar]"); if(u && plTelTrampa && plTelTrampa.conteo!=null){ const inp = $(`#pl-medidas input[data-plk="${plTelTrampa.medida}"]`); if(inp){ inp.value = String(plTelTrampa.conteo); inp.dispatchEvent(new Event("input")); toast("Conteo de la trampa tomado de la foto: revíselo"); } } });
-window.__engramVision = {trampaContar, agujaLeer, floresEstimar, valorDeAngulo, anguloHorario, anguloDeValor, agujaCentro, agujaCubo, cadenaMarcas, valorEnEscala, veredictoHTML, AGUJA_DEF};
-window.__engramLib = {show: libShow, lineas: ()=>libLines, fuente: f=>{ libFuente = f; }, interpretar: libInterpretar, razon: ()=>libRazon};   // v46: ganchos de prueba de la libreta (consola)
+window.__engramVision = {trampaContar, agujaLeer, floresEstimar, dilatar, erosionar, valorDeAngulo, anguloHorario, anguloDeValor, agujaCentro, agujaCubo, agujaDial, agujaRadioCara, umbralTinta, cadenaMarcas, valorEnEscala, veredictoHTML, AGUJA_DEF};
+window.__engramLib = {show: libShow, lineas: ()=>libLines, fuente: f=>{ libFuente = f; }, interpretar: libInterpretar, razon: ()=>libRazon, reglas: interpretLines, corregir: corregirVocab};   // v46: ganchos de prueba de la libreta (consola)
 // ---------------------------------------------------------------- clasificador propio en el teléfono (ONNX entrenado en el RIG) · visión v1 · PRELIMINAR
 // El cerebro (tabla `cerebro`, fotos.clasificador) dice si hay un clasificador propio publicado: su URL (modelos/plagas_v1.onnx en la misma carpeta
 // de la app), sus clases y su preprocesado. La app lo baja una vez (con señal), lo guarda (el service worker cachea lo propio) y lo corre con
@@ -4248,9 +4337,9 @@ let vidFile = null, vidURL = null;
 $("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; fotolEnVideo(f); if(typeof vozlEnVideo==="function") vozlEnVideo(f); if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
 function vidReset(){ vidFile = null; vidVoz = null; { const b = $("#vid-voz"); if(b){ b.hidden = true; b.textContent = ""; } } if(vidURL){ URL.revokeObjectURL(vidURL); vidURL = null; } $("#vid-preview").hidden = true; $("#vid-preview").innerHTML = ""; $("#vid-input").value = ""; $("#vid-save").disabled = true; $("#vid-drop").querySelector("b").textContent = "Filmar"; }
 $("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent;
-  const tel = Object.assign({}, vidReco ? {reconocimiento: vidReco} : {}, vidVoz ? {voz: {texto: vidVoz.texto, lineas: vidVoz.lineas, modelo: vidVoz.modelo, segundos: vidVoz.segundos}} : {});
+  const tel = Object.assign({}, vidReco ? {reconocimiento: vidReco} : {}, vidVoz ? (vidVoz.fallo ? {voz: {fallo: vidVoz.fallo}} : {voz: {texto: vidVoz.texto, lineas: vidVoz.lineas, modelo: vidVoz.modelo, segundos: vidVoz.segundos}}) : {});
   const item = addLog("video", `Video · ${t} · ${(vidFile.size/1048576).toFixed(1)} MB${vidReco && vidReco.plaga ? ` · teléfono: ${plNombre(LOTES[lotIdx], vidReco.plaga)} ${Math.round(vidReco.confianza*100)} %` : " · el motor lo mira con señal"}${vidVoz ? " · con lo dicho" : ""}`, hoyISO, "video", {muestra:t, mb:+(vidFile.size/1048576).toFixed(1), ...(Object.keys(tel).length ? {telefono: tel} : {})}, {bucket:"videos", ext: extDe(vidFile), blob: vidFile}); vidReco = null;
-  const voz = vidVoz && vidVoz.lineas.length ? vidVoz : null; afterSave(voz ? "Video guardado; ahora lo que dijo" : "Video guardado en la bitácora");
+  const voz = vidVoz && vidVoz.lineas && vidVoz.lineas.length ? vidVoz : null; afterSave(voz ? "Video guardado; ahora lo que dijo" : (vidVoz && vidVoz.fallo && navigator.onLine) ? "Video guardado; el motor escucha el audio y le avisa en Registrar" : "Video guardado en la bitácora");
   if(voz) setTimeout(()=>vidlRevisar(item && item.cid, voz), 450); });
 
 // ---------------------------------------------------------------- toast y arranque
