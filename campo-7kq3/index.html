@@ -2159,7 +2159,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "49 · 8 nov 2026";
+const APP_VERSION = "50 · 8 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3491,6 +3491,9 @@ function usoFin(t){ clearInterval(t); cargaFin(); }
 async function vozlTranscribir(blob, avisar, opts){
   avisar("Cargando el modelo de voz en el teléfono…"); if(!(await vozlAsegurar())) throw new Error(vozl.error || "modelo de voz no disponible");
   avisar("Preparando el audio…"); const audio = blob instanceof Float32Array ? blob : await blobAFloat32(blob, opts && opts.msDecodificar); const t0 = Date.now(); const dur = Math.round(audio.length/16000);   // v48: también audio ya capturado
+  const enHilo = !!(vozl.pipe && vozl.pipe.worker); diagAnotar(vozl.diag, `audio listo: ${dur} s · ${enHilo ? "hilo aparte" : "hilo principal"}`);
+  if(!enHilo && dur > (opts && opts.maxSegHiloPrincipal || 40)) throw new Error(`audio de ${dur} s y el hilo de modelos no está: en el hilo principal congelaría la pantalla`);   // v50
+  avisar(`Audio listo (${dur} s): transcribiendo en el teléfono…${enHilo ? "" : " (la pantalla puede quedarse quieta un momento)"}`);
   const tick = setInterval(()=>avisar(`Transcribiendo en el teléfono… ${Math.round((Date.now()-t0)/1000)} s`), 500); const g = usoGuard("voz", (VOZL_MODELOS[vozl.modelo]||VOZL_MODELOS.base).id, vozl.motor, `transcribiendo ${dur} s de audio`);
   try{ const opts = {language:"spanish", task:"transcribe", chunk_length_s:30, stride_length_s:5, return_timestamps:true}; const out = vozl.pipe && vozl.pipe.worker ? await wkRpc({cmd:"transcribir", audio, opts}, null, [audio.buffer]) : await vozl.pipe(audio, opts);
     const texto = String((out && out.text) || "").trim(); return {texto, lineas: chunksALineas(out && out.chunks, texto), segundos: Math.round((Date.now()-t0)/1000)}; }
@@ -3930,12 +3933,16 @@ async function vozlEnVideoReproduciendo(f){                      // v48: a pedid
 }
 async function vozlEnVideo(f){
   vidVoz = null; const box = $("#vid-voz"); if(!box) return; box.hidden = true; if(!f || !vozlDisponible()) return;
-  box.hidden = false; box.textContent = "Escuchando el video en el teléfono…";
-  try{ if(!(await vozlAsegurar())){ vidVoz = {fallo: "modelo de voz no disponible", lineas: []}; box.textContent = `El modelo de voz no está listo en este teléfono (${String(vozl.error||"no descargado").slice(0,80)}): ${navigator.onLine ? "al guardar, el motor escucha el video y le propone los registros en Registrar." : "con señal, el motor escucha el video."}`; return; }
-    const r = await vozlTranscribir(f, m=>{ box.textContent = m; }, {msDecodificar: 12000}); vozlVideoListo(box, r); }
-  catch(e){ const msg = String(e.message||e).slice(0,70); vidVoz = {fallo: msg, lineas: []};
-    box.innerHTML = `<span>El teléfono no pudo separar el audio de este video directamente (${esc(msg)}). </span><button class="btn sec sm" id="vid-escuchar" style="margin:6px 0">Escuchar el video ahora</button><span class="small muted"> Lo reproduce en silencio y lo oye (dura lo que dura el video).${navigator.onLine ? " Si no, al guardar el motor lo escucha y le propone los registros en Registrar." : " Sin señal, se guarda igual y el motor lo escucha cuando vuelva la señal."}</span>`;
-    const b = $("#vid-escuchar"); if(b) b.addEventListener("click", ()=>vozlEnVideoReproduciendo(f)); }
+  box.hidden = false; box.textContent = "Escuchando el video en el teléfono…"; let etapa = "inicio"; const anotar = m => { etapa = m; diagAnotar(vozl.diag, `video: ${m}`); };
+  const vigilante = setTimeout(()=>{ if(vidFile===f && !vidVoz){ diagAnotar(vozl.diag, `video: vigilante a los 120 s en «${etapa}»`); vozlVideoFallo(box, f, `se trabó en «${etapa}»`); } }, 120000);   // v50: nunca más "para siempre"
+  try{ anotar("cargando el modelo de voz"); if(!(await vozlAsegurar())){ clearTimeout(vigilante); vidVoz = {fallo: "modelo de voz no disponible", lineas: []}; box.textContent = `El modelo de voz no está listo en este teléfono (${String(vozl.error||"no descargado").slice(0,80)}): ${navigator.onLine ? "al guardar, el motor escucha el video y le propone los registros en Registrar." : "con señal, el motor escucha el video."}`; return; }
+    const r = await vozlTranscribir(f, m=>{ box.textContent = m; anotar(m.replace(/….*$/, "")); }, {msDecodificar: 12000, maxSegHiloPrincipal: 40}); clearTimeout(vigilante); if(vidFile!==f) return; vozlVideoListo(box, r); anotar(`listo (${r.segundos} s)`); }
+  catch(e){ clearTimeout(vigilante); const msg = String(e.message||e).slice(0,90); anotar(`falló: ${msg}`); vozlVideoFallo(box, f, msg); }
+}
+function vozlVideoFallo(box, f, msg){                              // v50: el aviso y el botón de escuchar reproduciendo, en un solo lugar
+  if(!vidVoz || !vidVoz.lineas || !vidVoz.lineas.length) vidVoz = {fallo: msg, lineas: []};
+  box.innerHTML = `<span>El teléfono no pudo separar el audio de este video directamente (${esc(msg)}). </span><button class="btn sec sm" id="vid-escuchar" style="margin:6px 0">Escuchar el video ahora</button><span class="small muted"> Lo reproduce en silencio y lo oye (dura lo que dura el video).${navigator.onLine ? " Si no, al guardar el motor lo escucha y le propone los registros en Registrar." : " Sin señal, se guarda igual y el motor lo escucha cuando vuelva la señal."}</span>`;
+  const b = $("#vid-escuchar"); if(b) b.addEventListener("click", ()=>vozlEnVideoReproduciendo(f));
 }
 let vidPendCid = null;
 function vidlRevisar(cid, voz){                              // después de guardar el video: lo dicho -> revisión -> registros (fuente video)
@@ -4235,7 +4242,8 @@ async function floresEstimar(file, opts){
     const blobs = kk ? componentes(abrir3(m, bw, bh), bw, bh, 12, bw*bh) : []; const mayorB = blobs.length ? Math.max(...blobs.map(b_=>b_.area)) : 0;
     f.marca = kk / f.area; f.manchaMayor = mayorB / f.area; f.evidenciaMarca = mayorB >= 20 && f.manchaMayor >= .012; });
   let abejorro = false, confirmadas = null, modeloUsado = null;
-  const propio = (typeof clasifFlores !== "undefined" && clasifFlores.disponible()) ? clasifFlores : null;
+  let propio = (typeof clasifFlores !== "undefined" && clasifFlores.disponible()) ? clasifFlores : null;
+  if(propio && flores.length){ if(opts.avisar) opts.avisar("Cargando el clasificador de flores del RIG…"); let okp = false; try{ okp = await propio.asegurar(); }catch(e){ okp = false; } if(!okp){ diagAnotar(null, `clasificador de flores no disponible (${String((propio.estado()||{}).error||"").slice(0,80)}): se usa el modelo general`); propio = null; } }   // v50: si falta el archivo, no se pierde la confirmación
   if(propio && flores.length){                                                                                                   // v48: clasificador propio de flores publicado por el RIG
     const keep = []; confirmadas = 0; modeloUsado = "propio";
     for(let i=0;i<Math.min(flores.length, 8);i++){ const f = flores[i]; if(opts.avisar) opts.avisar(`Mirando flor por flor con el clasificador del RIG… ${i+1}/${Math.min(flores.length, 8)}`);
@@ -4416,7 +4424,7 @@ $("#ss-clasif-cargar").addEventListener("click", clasifCargar);
 window.__engramClasif = {predecir: clasifPredecir, spec: clasifSpec, flores: clasifFlores};
 // ---------------------------------------------------------------- video
 let vidFile = null, vidURL = null;
-$("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; fotolEnVideo(f); if(typeof vozlEnVideo==="function") vozlEnVideo(f); if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
+$("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; Promise.resolve(fotolEnVideo(f)).catch(()=>{}).then(()=>{ if(typeof vozlEnVideo==="function" && vidFile===f) vozlEnVideo(f); }); /* v50: uno después del otro (comparten el hilo de modelos) */ if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
 function vidReset(){ vidFile = null; vidVoz = null; { const b = $("#vid-voz"); if(b){ b.hidden = true; b.textContent = ""; } } if(vidURL){ URL.revokeObjectURL(vidURL); vidURL = null; } $("#vid-preview").hidden = true; $("#vid-preview").innerHTML = ""; $("#vid-input").value = ""; $("#vid-save").disabled = true; $("#vid-drop").querySelector("b").textContent = "Filmar"; }
 $("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent;
   const tel = Object.assign({}, vidReco ? {reconocimiento: vidReco} : {}, vidVoz ? (vidVoz.fallo ? {voz: {fallo: vidVoz.fallo}} : {voz: {texto: vidVoz.texto, lineas: vidVoz.lineas, modelo: vidVoz.modelo, segundos: vidVoz.segundos}}) : {});
