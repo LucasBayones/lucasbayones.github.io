@@ -2159,7 +2159,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "48 · 7 nov 2026";
+const APP_VERSION = "49 · 8 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3589,6 +3589,7 @@ const RAZL_MODELOS = {
 // entero en memoria, que es lo que tumba la app en iPhone). Biblioteca del CDN (el service worker la guarda), pesos de huggingface.co/mlc-ai,
 // módulo del modelo de raw.githubusercontent.com (WebLLM los deja en sus propias cachés: webllm/model, webllm/wasm, webllm/config -> sin señal).
 const WEBLLM_CDN = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.87/+esm";
+const RAZL_AJUSTE_IPHONE = {context_window_size: 2048};   // v49: menos caché de atención en iPhone (los pedidos son cortos); el prellenado va compilado en la biblioteca
 async function webllmLib(){ if(window.__webllm) return window.__webllm; if(window.ENGRAM_WEBLLM_FAKE){ window.__webllm = window.ENGRAM_WEBLLM_FAKE; return window.__webllm; } window.__webllm = await import(WEBLLM_CDN); return window.__webllm; }
 function webllmPosible(m){ return !!(m && m.mlc) && !!navigator.gpu && window.__gpuOK !== false && !caidaDe("razon", m.mlc, "webllm"); }
 async function razlCargarWebLLM(m, avisarProg){
@@ -3599,11 +3600,17 @@ async function razlCargarWebLLM(m, avisarProg){
     cargaGuard({que:"razon", modelo: id, device:"webllm", dtype: id.includes("q4f32") ? "q4f32_1" : "q4f16_1"});
     try{
       let primera = false; const cb = r => { const txt = (r && r.text || ""); if(/fetching/i.test(txt)) primera = true; const pr = Math.round((r && r.progress || 0)*100); avisarProg(pr, txt.slice(0,70)); cargaProgreso({status: pr >= 100 ? "done" : "progress", progress: pr, file:"webllm"}); };
-      let engine = await lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"});
+      // v49: en iPhone la memoria de la pestaña es el límite; la caché de atención se reserva según la ventana de contexto (de fábrica 4096).
+      // Nuestros pedidos son cortos (≤ ~1400 tokens con la respuesta): 2048 alcanza y ahorra 60–235 MB según el modelo.
+      let ajuste = esIPhone() ? Object.assign({}, RAZL_AJUSTE_IPHONE) : null;
+      const crear = async () => { try{ return await lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"}, ajuste || undefined); }
+        catch(e){ const msg = String(e && e.message || e); if(ajuste && /context|window|sliding|sink|exceed|greater|larger|kv/i.test(msg)){ diagAnotar(razl.diag, `ajuste de memoria rechazado (${msg.slice(0,80)}): valores de fábrica`); ajuste = null; return lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"}); } throw e; } };
+      let engine = await crear();
       if(primera){                                                                                            // v48: recién bajado = pico de memoria; se suelta la GPU y se recarga desde la caché del teléfono (como cerrar y abrir)
         avisarProg(100, "descargado; recargando desde la memoria del teléfono…"); diagAnotar(razl.diag, "primera descarga: recarga desde caché");
         try{ await engine.unload(); }catch(e){} engine = null; await new Promise(r_=>setTimeout(r_, 800));
-        engine = await lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"}); }
+        engine = await crear(); }
+      razl.ajuste = ajuste; diagAnotar(razl.diag, ajuste ? `memoria: ventana de contexto ${ajuste.context_window_size}` : "memoria: valores de fábrica de la biblioteca");
       cargaFin(); razl.engine = engine; razl.pipe = null; razl.motor = "webllm"; razl.dtype = id.includes("q4f32") ? "q4f32_1" : "q4f16_1"; razl.mlc = id; diagAnotar(razl.diag, `cargado con webllm (${id})${primera ? " · recargado desde caché" : ""}`); return true;
     }catch(e){ cargaFin(); const msg = (e && e.message ? e.message : String(e)); diagAnotar(razl.diag, `webllm ${id}: ${msg.slice(0, 220)}`); razl.engine = null; if(!/f16|feature|shader/i.test(msg)) return false; }
   }
@@ -3654,7 +3661,7 @@ async function razlProbar(){                                 // v32.1: "Probar":
   renderSinSenal();
 }
 function razlDiagTexto(){ const c = razlConf(); const e = window.__espacio; let inst = "?"; try{ inst = (navigator.standalone || matchMedia("(display-mode: standalone)").matches) ? "instalada" : "navegador"; }catch(x){}
-  return [`Engram Campo ${APP_VERSION} · ${inst}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · error: ${razl.error||"-"}`, `biblioteca: ${vozl.lib||"no cargada"} (${vozl.libUrl||"-"}) · gpu: ${window.__gpuOK} · gpu iPhone activado: ${gpuIOSActivo()} · memoria: ${navigator.deviceMemory||"?"} GB · núcleos: ${navigator.hardwareConcurrency||"?"} · espacio: ${e ? Math.round(e.usado/1048576) + " de " + Math.round(e.cuota/1048576) + " MB" : "?"} · permanente: ${window.__persistido}`, `ua: ${navigator.userAgent.slice(0,120)} · webllm cargado: ${!!window.__webllm} · motor razón: ${razl.motor||"-"}/${razl.dtype||"-"} · hilo de modelos: ${wk ? "vivo" : "no"} · cargados: ${[vozl.pipe && "voz", (typeof fotol!=="undefined" && fotol.pipe) && "fotos", (typeof ocrl!=="undefined" && ocrl.model) && "libreta"].filter(Boolean).join(",") || "ninguno"}`, `caídas: ${caidas().length ? caidas().slice(-4).map(caidaTxt).join(" || ") : "ninguna"}`, `voz: ${JSON.stringify(vozlConf())} · fotos: ${localStorage.getItem(FOTOL_KEY)||"{}"} · libreta: ${JSON.stringify(ocrlConf())} · clasificador: ${localStorage.getItem(CLASIF_KEY)||"{}"}`].concat(razl.diag || []).concat(vozl.diag || []).concat(["--- historial guardado (sobrevive a las caídas):"], diagGuardado().slice(-18)).join("\n"); }
+  return [`Engram Campo ${APP_VERSION} · ${inst}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · ventana: ${razl.ajuste ? razl.ajuste.context_window_size : "fábrica"} · error: ${razl.error||"-"}`, `biblioteca: ${vozl.lib||"no cargada"} (${vozl.libUrl||"-"}) · gpu: ${window.__gpuOK} · gpu iPhone activado: ${gpuIOSActivo()} · memoria: ${navigator.deviceMemory||"?"} GB · núcleos: ${navigator.hardwareConcurrency||"?"} · espacio: ${e ? Math.round(e.usado/1048576) + " de " + Math.round(e.cuota/1048576) + " MB" : "?"} · permanente: ${window.__persistido}`, `ua: ${navigator.userAgent.slice(0,120)} · webllm cargado: ${!!window.__webllm} · motor razón: ${razl.motor||"-"}/${razl.dtype||"-"} · hilo de modelos: ${wk ? "vivo" : "no"} · cargados: ${[vozl.pipe && "voz", (typeof fotol!=="undefined" && fotol.pipe) && "fotos", (typeof ocrl!=="undefined" && ocrl.model) && "libreta"].filter(Boolean).join(",") || "ninguno"}`, `caídas: ${caidas().length ? caidas().slice(-4).map(caidaTxt).join(" || ") : "ninguna"}`, `voz: ${JSON.stringify(vozlConf())} · fotos: ${localStorage.getItem(FOTOL_KEY)||"{}"} · libreta: ${JSON.stringify(ocrlConf())} · clasificador: ${localStorage.getItem(CLASIF_KEY)||"{}"}`].concat(razl.diag || []).concat(vozl.diag || []).concat(["--- historial guardado (sobrevive a las caídas):"], diagGuardado().slice(-18)).join("\n"); }
 async function razlAsegurar(){ if(razl.estado==="listo" && (razl.pipe || razl.engine)) return true; const c = razlConf(); if(!c.listo) return false; return razlCargar(c.modelo || "qwen05"); }
 async function razlGenerar(messages, max, avisar, opts){
   if(!(await razlAsegurar())) throw new Error(razl.error || "modelo de razonamiento no disponible");
@@ -3712,7 +3719,7 @@ Reglas: hoy es ${hoyISO}; "ayer" es ${ayer}; "antier" es ${localISO(new Date(new
 "que" es uno de: enfermedad, plaga, helada, granizo, falta de agua, encharcamiento, fenología. "donde" es uno de: un manchón, la orilla, toda la parcela. "sev" es 0 a 5 (poquito = 1, bastante = 2, mucho = 3, grave = 4).
 "unidad" es una de: ${RAZL_UNIDADES.join(", ")}. "clase" es una de: ${RAZL_CLASES.join(", ")}. "metodo" es uno de: ${RAZL_METODOS.join(", ")}. Rendimiento en t/ha (32 quintales = 3.2; 40 toneladas en 2 hectáreas = 20).
 No inventes datos: lo que no dice el productor no se pone; una frase que no describe algo hecho o visto en el lote va en "sin_interpretar" con su motivo.${ctx && ctx.cultivo ? ` Cultivo: ${ctx.cultivo}.` : ""}${ctx && ctx.lote ? ` Lote: ${ctx.lote}.` : ""}`;
-  const user = lineas.map((l,i)=>`${i+1}. ${l.texto.trim()}`).join("\n");
+  const user = lineas.slice(0, 20).map((l,i)=>`${i+1}. ${l.texto.trim().slice(0, 200)}`).join("\n");   // v49: tope de líneas y largo (ventana de 2048 en iPhone)
   return [{role:"system", content: sys}, {role:"user", content: user}];
 }
 function razlValidarRegs(j, lineas){
@@ -3778,7 +3785,7 @@ function razlLimpiar(t){ return String(t||"").replace(/```[a-z]*/gi, "").replace
 function razlEsBasura(t){ const x = String(t||""); return /!{4,}/.test(x) || /\uFFFD/.test(x) || (x.match(/!!/g)||[]).length >= 3; }   // v43: desborde numérico del modelo (fp16): tokens "!" en ráfaga y palabras rotas
 async function razlRedactar(instruccion, hechos, max, avisar){
   const sys = `Eres el asistente de campo de Engram Campo. Responde en español de México, de usted, en máximo 4 frases cortas y naturales, SOLO con los datos del lote que recibes. Escribe oraciones: nunca uses llaves, corchetes, comillas ni copies el formato de los datos. Si el dato no está, diga que no lo tiene en el teléfono. Nunca recomiende, nombre ni sugiera productos, dosis ni mezclas: eso lo decide el agrónomo con una receta firmada. No invente números ni fechas; use exactamente los de los datos.`;
-  const bruto = await razlGenerar([{role:"system", content: sys}, {role:"user", content: `Datos del lote:\n${razlHechosTexto(hechos)}\n\n${instruccion}`}], max || 160, avisar);
+  const bruto = await razlGenerar([{role:"system", content: sys}, {role:"user", content: `Datos del lote:\n${razlHechosTexto(hechos).slice(0, 3500)}\n\n${instruccion}`}], max || 160, avisar);   // v49: tope (ventana de 2048 en iPhone)
   const txt = razlLimpiar(bruto); const basura = razlEsBasura(bruto); const formato = !basura && razlEsFormatoDatos(txt);
   if(basura) diagAnotar(razl.diag, `respuesta con desborde numérico (${razl.dtype||"?"}): ${bruto.slice(0,60)}`);
   const sp = razlSinProductos(formato || basura ? "" : txt); const cp = razlCompuerta(sp.texto, hechos);
