@@ -644,7 +644,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div class="kv" id="ss-razon-kv"></div>
     <div class="progress" id="ss-razon-prog" hidden><i></i></div>
     <p class="small muted" id="ss-razon-txt"></p>
-    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~300 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~900 MB)</button><button class="btn sec" data-razl="qwen15f32">Qwen2.5 1.5B estable · f32 (~1 GB)</button><button class="btn sec" data-razl="qwen3_17">Qwen3 1.7B · nuevo (~1.1 GB)</button><button class="btn sec" data-razl="qwen25_3b">Qwen2.5 3B · potente, experimental (~1.9 GB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
+    <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~300 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~900 MB)</button><button class="btn sec" data-razl="qwen15f32">Qwen2.5 1.5B estable · f32 (~1 GB)</button><button class="btn sec" data-razl="qwen3_17">Qwen3 1.7B · nuevo (~1.1 GB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
     <p class="small" id="ss-razon-prueba" hidden></p>
     <p class="note">Descárguelo desde la app instalada en la pantalla de inicio (no desde el navegador: son memorias separadas). Corre en el procesador gráfico del teléfono (WebGPU, con el motor WebLLM, que sube los pesos por tandas): iPhone 15 Pro o más nuevo con iOS 26, Android con Chrome al día y procesador gráfico compatible, y computadoras con Chrome. Sin procesador gráfico no hay razonador en el teléfono (el camino por WASM pide demasiada memoria y suele cerrar la app): las notas se entienden por reglas, sin señal, y el motor las entiende con señal. Si el sistema cierra la app mientras carga, la app lo recuerda y no vuelve a intentarlo sola. Después de descargar, toque <b>Probar</b>: si responde, ya funciona sin señal.</p>
     <p class="note">Un modelo de lenguaje chico que vive en el teléfono: entiende las notas de voz y de libreta en registros (mejor que las reglas), resume el recorrido de plagas y responde preguntas sobre el lote con lo que la app tiene guardado (Hoy → "Pregúntele al teléfono"). Dos compuertas siempre: ningún número que no esté en los datos y nunca productos ni dosis. Con señal, el motor vuelve a entender cada nota con el modelo grande y mide el acuerdo: así se sabe cuánto confiar en el teléfono. PRELIMINAR.</p>
@@ -2159,7 +2159,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "47 · 7 nov 2026";
+const APP_VERSION = "48 · 7 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3385,6 +3385,7 @@ function cargaFin(){ try{ localStorage.removeItem(CARGA_KEY); }catch(e){} }
 function caidaDe(que, modelo, device){ return caidas().find(c=>!c.oculta && c.que===que && (!modelo || c.modelo===modelo) && (!device || c.device===device)) || null; }   // las de segundo plano no bloquean
 function motorCaido(device){ return caidas().some(c=>!c.oculta && c.device===device && c.que!=="razon"); }     // el gráfico tumbó la app con voz, fotos o libreta: no se usa más en este teléfono
 function caidasOlvidar(){ try{ localStorage.removeItem(CAIDAS_KEY); localStorage.removeItem(CARGA_KEY); }catch(e){} }
+(function caidasMigrar48(){ try{ const l = caidas(); const q = l.filter(c=>!(c.fase==="calentando" || (c.que==="razon" && /Qwen2\.5-3B/.test(String(c.modelo||""))))); if(q.length !== l.length){ localStorage.setItem(CAIDAS_KEY, JSON.stringify(q)); setTimeout(()=>{ try{ diagAnotar(null, `caídas del calentamiento v47 olvidadas (${l.length - q.length}): ese paso ya no existe`); }catch(e){} }, 0); } }catch(e){} })();   // v48
 (function caidasMigrar(){ try{ const l = caidas(); const q = l.filter(c=>{ const v = parseFloat(String(c.app||"0")); return !(["voz","fotos","libreta"].includes(c.que) && v < 42); }); if(q.length !== l.length){ localStorage.setItem(CAIDAS_KEY, JSON.stringify(q)); setTimeout(()=>{ try{ diagAnotar(null, `caídas de voz/fotos/libreta anteriores a la v42 descartadas (${l.length - q.length}): el binario cambió`); }catch(e){} }, 0); } }catch(e){} })();   // v43
 const DIAG_KEY = "engram-campo-diag-v1";
 function diagAnotar(arr, l){ if(arr) arr.push(l); try{ const d = JSON.parse(localStorage.getItem(DIAG_KEY)) || []; d.push(new Date().toISOString().slice(5,19).replace("T"," ") + " " + String(l).slice(0,220)); localStorage.setItem(DIAG_KEY, JSON.stringify(d.slice(-40))); }catch(e){} }   // v37.1: el diagnóstico sobrevive a una caída
@@ -3468,11 +3469,11 @@ function vozlDisponible(){ return vozl.estado==="listo" || !!vozlConf().listo; }
 async function vozlAsegurar(){ if(vozl.estado==="listo" && vozl.pipe) return true; const c = vozlConf(); if(!c.listo) return false; let modelo = c.modelo || "base";
   if(modelo==="small" && caidaDe("voz", VOZL_MODELOS.small.id)){ modelo = "base"; diagAnotar(vozl.diag, "el modelo mejor tumbó la app en este teléfono: se usa el básico"); try{ toast("El modelo de voz «mejor» se quedó sin memoria en este teléfono: se usa el básico (si no está descargado, bájelo con wifi)"); }catch(e){} }   // v44
   return vozlCargar(modelo); }
-async function blobAFloat32(blob){
+async function blobAFloat32(blob, ms){
   const ab = await blob.arrayBuffer(); const AC = window.AudioContext || window.webkitAudioContext; let ac;
   try{ ac = new AC({sampleRate:16000}); }catch(e){ ac = new AC(); }
   const buf = await Promise.race([new Promise((ok, no)=>{ try{ const r = ac.decodeAudioData(ab, ok, no); if(r && r.then) r.then(ok, no); }catch(e){ no(e); } }),
-                                  new Promise((_, no)=>setTimeout(()=>no(new Error("no pude separar el audio de este archivo (formato)")), 30000))]);   // v46: antes podía quedarse en "Preparando el audio…" para siempre
+                                  new Promise((_, no)=>setTimeout(()=>{ try{ ac.close(); }catch(e){} no(new Error("no pude separar el audio de este archivo (formato)")); }, ms || 30000))]);   // v46: antes podía quedarse en "Preparando el audio…" para siempre
   let data = buf.getChannelData(0);
   if(buf.numberOfChannels > 1){ const n = buf.length, out = new Float32Array(n); for(let c=0;c<buf.numberOfChannels;c++){ const d = buf.getChannelData(c); for(let i=0;i<n;i++) out[i] += d[i]/buf.numberOfChannels; } data = out; }
   if(buf.sampleRate !== 16000){ const ratio = buf.sampleRate/16000, n = Math.floor(data.length/ratio), out = new Float32Array(n); for(let i=0;i<n;i++){ const x = i*ratio, i0 = Math.floor(x), f = x-i0; out[i] = data[i0]*(1-f) + (data[Math.min(i0+1, data.length-1)]||0)*f; } data = out; }
@@ -3487,9 +3488,9 @@ function chunksALineas(chunks, texto){
 }
 function usoGuard(que, modelo, device, archivo){ cargaGuard({que, modelo, device, dtype:"q8", fase:"usando", archivo, segundos:0}); const t0 = Date.now(); return setInterval(()=>{ try{ const c = JSON.parse(localStorage.getItem(CARGA_KEY)); if(c && c.fase==="usando"){ c.segundos = Math.round((Date.now()-t0)/1000); localStorage.setItem(CARGA_KEY, JSON.stringify(c)); } }catch(e){} }, 1000); }   // v44: si la app cae mientras el modelo trabaja, queda anotado "al usarlo (…, N s)"
 function usoFin(t){ clearInterval(t); cargaFin(); }
-async function vozlTranscribir(blob, avisar){
+async function vozlTranscribir(blob, avisar, opts){
   avisar("Cargando el modelo de voz en el teléfono…"); if(!(await vozlAsegurar())) throw new Error(vozl.error || "modelo de voz no disponible");
-  avisar("Preparando el audio…"); const audio = await blobAFloat32(blob); const t0 = Date.now(); const dur = Math.round(audio.length/16000);
+  avisar("Preparando el audio…"); const audio = blob instanceof Float32Array ? blob : await blobAFloat32(blob, opts && opts.msDecodificar); const t0 = Date.now(); const dur = Math.round(audio.length/16000);   // v48: también audio ya capturado
   const tick = setInterval(()=>avisar(`Transcribiendo en el teléfono… ${Math.round((Date.now()-t0)/1000)} s`), 500); const g = usoGuard("voz", (VOZL_MODELOS[vozl.modelo]||VOZL_MODELOS.base).id, vozl.motor, `transcribiendo ${dur} s de audio`);
   try{ const opts = {language:"spanish", task:"transcribe", chunk_length_s:30, stride_length_s:5, return_timestamps:true}; const out = vozl.pipe && vozl.pipe.worker ? await wkRpc({cmd:"transcribir", audio, opts}, null, [audio.buffer]) : await vozl.pipe(audio, opts);
     const texto = String((out && out.text) || "").trim(); return {texto, lineas: chunksALineas(out && out.chunks, texto), segundos: Math.round((Date.now()-t0)/1000)}; }
@@ -3582,7 +3583,7 @@ const RAZL_MODELOS = {
   qwen15f32: {id:"onnx-community/Qwen2.5-1.5B-Instruct", mlc:"Qwen2.5-1.5B-Instruct-q4f32_1-MLC", mb:1000, txt:"Qwen2.5 1.5B · estable (f32)", gpu:true, f32:true},   // v43: sin aritmética de 16 bits -> sin los "!!!!!" por desborde
   llama1: {id:"onnx-community/Llama-3.2-1B-Instruct",  mlc:"Llama-3.2-1B-Instruct-q4f16_1-MLC",  mb:700, txt:"Llama 3.2 1B", gpu:true, oculto:true},   // v41: sin botón (en iPhone no terminaba de bajar); queda por si hay una conf guardada
   qwen3_17: {id:"Qwen3-1.7B-q4f16_1-MLC", mlc:"Qwen3-1.7B-q4f16_1-MLC", mb:1100, txt:"Qwen3 1.7B · nuevo (razona mejor)", gpu:true, qwen3:true},          // v47: generación siguiente, mismo tamaño que el 1.5B; sin el "pensamiento" largo
-  qwen25_3b: {id:"Qwen2.5-3B-Instruct-q4f16_1-MLC", mlc:"Qwen2.5-3B-Instruct-q4f16_1-MLC", mb:1900, txt:"Qwen2.5 3B · potente (experimental)", gpu:true, experimental:true}   // v47: el doble de pesos; en iPhone puede quedarse sin memoria (queda anotado y no se repite)
+  qwen25_3b: {id:"Qwen2.5-3B-Instruct-q4f16_1-MLC", mlc:"Qwen2.5-3B-Instruct-q4f16_1-MLC", mb:1900, txt:"Qwen2.5 3B · potente (experimental)", gpu:true, experimental:true, oculto:true}   // v48: sin botón (en iPhone cayó bajando al 78 %); queda por si hay una conf guardada
 };
 // v38: WebLLM (mlc.ai) = motor de lenguaje para WebGPU que sube los pesos a la GPU por tandas desde la caché del navegador (sin copiar el modelo
 // entero en memoria, que es lo que tumba la app en iPhone). Biblioteca del CDN (el service worker la guarda), pesos de huggingface.co/mlc-ai,
@@ -3597,10 +3598,13 @@ async function razlCargarWebLLM(m, avisarProg){
     if(id !== m.mlc && caidaDe("razon", id, "webllm")) continue;
     cargaGuard({que:"razon", modelo: id, device:"webllm", dtype: id.includes("q4f32") ? "q4f32_1" : "q4f16_1"});
     try{
-      const engine = await lib.CreateMLCEngine(id, {initProgressCallback: r => { const pr = Math.round((r && r.progress || 0)*100); avisarProg(pr, (r && r.text || "").slice(0,70)); cargaProgreso({status: pr >= 100 ? "done" : "progress", progress: pr, file:"webllm"}); }, logLevel:"WARN"});
-      razl.engine = engine; razl.pipe = null; razl.motor = "webllm"; razl.dtype = id.includes("q4f32") ? "q4f32_1" : "q4f16_1"; razl.mlc = id; diagAnotar(razl.diag, `cargado con webllm (${id})`);
-      try{ avisarProg(100, "preparando el modelo para este teléfono (primera respuesta)…"); cargaGuard({que:"razon", modelo: id, device:"webllm", dtype: razl.dtype, fase:"calentando"}); const req = {messages:[{role:"user", content:"hola"}], max_tokens: 1, temperature: 0}; if(/^Qwen3/i.test(id)) req.extra_body = {enable_thinking: false}; await engine.chat.completions.create(req); diagAnotar(razl.diag, "calentamiento OK"); }catch(e){ diagAnotar(razl.diag, `calentamiento: ${String(e && e.message || e).slice(0,100)}`); }   // v47
-      cargaFin(); return true;
+      let primera = false; const cb = r => { const txt = (r && r.text || ""); if(/fetching/i.test(txt)) primera = true; const pr = Math.round((r && r.progress || 0)*100); avisarProg(pr, txt.slice(0,70)); cargaProgreso({status: pr >= 100 ? "done" : "progress", progress: pr, file:"webllm"}); };
+      let engine = await lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"});
+      if(primera){                                                                                            // v48: recién bajado = pico de memoria; se suelta la GPU y se recarga desde la caché del teléfono (como cerrar y abrir)
+        avisarProg(100, "descargado; recargando desde la memoria del teléfono…"); diagAnotar(razl.diag, "primera descarga: recarga desde caché");
+        try{ await engine.unload(); }catch(e){} engine = null; await new Promise(r_=>setTimeout(r_, 800));
+        engine = await lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"}); }
+      cargaFin(); razl.engine = engine; razl.pipe = null; razl.motor = "webllm"; razl.dtype = id.includes("q4f32") ? "q4f32_1" : "q4f16_1"; razl.mlc = id; diagAnotar(razl.diag, `cargado con webllm (${id})${primera ? " · recargado desde caché" : ""}`); return true;
     }catch(e){ cargaFin(); const msg = (e && e.message ? e.message : String(e)); diagAnotar(razl.diag, `webllm ${id}: ${msg.slice(0, 220)}`); razl.engine = null; if(!/f16|feature|shader/i.test(msg)) return false; }
   }
   return false;
@@ -3814,7 +3818,7 @@ function renderRazonSinSenal(){
   const filas = [["Modelo de razonamiento", est]]; if(c.fecha) filas.push(["Descargado el", fmtD(c.fecha.slice(0,10))]); if(razl.ultimo) filas.push(["Última respuesta", `${razl.ultimo.segundos} s`]);
   kvEl.innerHTML = kv(filas);
   const pr = $("#ss-razon-prog"); pr.hidden = razl.estado!=="cargando"; pr.querySelector("i").style.width = razl.progreso + "%";
-  $("#ss-razon-txt").textContent = razl.estado==="error" ? "No se pudo cargar: " + razl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : razl.estado==="listo" ? "Las notas se entienden y las preguntas se responden en este teléfono, sin internet. La primera vez después de descargar, el teléfono compila el modelo: puede tardar y hasta cerrar la app; si pasa, ábrala de nuevo y pruebe otra vez (la segunda arranca)." : c.listo ? "Listo para usarse sin señal (si la app se cerró al probarlo recién descargado, vuelva a probar: la primera vez compila)." : (caidaDe("razon") && !webllmPosible(RAZL_MODELOS.qwen05) ? "Este teléfono cerró la app cargando el modelo de razonamiento (sin memoria). Las notas se siguen entendiendo por reglas sin señal, y con señal las entiende el motor." : navigator.gpu ? "Con wifi, descargue un modelo una vez: corre en el procesador gráfico (WebLLM), que carga por tandas y cabe en este teléfono." : "Este navegador no tiene WebGPU: el razonador no corre aquí. Las notas se entienden por reglas sin señal y con el motor cuando hay señal.");
+  $("#ss-razon-txt").textContent = razl.estado==="error" ? "No se pudo cargar: " + razl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : razl.estado==="listo" ? "Las notas se entienden y las preguntas se responden en este teléfono, sin internet. Toque Probar: la primera respuesta compila el modelo para este teléfono (1–2 min); si la app se cierra, ábrala y pruebe de nuevo, la segunda vez arranca." : c.listo ? "Listo para usarse sin señal (la primera respuesta tarda más: compila el modelo; si la app se cierra, vuelva a probar)." : (caidaDe("razon") && !webllmPosible(RAZL_MODELOS.qwen05) ? "Este teléfono cerró la app cargando el modelo de razonamiento (sin memoria). Las notas se siguen entendiendo por reglas sin señal, y con señal las entiende el motor." : navigator.gpu ? "Con wifi, descargue un modelo una vez: corre en el procesador gráfico (WebLLM), que carga por tandas y cabe en este teléfono." : "Este navegador no tiene WebGPU: el razonador no corre aquí. Las notas se entienden por reglas sin señal y con el motor cuando hay señal.");
   $$("#ss-razon-btns button[data-razl]").forEach(b=>{ const m = RAZL_MODELOS[b.dataset.razl] || {}; const sinGpu = !!m.gpu && !webllmPosible(m) && !razlIntentos(m).length; b.disabled = razl.estado==="cargando" || sinGpu; b.title = sinGpu ? "necesita el procesador gráfico (WebGPU)" : (caidaDe("razon", m.id) || caidaDe("razon", m.mlc)) ? "ya tumbó la app en este teléfono" : ""; }); $("#ss-razon-quitar").hidden = !c.listo;
   $("#ss-razon-probar").hidden = !c.listo && razl.estado!=="listo"; $("#ss-razon-diag").hidden = false;   // v37.1: siempre (tras una caída el historial guardado es lo que importa)
 }
@@ -3822,7 +3826,7 @@ $("#ss-razon-probar").addEventListener("click", razlProbar);
 $("#ss-razon-diag").addEventListener("click", async ()=>{ const t = razlDiagTexto(); try{ await navigator.clipboard.writeText(t); toast("Diagnóstico copiado: péguelo en el chat"); }catch(e){ prompt("Copie este diagnóstico:", t); } });
 $$("#ss-razon-btns button[data-razl]").forEach(b=>b.addEventListener("click", ()=>razlCargar(b.dataset.razl)));
 window.__engramRazl = {hechos: razlHechos, compuerta: razlCompuerta, sinProductos: razlSinProductos, json: razlJSON};   // para depurar en el teléfono (consola)
-window.__engramMotor = {motor: vozlMotor, intentos: razlIntentos, modelos: RAZL_MODELOS, caidas, diag: razlDiagTexto, webllmPosible, generar: razlGenerar, estado: ()=>razl, reducir: fotoReducida, liberar: ortLiberar, hechosTexto: razlHechosTexto, esFormato: razlEsFormatoDatos, redactar: razlRedactar, vozl: ()=>vozl, fotol: ()=>fotol, ocrl: ()=>ocrl, worker: ()=>wk, usarWorker, transcribir: vozlTranscribir, clasificar: fotolClasificar, leer: ocrlLeer, ocrTexto: ocrlTexto, lote: ()=>LOTES[lotIdx]};   // v37: motor elegido, intentos del razonador y caídas (consola/pruebas)
+window.__engramMotor = {audioPorReproduccion, motor: vozlMotor, intentos: razlIntentos, modelos: RAZL_MODELOS, caidas, diag: razlDiagTexto, webllmPosible, generar: razlGenerar, estado: ()=>razl, reducir: fotoReducida, liberar: ortLiberar, hechosTexto: razlHechosTexto, esFormato: razlEsFormatoDatos, redactar: razlRedactar, vozl: ()=>vozl, fotol: ()=>fotol, ocrl: ()=>ocrl, worker: ()=>wk, usarWorker, transcribir: vozlTranscribir, clasificar: fotolClasificar, leer: ocrlLeer, ocrTexto: ocrlTexto, lote: ()=>LOTES[lotIdx]};   // v37: motor elegido, intentos del razonador y caídas (consola/pruebas)
 $("#ss-razon-quitar").addEventListener("click", async ()=>{ razlGuardarConf({}); const eng = razl.engine; razl = {estado:"no", progreso:0, pipe:null, engine:null, modelo:null, motor:null, error:null, archivo:"", ocupado:false, ultimo:null}; renderSinSenal(); renderRazonHoy();
   try{ if(eng && eng.unload) await eng.unload(); }catch(e){}
   try{ const lib = window.__webllm || (navigator.onLine ? await webllmLib() : null); if(lib && lib.deleteModelAllInfoInCache){ for(const k of Object.keys(RAZL_MODELOS)){ try{ await lib.deleteModelAllInfoInCache(RAZL_MODELOS[k].mlc); }catch(e){} } } }catch(e){}   // v38: pesos de WebLLM fuera de la caché
@@ -3886,15 +3890,45 @@ async function libStartLocal(file){                         // la foto de la lib
 }
 // --- (a) video -> voz
 let vidVoz = null;
+// v48: cuando el navegador no separa el audio de un video (iPhone/.mov), se reproduce en silencio y se captura lo que suena: dura lo que dura el video
+async function audioPorReproduccion(file, avisar){
+  const AC = window.AudioContext || window.webkitAudioContext; let ac; try{ ac = new AC({sampleRate:16000}); }catch(e){ ac = new AC(); } try{ await ac.resume(); }catch(e){}
+  const url = URL.createObjectURL(file); const v = document.createElement("video"); v.setAttribute("playsinline", ""); v.playsInline = true; v.preload = "auto"; v.muted = false; v.volume = 1; v.style.cssText = "position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0.01"; v.src = url; document.body.appendChild(v);
+  const chunks = []; let total = 0;
+  try{
+    await new Promise((ok, no)=>{ v.onloadedmetadata = ()=>ok(); v.onerror = ()=>no(new Error("el navegador no abre este video")); setTimeout(()=>no(new Error("el video no cargó")), 15000); });
+    const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 60;
+    const src = ac.createMediaElementSource(v); const proc = ac.createScriptProcessor(4096, 1, 1); const gain = ac.createGain(); gain.gain.value = 0;
+    proc.onaudioprocess = e => { const d = e.inputBuffer.getChannelData(0); chunks.push(new Float32Array(d)); total += d.length; };
+    src.connect(proc); proc.connect(gain); gain.connect(ac.destination);
+    const fin = new Promise(ok=>{ v.onended = ()=>ok(); setTimeout(ok, (dur + 8)*1000); });
+    await v.play(); const t0 = Date.now(); const tick = setInterval(()=>{ if(avisar) avisar(`Escuchando el video… ${Math.min(Math.round((Date.now()-t0)/1000), Math.round(dur))} s de ${Math.round(dur)} s`); }, 500);
+    await fin; clearInterval(tick); try{ v.pause(); }catch(e){} try{ proc.disconnect(); src.disconnect(); gain.disconnect(); }catch(e){}
+    let out = new Float32Array(total); let o = 0; for(const ch of chunks){ out.set(ch, o); o += ch.length; }
+    if(ac.sampleRate !== 16000){ const ratio = ac.sampleRate/16000, n = Math.floor(out.length/ratio), r = new Float32Array(n); for(let i=0;i<n;i++){ const x = i*ratio, i0 = Math.floor(x), f = x-i0; r[i] = out[i0]*(1-f) + (out[Math.min(i0+1, out.length-1)]||0)*f; } out = r; }
+    return out;
+  } finally { try{ v.remove(); }catch(e){} URL.revokeObjectURL(url); try{ ac.close(); }catch(e){} }
+}
+function vozlVideoListo(box, r){
+  if(!r.lineas.length){ box.textContent = "No se oyó nada reconocible en el video (si habló, el motor lo vuelve a oír con señal)."; vidVoz = null; return; }
+  vidVoz = {texto: r.texto, lineas: r.lineas, segundos: r.segundos, modelo: `whisper-${vozl.modelo||"base"} · teléfono (${vozl.motor}, video)`};
+  box.textContent = `Lo que dijo en el video (oído en el teléfono, ${r.segundos} s): «${r.texto.slice(0,160)}${r.texto.length>160?"…":""}». Al guardar, podrá convertirlo en registros.`;
+}
+async function vozlEnVideoReproduciendo(f){                      // v48: a pedido (botón): hace falta un toque para que el teléfono deje reproducir
+  const box = $("#vid-voz"); if(!box || !f) return; box.textContent = "Escuchando el video…";
+  try{ const audio = await audioPorReproduccion(f, m=>{ box.textContent = m; }); let mx = 0; for(let i=0;i<audio.length;i+=5) mx = Math.max(mx, Math.abs(audio[i]));
+    if(audio.length < 16000 || mx < 0.003){ box.textContent = "No se oyó sonido en el video (¿tiene audio? ¿el teléfono está en silencio?). Con señal el motor lo intenta igual; si dijo algo importante, grábelo como nota de voz."; return; }
+    const r = await vozlTranscribir(audio, m=>{ box.textContent = m; }); vozlVideoListo(box, r); }
+  catch(e){ const msg = String(e.message||e).slice(0,70); vidVoz = {fallo: msg, lineas: []}; box.textContent = `No pude escuchar el video (${msg}). Con señal el motor lo escucha y le propone los registros; o grabe lo mismo como nota de voz.`; }
+}
 async function vozlEnVideo(f){
   vidVoz = null; const box = $("#vid-voz"); if(!box) return; box.hidden = true; if(!f || !vozlDisponible()) return;
   box.hidden = false; box.textContent = "Escuchando el video en el teléfono…";
-  try{ const r = await vozlTranscribir(f, m=>{ box.textContent = m; });
-    if(!r.lineas.length){ box.textContent = "No se oyó nada reconocible en el video (si habló, el motor lo vuelve a oír con señal)."; return; }
-    vidVoz = {texto: r.texto, lineas: r.lineas, segundos: r.segundos, modelo: `whisper-${vozl.modelo||"base"} · teléfono (${vozl.motor}, video)`};
-    box.textContent = `Lo que dijo en el video (oído en el teléfono, ${r.segundos} s): «${r.texto.slice(0,160)}${r.texto.length>160?"…":""}». Al guardar, podrá convertirlo en registros.`;
-  }catch(e){ const msg = String(e.message||e).slice(0,70); vidVoz = {fallo: msg, lineas: []}; box.textContent = navigator.onLine ? `El teléfono no pudo separar el audio de este video (${msg}): al guardar, el motor lo escucha y le propone los registros en Registrar (unos minutos). Si quiere, diga lo mismo en una nota de voz.`
-                                                                                              : `El teléfono no pudo separar el audio de este video (${msg}). Se guarda igual: con señal el motor lo escucha y le propone los registros. Si dijo algo importante, grábelo también como nota de voz.`; }
+  try{ if(!(await vozlAsegurar())){ vidVoz = {fallo: "modelo de voz no disponible", lineas: []}; box.textContent = `El modelo de voz no está listo en este teléfono (${String(vozl.error||"no descargado").slice(0,80)}): ${navigator.onLine ? "al guardar, el motor escucha el video y le propone los registros en Registrar." : "con señal, el motor escucha el video."}`; return; }
+    const r = await vozlTranscribir(f, m=>{ box.textContent = m; }, {msDecodificar: 12000}); vozlVideoListo(box, r); }
+  catch(e){ const msg = String(e.message||e).slice(0,70); vidVoz = {fallo: msg, lineas: []};
+    box.innerHTML = `<span>El teléfono no pudo separar el audio de este video directamente (${esc(msg)}). </span><button class="btn sec sm" id="vid-escuchar" style="margin:6px 0">Escuchar el video ahora</button><span class="small muted"> Lo reproduce en silencio y lo oye (dura lo que dura el video).${navigator.onLine ? " Si no, al guardar el motor lo escucha y le propone los registros en Registrar." : " Sin señal, se guarda igual y el motor lo escucha cuando vuelva la señal."}</span>`;
+    const b = $("#vid-escuchar"); if(b) b.addEventListener("click", ()=>vozlEnVideoReproduciendo(f)); }
 }
 let vidPendCid = null;
 function vidlRevisar(cid, voz){                              // después de guardar el video: lo dicho -> revisión -> registros (fuente video)
@@ -4175,33 +4209,50 @@ async function clipEtiquetas(blob, etiquetas){                     // v47: el mo
   if(fotol.pipe && fotol.pipe.worker) return wkRpc({cmd:"clasificar", blob, etiquetas, max:512});
   const url = URL.createObjectURL(blob); try{ return await fotol.pipe(url, etiquetas); } finally{ URL.revokeObjectURL(url); }
 }
-// --- (4) flores de tomate: flor = mancha amarilla (pétalos y cono de anteras unidos por cierre); marca = café oscuro en el centro de la flor
+function recorteBlob(c, f, margen){                                // recorte de una caja con margen, como JPEG
+  const mx = (f.maxx-f.minx+1)*margen, my = (f.maxy-f.miny+1)*margen; const x0 = Math.max(0, Math.round(f.minx-mx)), y0 = Math.max(0, Math.round(f.miny-my)), x1 = Math.min(c.w, Math.round(f.maxx+mx+1)), y1 = Math.min(c.h, Math.round(f.maxy+my+1));
+  const cv = document.createElement("canvas"); cv.width = Math.max(8, x1-x0); cv.height = Math.max(8, y1-y0); cv.getContext("2d").drawImage(c.canvas, x0, y0, x1-x0, y1-y0, 0, 0, cv.width, cv.height); return new Promise(ok=>cv.toBlob(ok, "image/jpeg", .85));
+}
+// --- (4) flores de tomate: flor = mancha amarilla (pétalos y cono de anteras unidos por cierre); marca = mancha café compacta, bastante más oscura que la flor, en el centro
 async function floresEstimar(file, opts){
-  opts = opts || {}; const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const am = new Uint8Array(n), caf = new Uint8Array(n);
-  for(let i=0;i<n;i++){ const [hh, s_, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); if(hh >= 30 && hh <= 60 && s_ > .40 && v > .50) am[i] = 1; else if(hh >= 8 && hh <= 45 && s_ > .3 && v < .5) caf[i] = 1; }
-  const k = Math.max(2, Math.round(0.012*w)); const cerrado = erosionar(dilatar(abrir3(am, w, h), w, h, k), w, h, k);          // v47: cierre: une pétalos separados por sombras o tallos
+  opts = opts || {}; const c = await imgACanvas(file, 1024); const {w, h, data} = c; const n = w*h; const am = new Uint8Array(n), caf = new Uint8Array(n), vv = new Float32Array(n);
+  for(let i=0;i<n;i++){ const [hh, s_, v] = hsvDe(data[i*4], data[i*4+1], data[i*4+2]); vv[i] = v; if(hh >= 30 && hh <= 60 && s_ > .40 && v > .50) am[i] = 1; else if(hh >= 5 && hh <= 42 && s_ > .35 && s_ <= .72 && v < .45) caf[i] = 1; }   // v48: café apagado (magulladura), no naranja intenso en sombra
+  const k = Math.max(3, Math.round(0.018*w)); const cerrado = erosionar(dilatar(abrir3(am, w, h), w, h, k), w, h, k);          // v48: cierre mayor: pétalos partidos por sombras o tallos se unen
   let flores = componentes(cerrado, w, h, Math.round(n*0.0015), n*0.92).sort((a_,b_)=>b_.area-a_.area);
-  const mayor = flores.length ? flores[0].area : 0; flores = flores.filter(f=>f.area >= 0.12*mayor).slice(0, 12);                  // v47: lo mucho más chico que la flor grande es fondo
-  let abejorro = false, confirmadas = null;
-  if(opts.clip && flores.length && fotolDisponible()){                                                                         // v47: cada candidata se confirma con el modelo de fotos
-    const et = ["a yellow tomato flower", "a bumblebee or bee on a flower", "green leaves and stems", "blurry green background"]; const keep = []; confirmadas = 0;
+  const mayor = flores.length ? flores[0].area : 0;
+  flores = flores.filter(f=>{ const bw = f.maxx-f.minx+1, bh = f.maxy-f.miny+1; const asp = bw/bh; return f.area >= 0.15*mayor && asp >= .45 && asp <= 2.2 && f.area/(bw*bh) >= .25; }).slice(0, 12);   // v48: un pétalo suelto es alargado y chico
+  // evidencia de color de la marca: café compacto (una mancha, no píxeles sueltos) y bastante más oscuro que la flor
+  flores.forEach(f=>{ const vs = []; for(let y=f.miny;y<=f.maxy;y+=2) for(let x=f.minx;x<=f.maxx;x+=2){ const i = y*w+x; if(am[i]) vs.push(vv[i]); } vs.sort((a_,b_)=>a_-b_); const vmed = vs.length ? vs[vs.length>>1] : .8;
+    const bw = f.maxx-f.minx+1, bh = f.maxy-f.miny+1; const m = new Uint8Array(bw*bh); let kk = 0; const mx0 = bw*.15, mx1 = bw*.85, my0 = bh*.15, my1 = bh*.85;
+    for(let y=0;y<bh;y++) for(let x=0;x<bw;x++){ const i = (y+f.miny)*w + (x+f.minx); if(caf[i] && vv[i] < vmed - .28 && x>=mx0 && x<=mx1 && y>=my0 && y<=my1){ m[y*bw+x] = 1; kk++; } }
+    const blobs = kk ? componentes(abrir3(m, bw, bh), bw, bh, 12, bw*bh) : []; const mayorB = blobs.length ? Math.max(...blobs.map(b_=>b_.area)) : 0;
+    f.marca = kk / f.area; f.manchaMayor = mayorB / f.area; f.evidenciaMarca = mayorB >= 20 && f.manchaMayor >= .012; });
+  let abejorro = false, confirmadas = null, modeloUsado = null;
+  const propio = (typeof clasifFlores !== "undefined" && clasifFlores.disponible()) ? clasifFlores : null;
+  if(propio && flores.length){                                                                                                   // v48: clasificador propio de flores publicado por el RIG
+    const keep = []; confirmadas = 0; modeloUsado = "propio";
+    for(let i=0;i<Math.min(flores.length, 8);i++){ const f = flores[i]; if(opts.avisar) opts.avisar(`Mirando flor por flor con el clasificador del RIG… ${i+1}/${Math.min(flores.length, 8)}`);
+      try{ const r = await propio.predecir(await recorteBlob(c, f, .25)); const p = k_ => ((r.top||[]).find(t=>t.clave===k_)||{}).score || 0; f.p_con = +p("flor_con_marca").toFixed(2); f.p_sin = +p("flor_sin_marca").toFixed(2); f.p_no = +p("no_flor").toFixed(2); f.version = r.version;
+        if(f.p_no < .5){ f.conMarca = f.p_con >= .5 && (f.evidenciaMarca || f.p_con >= .75); keep.push(f); confirmadas++; } }
+      catch(e){ f.conMarca = f.evidenciaMarca; keep.push(f); } }
+    flores.slice(8).forEach(f=>{ f.conMarca = f.evidenciaMarca; keep.push(f); }); flores = keep;
+  } else if(opts.clip && flores.length && fotolDisponible()){                                                                    // v47/v48: el modelo general confirma flor y marca
+    const et = ["a yellow tomato flower", "a bumblebee or bee on a flower", "green leaves and stems", "blurry green background"]; const etM = ["a tomato flower whose anther cone has a brown bruise mark", "a tomato flower with clean bright yellow anthers"]; const keep = []; confirmadas = 0; modeloUsado = "general";
     for(let i=0;i<Math.min(flores.length, 6);i++){ const f = flores[i]; if(opts.avisar) opts.avisar(`Confirmando flores en el teléfono… ${i+1}/${Math.min(flores.length, 6)}`);
-      const mx = (f.maxx-f.minx+1)*.25, my = (f.maxy-f.miny+1)*.25; const x0 = Math.max(0, Math.round(f.minx-mx)), y0 = Math.max(0, Math.round(f.miny-my)), x1 = Math.min(w, Math.round(f.maxx+mx+1)), y1 = Math.min(h, Math.round(f.maxy+my+1));
-      const cv = document.createElement("canvas"); cv.width = x1-x0; cv.height = y1-y0; cv.getContext("2d").drawImage(c.canvas, x0, y0, x1-x0, y1-y0, 0, 0, x1-x0, y1-y0); const blob = await new Promise(ok=>cv.toBlob(ok, "image/jpeg", .85));
-      try{ const res = await clipEtiquetas(blob, et); const sc = l_ => ((res||[]).find(x=>x.label===l_)||{}).score || 0; f.flor = +sc(et[0]).toFixed(2); f.abeja = +sc(et[1]).toFixed(2);
-        if(f.abeja >= .3) abejorro = true; if(f.flor >= .35 || f.flor + f.abeja >= .55){ keep.push(f); confirmadas++; } }
-      catch(e){ keep.push(f); } }
-    flores.slice(6).forEach(f=>keep.push(f)); flores = keep;
-  }
-  let marcadas = 0;
-  flores.forEach(f=>{ let kk = 0, kc = 0; const mx0 = f.minx + (f.maxx-f.minx)*.2, mx1 = f.maxx - (f.maxx-f.minx)*.2, my0 = f.miny + (f.maxy-f.miny)*.2, my1 = f.maxy - (f.maxy-f.miny)*.2;
-    for(let y=f.miny;y<=f.maxy;y++) for(let x=f.minx;x<=f.maxx;x++) if(caf[y*w+x]){ kk++; if(x>=mx0 && x<=mx1 && y>=my0 && y<=my1) kc++; }
-    f.marca = kk / f.area; f.marcaCentro = kc / f.area; if(f.marcaCentro > .02 || f.marca > .035){ f.conMarca = true; marcadas++; } });
+      try{ const blob = await recorteBlob(c, f, .25); const res = await clipEtiquetas(blob, et); const sc = l_ => ((res||[]).find(x=>x.label===l_)||{}).score || 0; f.flor = +sc(et[0]).toFixed(2); f.abeja = +sc(et[1]).toFixed(2);
+        if(f.abeja >= .3) abejorro = true;
+        if(f.flor >= .35 || f.flor + f.abeja >= .55){ keep.push(f); confirmadas++; if(f.evidenciaMarca){ const rm = await clipEtiquetas(blob, etM); const pm = ((rm||[]).find(x=>x.label===etM[0])||{}).score || 0; f.p_marca_clip = +pm.toFixed(2); f.conMarca = pm >= .5; } else f.conMarca = false; } }
+      catch(e){ f.conMarca = f.evidenciaMarca; keep.push(f); } }
+    flores.slice(6).forEach(f=>{ f.conMarca = f.evidenciaMarca; keep.push(f); }); flores = keep;
+  } else flores.forEach(f=>{ f.conMarca = f.evidenciaMarca; });
+  const marcadas = flores.filter(f=>f.conMarca).length;
   const pct = flores.length ? Math.round(1000*marcadas/flores.length)/10 : null;
   const dataURL = dibujar(c, ctx=>{ ctx.lineWidth = 3; flores.forEach(f=>{ ctx.strokeStyle = f.conMarca ? "#ff2d55" : "#00e5ff"; ctx.strokeRect(f.minx, f.miny, f.maxx-f.minx+1, f.maxy-f.miny+1); if(f.abeja >= .3){ ctx.fillStyle = "#ffd60a"; ctx.font = "bold 18px sans-serif"; ctx.fillText("abejorro", f.minx+4, f.miny+20); } }); });
-  const nota = flores.length ? `${flores.length} flor${flores.length===1?"":"es"} y ${marcadas} con mancha café en las anteras (${pct} %).${abejorro ? " Hay un abejorro trabajando en la flor." : ""}${confirmadas != null ? " Cada flor la confirmó el modelo de fotos." : ""} Es una ayuda para contar, no un conteo: corrija lo que vea distinto.`
+  const como = modeloUsado === "propio" ? " Cada flor la miró el clasificador de flores del RIG." : modeloUsado === "general" ? " Cada flor la confirmó el modelo de fotos." : "";
+  const nota = flores.length ? `${flores.length} flor${flores.length===1?"":"es"} y ${marcadas} con mancha café en las anteras (${pct} %).${abejorro ? " Hay un abejorro trabajando en la flor." : ""}${como} Es una ayuda para contar, no un conteo: corrija lo que vea distinto.`
                               : "No distingo flores amarillas: acérquese con las anteras visibles y buena luz, o teclee el conteo.";
-  return {flores: flores.length, con_marca: marcadas, pct, abejorro, confianza: flores.length ? (confirmadas != null ? .5 : .35) : .1, modelo: confirmadas != null ? "color y forma + modelo de fotos · teléfono" : "color y forma · teléfono", preliminar:true, dataURL, nota};
+  return {flores: flores.length, con_marca: marcadas, pct, abejorro, confianza: flores.length ? (modeloUsado === "propio" ? .6 : modeloUsado ? .5 : .35) : .1, modelo: modeloUsado === "propio" ? "color y forma + clasificador propio de flores · teléfono" : modeloUsado ? "color y forma + modelo de fotos · teléfono" : "color y forma · teléfono", preliminar:true, dataURL, nota,
+          detalle: flores.map(f=>({area: f.area, marca: +f.marca.toFixed(3), mancha: +f.manchaMayor.toFixed(3), evidencia: !!f.evidenciaMarca, flor: f.flor, abeja: f.abeja, p_con: f.p_con, p_no: f.p_no, p_marca_clip: f.p_marca_clip}))};
 }
 // --- ganchos en la app: lectura de sensor (trampa / aguja / pantalla), polinización (flores), punto de monitoreo (trampa)
 let leTel = null, poTel = null, plTelTrampa = null;
@@ -4322,6 +4373,29 @@ async function clasifAnexar(reco, fuente, box){           // al lado de la sospe
   catch(e){ if(box) box.textContent += ` (clasificador propio: ${String(e.message||e).slice(0,60)})`; }
   return reco;
 }
+// v48: un clasificador propio más, con el mismo mecanismo (cerebro.fotos.<nombre> trae url/etiquetas/entrada; la app lo baja con señal y lo corre sin señal)
+function clasifGenerico(nombre, specFn, key){
+  const st = { estado:"no", sesion:null, spec:null, error:null };
+  const conf = () => { try{ return JSON.parse(localStorage.getItem(key)) || {}; }catch(e){ return {}; } };
+  const disponible = () => { const sp = specFn(); return !!sp && (st.estado==="listo" || conf().version===sp.version || navigator.onLine); };
+  async function cargar(){ const sp = specFn(); if(!sp){ st.estado = "no"; st.error = "sin modelo publicado"; return false; } st.estado = "cargando"; st.error = null;
+    try{ const ort = await ortLib(); let r = null, url = ""; for(const base of ["", "../"]){ url = new URL(base + sp.url, location.href).href; try{ r = await fetch(url); if(r.ok) break; }catch(e){ r = null; } }
+      if(!r || !r.ok) throw new Error(`no se encontró ${sp.url} (${r ? r.status : "sin respuesta"})`); const buf = await r.arrayBuffer();
+      cargaGuard({que:"clasificador-" + nombre, modelo: sp.version, device:"wasm", dtype:"fp32"}); st.sesion = await ort.InferenceSession.create(buf, {executionProviders:["wasm"]}); cargaFin(); st.spec = sp; st.estado = "listo";
+      try{ localStorage.setItem(key, JSON.stringify({version: sp.version, listo:true, fecha:new Date().toISOString(), bytes: buf.byteLength})); }catch(e){} }
+    catch(e){ st.estado = "error"; st.error = String(e && e.message || e).slice(0,160); st.sesion = null; }
+    return st.estado==="listo"; }
+  async function asegurar(){ if(st.estado==="listo" && st.sesion && st.spec && st.spec.version===(specFn()||{}).version) return true; if(!specFn()) return false; return cargar(); }
+  async function predecir(fuente){ if(!(await asegurar())) throw new Error(st.error || `clasificador de ${nombre} no disponible`);
+    const sp = st.spec, ent = sp.entrada || {}; const lado = ent.lado || 224, mean = ent.mean || [0.485,0.456,0.406], std = ent.std || [0.229,0.224,0.225]; const t0 = Date.now();
+    const datos = await clasifTensor(fuente, lado, mean, std); const ort = window.ort; const feeds = {}; feeds[ent.nombre || st.sesion.inputNames[0] || "imagen"] = new ort.Tensor("float32", datos, [1, 3, lado, lado]);
+    const out = await st.sesion.run(feeds); const salida = out[st.sesion.outputNames ? st.sesion.outputNames[0] : "logits"] || out.logits || Object.values(out)[0];
+    const logits = Array.from(salida.data); const mx = Math.max(...logits); const ex = logits.map(v=>Math.exp(v-mx)); const sum = ex.reduce((a,b)=>a+b, 0) || 1; const probs = ex.map(v=>v/sum);
+    const top = probs.map((p, i)=>({clave: sp.etiquetas[i], nombre: (sp.nombres||{})[sp.etiquetas[i]] || sp.etiquetas[i], score:+p.toFixed(3)})).sort((a,b)=>b.score-a.score);
+    return {clave: top[0].clave, nombre: top[0].nombre, confianza: top[0].score, top, version: sp.version, segundos: Math.round((Date.now()-t0)/100)/10, preliminar:true}; }
+  return {estado: ()=>st, disponible, cargar, asegurar, predecir, spec: specFn};
+}
+const clasifFlores = clasifGenerico("flores", ()=>(CEREBRO && CEREBRO.fotos && CEREBRO.fotos.flores && CEREBRO.fotos.flores.url) ? CEREBRO.fotos.flores : null, "engram-campo-clasif-flores-v1");
 function renderClasifSinSenal(){
   const kvEl = $("#ss-clasif-kv"); if(!kvEl) return; const sp = clasifSpec(); const c = clasifConf();
   if(!sp){ kvEl.innerHTML = kv([["Clasificador propio", "todavía no hay uno publicado por el RIG (visión v1: instalar_vision_v1.sh)"]]); $("#ss-clasif-cargar").hidden = true; return; }
@@ -4329,9 +4403,10 @@ function renderClasifSinSenal(){
   kvEl.innerHTML = kv([["Clasificador propio", `${sp.version} · ${(sp.etiquetas||[]).length} clases · ${est}`], ["Exactitud", `validación ${m.val_acc!=null ? Math.round(m.val_acc*100) + " %" : "?"}${m.reservado_acc!=null ? ` · fotos confirmadas ${Math.round(m.reservado_acc*100)} % (n=${m.n_reservado})` : " · sin fotos confirmadas todavía"}`], ["Tamaño", sp.bytes ? `${Math.round(sp.bytes/1048576)} MB` : "?"]]);
   const b = $("#ss-clasif-cargar"); b.hidden = false; b.disabled = clasif.estado==="cargando"; b.textContent = c.version===sp.version ? "Volver a cargar" : "Descargar clasificador propio";
   $("#ss-clasif-txt").textContent = clasif.estado==="error" ? "No se pudo cargar: " + clasif.error : "Con él, cada foto de plaga lleva dos opiniones: el modelo general y el entrenado en su RIG con fotos públicas y las que confirmó su agrónomo.";
+  { const fl = clasifFlores.spec(); if(fl){ const e_ = clasifFlores.estado(); const mf = fl.metricas || {}; kvEl.insertAdjacentHTML("beforeend", kv([["Clasificador de flores", `${fl.version} · ${(fl.etiquetas||[]).length} clases · ${e_.estado==="listo" ? "listo" : e_.estado==="error" ? "error: " + (e_.error||"") : "se baja al usarlo (con señal)"}${mf.val_acc!=null ? ` · validación ${Math.round(mf.val_acc*100)} %` : ""}`]])); } }
 }
 $("#ss-clasif-cargar").addEventListener("click", clasifCargar);
-window.__engramClasif = {predecir: clasifPredecir, spec: clasifSpec};
+window.__engramClasif = {predecir: clasifPredecir, spec: clasifSpec, flores: clasifFlores};
 // ---------------------------------------------------------------- video
 let vidFile = null, vidURL = null;
 $("#vid-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; vidFile = f; fotolEnVideo(f); if(typeof vozlEnVideo==="function") vozlEnVideo(f); if(vidURL) URL.revokeObjectURL(vidURL); vidURL = URL.createObjectURL(f); $("#vid-preview").hidden = false; $("#vid-preview").innerHTML = `<video src="${vidURL}" controls playsinline muted></video><p class="small muted" style="margin-top:6px">${(f.size/1048576).toFixed(1)} MB · con fecha y lugar.</p>`; $("#vid-save").disabled = false; $("#vid-drop").querySelector("b").textContent = "Filmar otro"; });
