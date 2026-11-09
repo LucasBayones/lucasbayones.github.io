@@ -1,6 +1,6 @@
 {
-  "name": "Engram Campo",
-  "short_name": "Engram Campo",
+  "name": "EG Agro",
+  "short_name": "EG Agro",
   "description": "Riesgo por lote, hoy y las próximas semanas. Versión preliminar para socios.",
   "lang": "es",
   "id": "./",
@@ -9,7 +9,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F3F5F8",
-  "theme_color": "#FFFFFF",
+  "theme_color": "#1E6B46",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

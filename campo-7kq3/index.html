@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow, noarchive">
-<meta name="description" content="Engram Campo — riesgo por lote, hoy y las próximas semanas. Versión preliminar para socios.">
-<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#121B26" media="(prefers-color-scheme: dark)">
-<meta name="application-name" content="Engram Campo">
+<meta name="description" content="EG Agro — la app de campo de Engram Technologies: riesgo por lote hoy y la semana, recorridos, sensores y polinización. Versión preliminar para socios.">
+<meta name="theme-color" content="#1E6B46" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0E1A14" media="(prefers-color-scheme: dark)">
+<meta name="application-name" content="EG Agro">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Engram Campo">
+<meta name="apple-mobile-web-app-title" content="EG Agro">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<title>Engram Campo</title>
+<title>EG Agro</title>
 <link rel="stylesheet" href="leaflet.css">
 <style>
 /* Engram Campo v25 · diseño limpio (3 nov 2026). Una columna de celular (máx 430px); barra inferior fija; pantallas conmutadas por hash.
@@ -281,6 +281,110 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 .stat .v{font-size:24px;font-weight:700;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums} .stat .v small{font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0}
 .stat .l{font-size:12px;color:var(--muted);font-weight:600}
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} .sheet .panel{transition:none} .log-item.new{animation:none} .bigbtn{transition:none} .scanline{animation:none} }
+/* ===== v51 · EG Agro: verde profundo para la marca y la acción, ocre para lo del suelo y el lote, semáforo aparte ===== */
+:root{ --ink:#14241C; --fg:#182A20; --muted:#5E7066; --line:#DDE5DF; --bg:#F2F5F1; --surface-2:#EBF0EC;
+  --accent:#1E6B46; --accent-bg:#E3F0E7; --cab:#1E6B46; --cab-osc:#134A30; --cab-fg:#FFFFFF; --ocre:#C98A1F; --ocre-bg:#FBF1DC;
+  --ok:#2E8B57; --ok-bg:#E3F3E9; --warn:#B9780F; --warn-bg:#FBF1DC; --bad:#C8372D; --bad-bg:#FBE6E3; --blue:#2B6CB0; --gps:#4FA3FF }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ink:#F1F4F2; --fg:#E7ECE8; --muted:#97A89D; --line:#2A3A30; --bg:#0E1A14; --surface:#16241C; --surface-2:#1E2E25;
+  --accent:#3FCB86; --accent-bg:#163A2A; --cab:#134A30; --cab-osc:#0E3522; --ocre:#E0A63A; --ocre-bg:#3C2D12; --ok:#3FCB86; --ok-bg:#163A2A; --warn:#F2B04E; --warn-bg:#3C2D12; --bad:#FF7B70; --bad-bg:#47221E; --blue:#7AA7FF; --bar:#101C15; --bar-fg:#F1F4F2 }}
+:root[data-theme="dark"]{ --ink:#F1F4F2; --fg:#E7ECE8; --muted:#97A89D; --line:#2A3A30; --bg:#0E1A14; --surface:#16241C; --surface-2:#1E2E25;
+  --accent:#3FCB86; --accent-bg:#163A2A; --cab:#134A30; --cab-osc:#0E3522; --ocre:#E0A63A; --ocre-bg:#3C2D12; --ok:#3FCB86; --ok-bg:#163A2A; --warn:#F2B04E; --warn-bg:#3C2D12; --bad:#FF7B70; --bad-bg:#47221E; --blue:#7AA7FF; --bar:#101C15; --bar-fg:#F1F4F2 }
+body::before{background:var(--cab)}
+main,.screen>*,.card>*,.kpi>*,.hoja>*,.hoja .card>*{min-width:0}          /* ningún hijo de la rejilla ensancha la pantalla (el iPhone la achicaba) */
+#hoy-razon #rz-q{flex:1 1 0;width:0}
+/* cabecera verde */
+.top{background:var(--cab);color:var(--cab-fg);border-bottom:0;padding-block:10px 12px}
+.brand b{color:#fff} .brand small{color:rgba(255,255,255,.72)}
+.brand .mark{background:#fff;padding:3px}
+.pill-private{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.22);color:#fff}
+.pill-private.off{background:rgba(255,255,255,.14);color:#FFD9A8;border-color:rgba(255,255,255,.22)} .pill-private.pend{background:rgba(255,255,255,.14);color:#CFF3DC;border-color:rgba(255,255,255,.22)}
+.campana{position:relative;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.14);border:0;color:#fff;display:grid;place-items:center;flex:none}
+.campana svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.campana .n{position:absolute;top:2px;right:2px;background:var(--bad);color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 5px;line-height:1}
+.campana .n:empty,.campana .n[data-n="0"]{display:none}
+.lot-chip{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff} .lot-chip small{color:rgba(255,255,255,.72)}
+.lot-chip[aria-pressed="true"]{background:#fff;color:var(--cab-osc);border-color:#fff} .lot-chip[aria-pressed="true"] small{color:#4E6358}
+.lot-chip.add{border-style:dashed;color:rgba(255,255,255,.85);background:transparent}
+/* Inicio: título y cuatro números */
+.ini-cab{display:grid;gap:2px;padding:2px 2px 0}
+.ini-cab h1{font-size:21px;font-weight:700;line-height:1.2;color:var(--fg)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--surface);border-radius:18px;padding:14px 14px 12px;border:0;position:relative;overflow:hidden;text-align:left;font:inherit;color:inherit;display:grid;gap:4px;align-content:start;box-shadow:var(--shadow);min-height:112px;cursor:pointer}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--acento,var(--accent))}
+.kpi .n{font-size:34px;font-weight:700;line-height:1;margin:4px 0 2px;font-variant-numeric:tabular-nums;color:var(--acento,var(--accent));letter-spacing:-.02em}
+.kpi .n.txt{font-size:22px;line-height:1.1;margin-top:8px}
+.kpi .n small{font-size:15px;font-weight:600;color:var(--muted);margin-left:3px;letter-spacing:0}
+.kpi .q{font-size:12px;color:var(--muted);line-height:1.3}
+.kpi .e{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpi.bajo{--acento:var(--ok)} .kpi.medio{--acento:var(--warn)} .kpi.alto{--acento:var(--bad)} .kpi.sin{--acento:var(--muted)} .kpi.ocre{--acento:var(--ocre)} .kpi.azul{--acento:var(--blue)}
+/* Pregúntele al teléfono: la tarjeta fuerte de Inicio */
+#hoy-razon{background:linear-gradient(135deg,var(--cab-osc),var(--cab));color:#fff;border:0}
+#hoy-razon .eyebrow,#hoy-razon .muted,#hoy-razon .note,#hoy-razon .small{color:rgba(255,255,255,.78)}
+#hoy-razon #rz-q{font:inherit;padding:12px 14px;border:1px solid rgba(255,255,255,.3);border-radius:14px;background:rgba(255,255,255,.12);color:#fff;font-size:15px}
+#hoy-razon #rz-q::placeholder{color:rgba(255,255,255,.65)}
+#hoy-razon .btn.acc{background:#fff;color:var(--cab-osc)}
+#hoy-razon .chip{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.22);color:#fff}
+#hoy-razon #rz-a{background:rgba(255,255,255,.12);border-radius:14px;padding:12px 14px}
+#hoy-razon #rz-a p{color:#fff}
+.tag-lite{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.18);color:#fff}
+/* qué mirar: acciones compactas */
+.action{grid-template-columns:auto 1fr;padding:10px 12px;border-radius:12px;background:var(--surface-2);border:0}
+.action .n{color:var(--accent)} .action .conf{display:none} .action span{font-size:13px}
+/* Recorrer: ocho azulejos */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--surface);border:0;border-radius:18px;padding:16px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;cursor:pointer;font:inherit;color:inherit;min-height:122px;justify-content:center;box-shadow:var(--shadow);transition:transform .08s}
+.tile:active{transform:scale(.985)}
+.tile .ic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--accent-bg);color:var(--accent)}
+.tile .ic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile b{font-size:15px;font-weight:700} .tile small{color:var(--muted);font-size:12px;line-height:1.3}
+.tile.ocre .ic{background:var(--ocre-bg);color:var(--ocre)} .tile.azul .ic{background:#E3ECF7;color:var(--blue)} .tile.ambar .ic{background:var(--warn-bg);color:var(--warn)}
+:root[data-theme="dark"] .tile.azul .ic,@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tile.azul .ic{background:#1C2A3C} }
+.tile.done{background:var(--ok-bg)} .tile.done .ic{background:var(--ok);color:#fff}
+/* hojas (abren desde abajo) y la hoja de alertas (baja desde arriba) */
+.hoja-fondo{position:fixed;inset:0;z-index:28;background:rgba(20,36,28,.45);display:flex;align-items:flex-end;justify-content:center}
+.hoja-fondo[hidden]{display:none}
+.hoja{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:430px;max-height:82%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px));display:grid;gap:12px;align-content:start;animation:hsube .28s ease-out}
+.hoja-fondo.arriba{align-items:flex-start} .hoja-fondo.arriba .hoja{border-radius:0 0 24px 24px;animation:hbaja .32s ease-out;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+@keyframes hsube{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}} @keyframes hbaja{from{transform:translateY(-40px);opacity:.6}to{transform:none;opacity:1}}
+.asa{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+.hoja .card{box-shadow:none;padding:0;background:transparent}
+.hoja .card.alerta-card{box-shadow:none}
+.hoja > .card[hidden]{display:none}
+.hoja-cerrar{width:100%}
+/* LISTO */
+.listo{position:fixed;inset:0;z-index:35;background:var(--cab);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center}
+.listo[hidden]{display:none}
+.listo .check{width:96px;height:96px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center;font-size:44px}
+.listo h2{font-size:30px;font-weight:700;letter-spacing:1px;color:#fff}
+.listo p{opacity:.92;max-width:320px;line-height:1.4}
+.listo .btn{background:#fff;color:var(--cab-osc);width:100%;max-width:300px}
+.listo .btn.sec{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55)}
+/* subpantalla de registro: cabecera verde */
+.sheet-head{background:var(--cab);color:#fff;border-bottom:0}
+.sheet-head .back{color:#fff} .sheet-head .lot{color:rgba(255,255,255,.75)} .sheet-head .ttl{color:#fff}
+/* barra inferior */
+nav.bottom button[aria-current="page"]{color:var(--accent)}
+nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30,107,70,.35)}
+/* Lote: formas y temporada en grande */
+.formas .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ciclo-dia{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ciclo-dia b{font-size:40px;font-weight:700;color:var(--ocre);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+#ciclo-fill{background:var(--ocre) !important}
+/* GPS en los recorridos */
+.gps-linea{display:flex;align-items:center;gap:8px;background:var(--ok-bg);border:1px solid rgba(46,139,87,.25);border-radius:12px;padding:9px 12px;font-size:13px;color:var(--fg)}
+.gps-linea.lejos{background:var(--surface-2);border-color:var(--line);color:var(--muted)}
+.gps-linea .pin{width:22px;height:22px;border-radius:50%;background:var(--gps);color:#fff;display:grid;place-items:center;font-size:12px;flex:none;box-shadow:0 0 0 4px rgba(79,163,255,.25)}
+.chip.gps{box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--gps)}
+.plpt-gps{box-shadow:0 0 0 4px rgba(46,139,87,.75), 0 0 0 7px rgba(255,255,255,.6)}
+/* listas de Ajustes agrupadas */
+.grupo{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px}
+.list button.web{border-style:dashed}
+.btn{background:var(--accent);color:#fff} .btn.sec{background:var(--surface-2);color:var(--fg)} .btn.acc{background:var(--accent);color:#fff}
+.chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.seg2 button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.vent[aria-pressed="true"]{outline-color:var(--accent)}
+@media (prefers-reduced-motion: reduce){ .hoja{animation:none} .tile{transition:none} }
 </style>
 </head>
 <body>
@@ -288,8 +392,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 <div class="phone">
 <header class="top">
   <div class="brand">
-    <div><img class="mark" src="icon.svg" alt=""><div><small>Engram Analítica</small><b>Engram Campo</b></div></div>
-    <span class="pill-private" id="net-chip">Preliminar · socios</span>
+    <div><img class="mark" src="icon.svg" alt=""><div><small>Engram Technologies</small><b>EG Agro</b></div></div>
+    <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="pill-private" id="net-chip">Preliminar · socios</span><button class="campana" id="campana" aria-label="Alertas del motor"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="n" id="campana-n" data-n="0"></span></button></div>
   </div>
   <div class="lotsel" id="lotsel" role="tablist" aria-label="Lotes"></div>
 </header>
@@ -297,79 +401,45 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 <main>
 <!-- ============================ HOY ============================ -->
 <section class="screen" id="s-hoy" aria-labelledby="h-hoy">
-  <div class="card alerta-card" id="hoy-alertas" hidden>
-    <div class="row between"><span class="eyebrow" style="color:var(--bad)">Alerta del motor</span><span class="small muted" id="hoy-alertas-meta"></span></div>
-    <div class="alertas" id="hoy-alertas-list"></div>
-    <p class="note">Solo avisamos cuando la probabilidad cruza el umbral alto en la etapa en que su cultivo es sensible. Qué hacer con esto lo decide usted con su agrónomo; "No aplica" nos ayuda a ajustar el umbral de su lote.</p>
-  </div>
-  <div class="card" id="hoy-lectura" hidden style="border-color:var(--blue)">
-    <div class="row between"><span class="eyebrow">Lectura de hoy</span><span class="small muted" id="lec-meta"></span></div>
-    <p id="lec-resumen" style="font-weight:700;margin:6px 0 4px"></p>
-    <p id="lec-texto" class="small" style="margin:0 0 6px"></p>
-    <details><summary class="small" style="color:var(--blue);cursor:pointer">Lo que no se puede saber con estos datos</summary><div id="lec-nosabemos" class="small muted" style="margin-top:6px"></div></details>
+  <div class="ini-cab"><span class="eyebrow" id="hoy-fecha">Viernes 16 de octubre</span><h1 id="ini-titulo">Hoy en tu lote</h1><p class="small muted" id="hoy-etapa"></p></div>
+  <div class="kpis" id="kpis">
+    <button class="kpi" id="kpi-riesgo" data-hoja="riesgo"><span class="e">Riesgo 7 días</span><div class="n">—</div><span class="q"></span></button>
+    <button class="kpi ok" id="kpi-ventana" data-hoja="ventana"><span class="e">Para aplicar</span><div class="n txt">—</div><span class="q"></span></button>
+    <button class="kpi ocre" id="kpi-3" data-hoja="suelo"><span class="e">Suelo</span><div class="n">—</div><span class="q"></span></button>
+    <button class="kpi" id="kpi-4" data-hoja="polin"><span class="e">Polinización</span><div class="n">—</div><span class="q"></span></button>
   </div>
   <div class="card">
-    <div class="row between"><span class="eyebrow" id="hoy-fecha">Viernes 16 de octubre</span><span class="lvl bajo" id="hoy-nivel">Riesgo bajo</span></div>
-    <h2 id="h-hoy">Hoy en tu lote</h2>
-    <p id="hoy-etapa" class="muted"></p>
+    <div class="row between"><span class="eyebrow">Semáforo del lote</span><span class="lvl bajo" id="hoy-nivel">Riesgo bajo</span></div>
+    <h2 id="h-hoy" class="small muted" style="font-weight:600;font-size:13px">Lo que el motor vigila en su etapa</h2>
     <div class="sem" id="hoy-sem"></div>
     <p class="note" id="hoy-nota"></p>
+  </div>
+  <div class="card" id="hoy-razon" hidden>
+    <div class="row between"><span class="eyebrow">Pregúntele al teléfono</span><span class="tag-lite">sin señal también</span></div>
+    <p class="small muted" id="rz-estado"></p>
+    <div class="row" style="gap:8px;flex-wrap:nowrap"><input id="rz-q" type="text" placeholder="¿Cuándo me conviene regar?" style="flex:1;min-width:0" disabled><button class="btn acc" id="rz-ask" disabled>Preguntar</button></div>
+    <div class="chips mini" id="rz-sug"><button class="chip">¿Qué tengo que revisar hoy?</button><button class="chip">¿Cómo van las plagas?</button><button class="chip">¿Puedo aplicar esta semana?</button><button class="chip">¿Qué registré últimamente?</button></div>
+    <div id="rz-a" hidden></div>
+    <p class="note">Un modelo chico que vive en su teléfono, solo con los datos de su lote; cada número se verifica y nunca sugiere productos ni dosis. Con señal, el motor y su agrónomo son los que mandan.</p>
   </div>
   <div class="card" id="hoy-receta" hidden>
     <div id="hoy-receta-body"></div>
     <p class="note">Receta firmada por su agrónomo: productos y dosis dentro de etiqueta. Al marcarla como aplicada, entra a la bitácora como aplicación.</p>
   </div>
-  <div class="card" id="hoy-sensores" hidden>
-    <div class="row between"><span class="eyebrow">Sensores y riego</span><button class="inline-link" data-go="mas-sensores">Ver todos</button></div>
-    <div class="sem" id="hoy-sensores-list"></div>
-  </div>
-  <div class="card" id="hoy-polin" hidden>
-    <div class="row between"><span class="eyebrow">Polinización · abejorros</span><span class="small muted">preliminar</span></div>
-    <div id="hoy-polin-txt"></div>
-    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-flow="polin">Recorrer ahora</button><button class="btn sec" data-go="mas-polin">Ver sectores</button></div>
-  </div>
-  <div class="card" id="hoy-plagas" hidden>
-    <div class="row between"><span class="eyebrow">Plagas · monitoreo por puntos</span><span class="small muted">preliminar</span></div>
-    <div class="sem" id="hoy-plagas-list"></div>
-    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-flow="plagas">Monitorear ahora</button><button class="btn sec" data-go="mas-plagas">Ver el mapa</button></div>
-    <p class="note">El teléfono propone los puntos, cuenta con usted y compara su nivel con el del motor; el mapa de presión dice hacia dónde puede moverse. Funciona sin señal.</p>
-  </div>
   <div class="card">
-    <span class="eyebrow" id="hoy-acciones-eyebrow">Qué hacer esta semana</span>
+    <span class="eyebrow" id="hoy-acciones-eyebrow">Esta semana, mirar</span>
     <div class="sem" id="hoy-acciones"></div>
     <div id="hoy-temporada-acc" hidden><span class="eyebrow" style="display:block;margin-top:10px">Para la temporada</span><div class="sem" id="hoy-acciones-temp"></div></div>
-    <p class="note">Las acciones nacen de los hechos del reporte y pasan por las compuertas: ningún número sin respaldo, ningún producto ni dosis. Lo que hacer con esto lo decide usted con su agrónomo.</p>
+    <p class="note">Nacen de los hechos del reporte y pasan por las compuertas: ningún número sin respaldo, ningún producto ni dosis. Qué hacer lo decide usted con su agrónomo.</p>
   </div>
-  <div class="card" id="hoy-verdor" hidden>
-    <div class="row between"><span class="eyebrow">Verdor del lote · satélite</span><span class="small muted" id="verdor-fecha"></span></div>
-    <div class="row between" style="align-items:flex-end;flex-wrap:nowrap" id="verdor-main">
-      <div><div class="verdor-num" id="verdor-num">—</div><div class="verdor-etq" id="verdor-etq"></div></div>
-      <svg class="spark" id="verdor-spark" viewBox="0 0 150 46" aria-hidden="true"></svg>
-    </div>
-    <div class="verdor-cambio" id="verdor-cambio"></div>
-    <div class="kv" id="verdor-parc"></div>
-    <p class="note" id="verdor-nota"></p>
-    <div class="row"><button class="btn sec" id="verdor-mapa" hidden>Ver en el mapa</button><span class="leyenda-ndvi"><i></i> suelo → vigoroso</span></div>
-  </div>
-  <div class="card" id="hoy-razon" hidden>
-    <div class="row between"><span class="eyebrow">Pregúntele al teléfono</span><span class="small muted">sin señal · preliminar</span></div>
-    <p class="small muted" id="rz-estado"></p>
-    <div class="row" style="gap:8px;flex-wrap:nowrap"><input id="rz-q" type="text" placeholder="¿Cómo está el lote hoy? ¿Qué reviso primero?" style="flex:1;min-width:0" disabled><button class="btn acc" id="rz-ask" disabled>Preguntar</button></div>
-    <div class="chips mini" id="rz-sug"><button class="chip">¿Qué tengo que revisar hoy?</button><button class="chip">¿Cómo van las plagas?</button><button class="chip">¿Puedo aplicar esta semana?</button><button class="chip">¿Qué registré últimamente?</button></div>
-    <div id="rz-a" hidden></div>
-    <p class="note">Responde un modelo chico que vive en su teléfono, solo con los datos que la app ya tiene guardados; cada número se verifica contra ellos y nunca sugiere productos ni dosis. Con señal, el motor y su agrónomo son los que mandan.</p>
-  </div>
-  <div class="card">
-    <span class="eyebrow">Memoria del campo</span>
-    <div class="row between"><span class="big" id="mem-n">1 <small>temporada</small></span><button class="btn sec" data-go="mas-memoria">Ver</button></div>
-    <p class="note" id="mem-txt"></p>
-  </div>
+  <button class="card" id="hoy-registrado" data-hoja="hoy" style="text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;align-items:center;gap:12px"><div><span class="eyebrow">Registrado hoy</span><div style="font-size:22px;font-weight:700" id="hoy-reg-n">0 cosas</div></div><span class="small muted" style="margin-left:auto;text-align:right" id="hoy-reg-txt">toque para ver ›</span></button>
+  <p class="note" style="text-align:center">Lo demás (bitácora completa, memoria del campo, verdor, tendencias) vive en <button class="inline-link" data-hoja="web">EG Agro Web ↗</button></p>
 </section>
 
 <!-- ============================ SEMANA ============================ -->
 <section class="screen" id="s-semana" hidden aria-labelledby="h-sem">
   <div class="card" id="sem-ventana">
-    <div class="row between"><span class="eyebrow">Ventana de aplicación · si va a aplicar algo</span><span class="small muted">preliminar</span></div>
+    <div class="row between"><span class="eyebrow">Ventana para aplicar · si va a aplicar algo</span><span class="small muted">preliminar</span></div>
     <div class="vents" id="sem-ventana-dias"></div>
     <p class="small" id="sem-ventana-txt"></p>
     <p class="note">Solo el clima: viento (deriva), lluvia (lavado), calor y aire seco (evaporación) con el ensamble del pronóstico. Qué aplicar lo decide usted con su agrónomo; aquí nunca hay productos ni dosis.</p>
@@ -381,38 +451,32 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="note" id="sem-fuente"></p>
   </div>
   <div class="card">
-    <span class="eyebrow">Días 8–14 · por semana, no por día</span>
-    <div class="kv" id="sem-b"></div>
+    <details><summary class="small" style="color:var(--blue);cursor:pointer;font-weight:600">Días 8–14 y semanas 3–5 (tendencia, no fechas)</summary>
+    <span class="eyebrow" style="display:block;margin-top:10px">Días 8–14 · por semana, no por día</span>
+    <div class="kv" id="sem-b" style="margin-top:6px"></div>
     <p class="note">A este plazo el ensamble dice tendencia, no fechas. Confianza media hasta que el scorecard la suba o la baje.</p>
-  </div>
-  <div class="card">
-    <span class="eyebrow">Semanas 3–5</span>
-    <p class="muted">Sin skill verificado a este plazo todavía. Lo que se sabe es lo que suele pasar en la zona en estas fechas, y eso es lo que mostraremos aquí hasta que las semanas 3 a 5 le ganen a la climatología en el scorecard.</p>
-    <button class="inline-link" data-go="mas-como">¿Cómo lo sabemos?</button>
+    <span class="eyebrow" style="display:block;margin-top:10px">Semanas 3–5</span>
+    <p class="small muted">Sin skill verificado a este plazo todavía: lo que suele pasar en la zona en estas fechas, hasta que las semanas 3 a 5 le ganen a la climatología en el scorecard.</p>
+    </details>
+    <p class="note">El detalle por hora, las curvas y los años parecidos: en <button class="inline-link" data-hoja="web">EG Agro Web ↗</button> · <button class="inline-link" data-go="mas-como">¿Cómo lo sabemos?</button></p>
   </div>
 </section>
 
 <!-- ============================ REGISTRAR ============================ -->
 <section class="screen" id="s-registrar" hidden aria-labelledby="h-reg">
-  <div class="card" id="reg-home">
-    <span class="eyebrow">El toque de la semana</span>
-    <h2 id="h-reg">¿Qué pasó en el lote?</h2>
-    <div class="grid2">
-      <button class="bigbtn" data-flow="aplique"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 3h6v4l3 3v11H6V10l3-3z"/><path d="M9 14h6M12 11v6"/></svg></span><b>Apliqué algo</b><span>Foto de la etiqueta o elegir de los últimos</span></button>
-      <button class="bigbtn" data-flow="regue"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/></svg></span><b>Regué</b><span>Horas o lámina, un toque</span></button>
-      <button class="bigbtn" data-flow="vi"><span class="ic"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span><b>Vi algo</b><span>Enfermedad, plaga, helada, granizo, agua</span></button>
-      <button class="bigbtn" data-flow="nada"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></span><b>Nada nuevo</b><span>Y eso también cuenta</span></button>
+  <div class="card" id="reg-home" style="background:transparent;box-shadow:none;padding:0">
+    <div class="ini-cab"><span class="eyebrow">Recorrer</span><h2 id="h-reg" style="font-size:21px">¿Qué va a registrar?</h2><p class="small muted">Dos o tres toques y termina en «Listo». Con GPS, el punto más cercano se marca solo.</p></div>
+    <div class="tiles">
+      <button class="tile" data-flow="plagas"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 7a3 3 0 0 1 6 0v1H9z"/><path d="M6 12a6 6 0 0 1 12 0v3a6 6 0 0 1-12 0z"/><path d="M3 10l3 2M21 10l-3 2M3 17l3-1M21 17l-3-1M12 12v9"/></svg></span><b>Plagas</b><small>puntos del lote · conteo</small></button>
+      <button class="tile ambar" data-flow="polin" id="opt-polin" hidden><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/></svg></span><b>Polinización</b><small>flores con marca · por sector</small></button>
+      <button class="tile azul" data-flow="regue"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></svg></span><b>Riego</b><small>horas · método</small></button>
+      <button class="tile" data-flow="aplique"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 3h8v4l3 3v11H5V10l3-3z"/><path d="M9 14h6"/></svg></span><b>Aplicación</b><small>foto de la etiqueta</small></button>
+      <button class="tile ocre" data-flow="lectura"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 12l4-3M12 4v2M20 12h-2M4 12h2"/></svg></span><b>Sensores</b><small>tensiómetro · trampa · sonda</small></button>
+      <button class="tile" data-flow="vi"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 22V12M12 12C7 12 4 9 4 4c5 0 8 3 8 8zM12 12c5 0 8-3 8-8-5 0-8 3-8 8z"/></svg></span><b>Cultivo</b><small>enfermedad · daño · etapa</small></button>
+      <button class="tile azul" data-hoja="contar"><span class="ic"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><b>Contar</b><small>voz · libreta · video</small></button>
+      <button class="tile" data-flow="nada"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></span><b>Todo en orden</b><small>y eso también cuenta</small></button>
     </div>
-    <span class="eyebrow" style="margin-top:6px">O cuéntelo como le quede más cómodo</span>
-    <button class="optrow" data-flow="libreta"><span class="oi"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg></span><span><b>Escanear la libreta</b><span class="s">Foto de la página → registros que usted revisa y confirma</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="voz"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota de voz</b><span class="s">Grabe aquí mismo lo que hizo y lo que vio</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="video"><span class="oi"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></span><span><b>Video</b><span class="s">Filme la planta o el daño, con fecha y lugar</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="plagas"><span class="oi"><svg viewBox="0 0 24 24"><path d="M12 3v3M8 7a4 4 0 0 1 8 0v7a4 4 0 0 1-8 0z"/><path d="M4 10h4M16 10h4M4 16h4M16 16h4M6 5l2 2M18 5l-2 2"/></svg></span><span><b>Monitoreo de plagas</b><span class="s">Puntos que cubren el lote, conteo por punto, su nivel frente al del motor</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="lectura"><span class="oi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 12l3-4M12 4v2M20 12h-2M4 12h2"/></svg></span><span><b>Lectura de sensor</b><span class="s">Tensiómetro, sonda, trampa: el valor o una foto del instrumento</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="polin" id="opt-polin" hidden><span class="oi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/></svg></span><span><b>Polinización (abejorros)</b><span class="s">Flores con marca por sector, con GPS y foto</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="visita"><span class="oi"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Visita técnica</b><span class="s">El formulario completo del cultivo (visitador o agrónomo); también por Excel en Más</span></span><span class="chev">›</span></button>
-    <div class="lastreg" id="lastreg"></div>
-    <p class="note">Todo lo demás se infiere: ubicación, clima, pronóstico, etapa del cultivo y tendencia de la zona. Usted solo cuenta lo que hizo y lo que vio.</p>
+    <div class="lastreg" id="lastreg" style="margin-top:4px"></div>
   </div>
 
   <div class="card" id="voz-pend" hidden>
@@ -421,9 +485,9 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <p class="note">El motor transcribe sus notas de voz en minutos. Revise lo que oyó, confirme lo que entendió y queda en la bitácora. Nada se guarda sin su visto bueno.</p>
   </div>
   <div class="card" id="log-card">
-    <div class="row between"><span class="eyebrow">Bitácora del lote</span><span class="small muted" id="log-count"></span></div>
+    <div class="row between"><span class="eyebrow">Bitácora del lote · reciente</span><span class="small muted" id="log-count"></span></div>
     <div class="log" id="log"></div>
-    <p class="note" id="sync-nota">Se guarda en este teléfono y se sincroniza con la nube cuando hay señal; de ahí pasa al motor cada noche.</p>
+    <p class="note" id="sync-nota">Se guarda en este teléfono y se sincroniza con la nube cuando hay señal; de ahí pasa al motor cada noche. La bitácora completa y la memoria del campo: <button class="inline-link" data-hoja="web">EG Agro Web ↗</button></p>
     <div class="syncline" id="sync-estado" hidden></div>
   </div>
 </section>
@@ -431,8 +495,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 <!-- ============================ LOTE ============================ -->
 <section class="screen" id="s-lote" hidden aria-labelledby="h-lote">
   <div class="card">
-    <span class="eyebrow">Ubicación y borde del lote</span>
-    <h2 id="h-lote">Marque el lote. El borde se ajusta con los dedos.</h2>
+    <span class="eyebrow">El lote</span>
+    <h2 id="h-lote" style="font-size:18px">Marque el lote y elija su forma. El borde se ajusta con los dedos.</h2>
     <div class="maptools">
       <button class="btn sec sm" id="geo-btn">◎ Mi ubicación</button>
       <button class="btn sec sm" id="verdor-btn" aria-pressed="false" hidden>Verdor</button>
@@ -441,24 +505,22 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     <div id="lmap" class="lmap" role="application" aria-label="Mapa satelital del lote: toque para marcar, pellizque para acercar"></div>
     <p class="small muted" id="verdor-leyenda" hidden></p>
     <p class="small muted maphint" id="map-hint">Toque el mapa donde está el lote (o use su ubicación). Después "Proponer polígono" y ajuste el borde arrastrando los vértices.</p>
+    <div class="chips formas" id="formas" role="group" aria-label="Forma del lote">
+      <button class="chip" id="poly-propose" data-forma="poligono">Polígono</button>
+      <button class="chip" id="poly-circle" data-forma="circulo">Pivote</button>
+      <button class="chip" id="poly-semi" data-forma="semicirculo">Medio pivote</button>
+      <button class="chip" id="poly-rect" data-forma="rectangulo">Rectángulo</button>
+    </div>
+    <div class="field" id="circle-ctl" hidden><label for="circle-r">Radio: <b id="circle-r-v">200</b> m · <span id="circle-ha"></span></label><input id="circle-r" type="range" min="40" max="800" step="5" value="200">
+      <div class="chips mini" id="semi-dir" hidden><span class="small muted" style="align-self:center">El medio pivote mira al</span><button class="chip" data-dir="N" aria-pressed="true">norte</button><button class="chip" data-dir="E" aria-pressed="false">este</button><button class="chip" data-dir="S" aria-pressed="false">sur</button><button class="chip" data-dir="O" aria-pressed="false">oeste</button></div></div>
     <div class="row wrap" id="poly-tools">
-      <button class="btn" id="poly-propose">Proponer polígono</button>
-      <button class="btn sec" id="poly-circle">Círculo (pivote)</button>
       <button class="btn sec" id="poly-edit">Ajustar</button>
       <button class="btn sec" id="poly-done" hidden>Listo</button>
       <button class="btn sec" id="vtx-del" hidden>Quitar vértice</button>
       <button class="btn acc" id="poly-ok">Confirmar</button>
     </div>
-    <div class="field" id="circle-ctl" hidden><label for="circle-r">Radio del pivote: <b id="circle-r-v">200</b> m · <span id="circle-ha"></span></label><input id="circle-r" type="range" min="40" max="800" step="5" value="200"></div>
     <div class="kv" id="poly-kv"></div>
     <div class="kv" id="lote-kv"></div>
-    <div id="ciclo-card" hidden style="margin-top:10px">
-      <span class="eyebrow">Cómo va la temporada</span>
-      <div id="ciclo-barra" style="margin:8px 0 4px;height:10px;border-radius:5px;background:var(--line,#e6ecef);overflow:hidden"><div id="ciclo-fill" style="height:100%;width:0;background:var(--ok,#3a8a4a)"></div></div>
-      <p class="small" id="ciclo-txt" style="margin:0 0 6px"></p>
-      <div class="kv" id="ciclo-kv"></div>
-      <p class="note" id="ciclo-nota"></p>
-    </div>
     <details>
       <summary class="small" style="color:var(--blue);cursor:pointer">Definir por coordenadas</summary>
       <div class="flow" style="margin-top:10px">
@@ -469,15 +531,13 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       </div>
     </details>
   </div>
-  <div class="card">
-    <div class="row between"><span class="eyebrow">Parcelas dentro del lote</span><button class="inline-link" id="parc-add">+ Agregar parcela</button></div>
-    <div id="parc-list" class="flow"></div>
-    <p class="note">Opcional. El lote es la unidad grande: clima, satélite y memoria se calculan por lote. Las parcelas sirven para registrar riegos, aplicaciones y observaciones por sección.</p>
-  </div>
-  <div class="card">
-    <span class="eyebrow">Resolución</span>
-    <div class="kv" id="res-kv"></div>
-    <p class="note">La imagen de fondo sirve para dibujar el borde. El seguimiento del cultivo se hace con Sentinel‑2 dentro del polígono (10 m por píxel, cada 5 días): en 4 ha son unos 400 píxeles por imagen, suficientes para la tendencia del lote y para ver manchones de más de media hectárea.</p>
+  <div class="card" id="ciclo-card" hidden>
+    <span class="eyebrow" style="color:var(--ocre)">Cómo va la temporada</span>
+    <div class="ciclo-dia"><b id="ciclo-dia">—</b><span class="small muted" id="ciclo-dia-sub"></span></div>
+    <div id="ciclo-barra" style="height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden"><div id="ciclo-fill" style="height:100%;width:0;background:var(--ocre)"></div></div>
+    <p class="small" id="ciclo-txt" style="margin:0"></p>
+    <details><summary class="small" style="color:var(--blue);cursor:pointer">Clima observado y bitácora de la temporada</summary><div class="kv" id="ciclo-kv" style="margin-top:8px"></div><p class="note" id="ciclo-nota"></p></details>
+    <p class="note">La tendencia de cosecha y los años parecidos: <button class="inline-link" data-go="mas-temporada">cómo termina la temporada ›</button></p>
   </div>
   <div class="card">
     <span class="eyebrow">Datos del lote</span>
@@ -499,28 +559,49 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
     </div>
     <p class="note">Con la fecha de siembra la etapa se conoce a ±3 días; sin ella se estima con la fecha típica de la zona (±3 semanas) y queda marcada como estimada.</p>
   </div>
+  <div class="card">
+    <div class="row between"><span class="eyebrow">Parcelas dentro del lote</span><button class="inline-link" id="parc-add">+ Agregar parcela</button></div>
+    <div id="parc-list" class="flow"></div>
+    <p class="note">Opcional. El lote es la unidad grande: clima, satélite y memoria se calculan por lote. Las parcelas sirven para registrar riegos, aplicaciones y observaciones por sección.</p>
+  </div>
+  <div class="card">
+    <details><summary class="small" style="color:var(--blue);cursor:pointer;font-weight:600">Resolución del satélite</summary>
+    <div class="kv" id="res-kv" style="margin-top:8px"></div>
+    <p class="note">La imagen de fondo sirve para dibujar el borde. El seguimiento del cultivo se hace con Sentinel‑2 dentro del polígono (10 m por píxel, cada 5 días): en 4 ha son unos 400 píxeles por imagen, suficientes para la tendencia del lote y para ver manchones de más de media hectárea.</p>
+    </details>
+  </div>
 </section>
 
 <!-- ============================ MÁS ============================ -->
 <section class="screen" id="s-mas" hidden aria-labelledby="h-mas">
   <div class="card" id="mas-home">
-    <h2 id="h-mas">Más</h2>
+    <h2 id="h-mas" style="font-size:21px">Ajustes</h2>
+    <span id="mem-n" hidden></span><span id="mem-txt" hidden></span>
     <div class="list">
+      <button data-go="mas-sinsenal">Sin señal <span id="btn-sinsenal-sub">modelos del teléfono: voz, fotos, libreta, razonador · pendientes por subir</span></button>
+      <button data-hoja="ubicacion">Ubicación <span>GPS solo mientras recorre: el punto más cercano se marca solo</span></button>
+      <button data-go="mas-avisos">Avisos al teléfono <span id="btn-avisos-sub">alertas y revisiones, aunque la app esté cerrada</span></button>
+      <button data-go="mas-whatsapp">WhatsApp <span id="btn-wa-sub">notas, fotos y planillas desde el chat; reportes y alertas al chat</span></button>
+      <button data-go="mas-pdf">Reporte en PDF <span id="btn-pdf-sub">el reporte del lote, para guardar o compartir</span></button>
       <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
-      <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
+      <button data-hoja="web" class="web">EG Agro Web <span>archivos, historiales, tendencias, mapas grandes, panel del agrónomo</span></button>
+      <button data-go="mas-acerca">Cuenta y versión <span>sesión, lotes, versión privada de socios</span></button>
+    </div>
+    <div class="grupo">Mapas y detalle del lote</div>
+    <div class="list">
       <button data-go="mas-plagas">Plagas <span>puntos de muestreo, presión hoy y a 7 días, recorridos</span></button>
       <button data-go="mas-sensores">Sensores y riego <span>tensiómetros, sondas, trampas: dónde están y qué marcan</span></button>
       <button data-go="mas-polin">Polinización <span>% de flores con marca de abejorro por sector</span></button>
+    </div>
+    <div class="grupo">Pasa a EG Agro Web · por ahora aquí</div>
+    <div class="list">
+      <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
-      <button data-go="mas-pdf">Reporte en PDF <span id="btn-pdf-sub">el reporte completo del lote, para guardar o compartir</span></button>
-      <button data-go="mas-whatsapp">WhatsApp <span id="btn-wa-sub">reportes y alertas al chat; notas, fotos y planillas desde el chat</span></button>
-      <button data-go="mas-avisos">Avisos al teléfono <span id="btn-avisos-sub">alertas y revisiones, aunque la app esté cerrada</span></button>
-      <button data-go="mas-planillas">Planillas de visita <span>la plantilla Excel del cultivo y las que subió</span></button>
-      <button data-go="mas-sinsenal">Sin señal <span id="btn-sinsenal-sub">voz entendida en el teléfono, mapa guardado, pendientes por subir</span></button>
+      <button data-go="mas-planillas">Planillas y archivos <span>la plantilla Excel del cultivo, las que subió, el historial de 20 años</span></button>
       <button data-go="mas-panel" id="btn-panel" hidden>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
       <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
-      <button data-go="mas-acerca">Acerca de esta versión <span>privada, solo socios</span></button>
     </div>
+    <p class="note" style="text-align:center;margin-top:6px">EG Agro · Engram Technologies · PRELIMINAR</p>
   </div>
 
   <div class="card" id="mas-alertas" hidden>
@@ -679,8 +760,8 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 
   <div class="card" id="mas-whatsapp" hidden>
     <div class="row between"><span class="eyebrow">WhatsApp</span><button class="inline-link" data-back>Volver</button></div>
-    <h2>Engram Campo en su chat</h2>
-    <p class="small">Escríbale al número de Engram Campo como a cualquier contacto: notas de voz, fotos, videos, texto o la planilla Excel llena quedan en la bitácora de su lote y en minutos le contesta qué entendió. Escriba <b>reporte</b> para recibir el PDF, <b>alertas</b> para las vigentes, <b>lote</b> para elegir a cuál van sus mensajes.</p>
+    <h2>EG Agro en su chat</h2>
+    <p class="small">Escríbale al número de EG Agro como a cualquier contacto: notas de voz, fotos, videos, texto o la planilla Excel llena quedan en la bitácora de su lote y en minutos le contesta qué entendió. Escriba <b>reporte</b> para recibir el PDF, <b>alertas</b> para las vigentes, <b>lote</b> para elegir a cuál van sus mensajes.</p>
     <p class="small" id="wa-numero"></p>
     <div class="field" style="margin-top:8px"><label for="wa-tel">Mi número de WhatsApp</label><input id="wa-tel" inputmode="tel" placeholder="52 1 55 1234 5678" autocomplete="tel"></div>
     <p class="note">Con código de país, tal como aparece en WhatsApp (México: 52 y luego el número de 10 dígitos). Así el motor sabe que los mensajes son suyos.</p>
@@ -728,11 +809,11 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
   </div>
 
   <div class="card" id="mas-acerca" hidden>
-    <div class="row between"><span class="eyebrow">Acerca de esta versión</span><button class="inline-link" data-back>Volver</button></div>
-    <h2>Preliminar, privada, de los socios</h2>
+    <div class="row between"><span class="eyebrow">Cuenta y versión</span><button class="inline-link" data-back>Volver</button></div>
+    <h2>EG Agro: preliminar, privada, de los socios</h2>
     <p class="small">Versión preliminar (octubre de 2026). En la demostración, el pronóstico de la Parcela 7 (Valle del Fuerte) es el real del ensamble del 16 de octubre y el lote de Toluca es de ejemplo. Con sesión, los lotes, registros y fotos se guardan en la nube cuando hay señal, el motor los recoge cada noche y devuelve el reporte y las alertas por lote.</p>
     <p class="small">El motor corre en el RIG y nunca se expone: cada noche recoge lo registrado y publica los reportes. Esta app muestra resultados; los modelos no salen de ahí.</p>
-    <p class="small">Sin señal (desde la versión 26): lo que registre queda en el teléfono y sube solo; con el modelo de voz descargado (Más → Sin señal), las notas de voz se transcriben en el teléfono, sin internet, y el motor las vuelve a oír cuando hay señal para confirmarlas. El modelo de voz se descarga una vez de un repositorio público; el audio no sale del teléfono hasta que se sincroniza con su nube.</p>
+    <p class="small">Sin señal (desde la versión 26): lo que registre queda en el teléfono y sube solo; con el modelo de voz descargado (Ajustes → Sin señal), las notas de voz se transcriben en el teléfono, sin internet, y el motor las vuelve a oír cuando hay señal para confirmarlas. El modelo de voz se descarga una vez de un repositorio público; el audio no sale del teléfono hasta que se sincroniza con su nube.</p>
     <div class="kv" id="sesion-kv"></div>
     <div class="row"><button class="btn sec" id="sesion-salir" hidden>Cerrar sesión</button><button class="btn sec" id="sesion-entrar" hidden>Entrar con mi correo</button></div>
     <details><summary class="small" style="color:var(--blue);cursor:pointer">Nube (configuración)</summary>
@@ -746,10 +827,95 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
       <div class="row"><button class="btn sec" id="lector-save">Guardar en este teléfono</button><span class="small muted" id="lector-estado"></span></div>
       <p class="note">Sin dirección, el escáner muestra una transcripción de ejemplo y la interpretación se hace en el teléfono. Con la dirección, la foto se lee de verdad.</p>
     </details>
-    <p class="small muted">Engram Analítica · consultas@engram-analitica.com · uso interno, no distribuir.</p>
+    <p class="small muted">Engram Technologies (antes Engram Analítica) · consultas@engram-analitica.com · uso interno, no distribuir.</p>
   </div>
 </section>
 </main>
+
+<!-- ============================ hojas de Inicio (lo que estaba en tarjetas largas; se abre al tocar un número) ============================ -->
+<div class="hoja-fondo arriba" id="hoja-alertas" hidden><div class="hoja">
+  <div class="card alerta-card" id="hoy-alertas" hidden>
+    <div class="row between"><span class="eyebrow" style="color:var(--bad)">Alertas del motor</span><span class="small muted" id="hoy-alertas-meta"></span></div>
+    <div class="alertas" id="hoy-alertas-list"></div>
+    <p class="note">Solo avisamos cuando la probabilidad cruza el umbral alto en la etapa en que su cultivo es sensible. Qué hacer con esto lo decide usted con su agrónomo; "No aplica" nos ayuda a ajustar el umbral de su lote.</p>
+  </div>
+  <p class="note" id="hoja-alertas-vacio">Sin alertas vigentes para este lote. El motor vuelve a revisar cada noche.</p>
+  <button class="inline-link" data-go="mas-alertas" style="justify-self:start">Ver todas las alertas (y las cerradas) ›</button>
+  <button class="btn hoja-cerrar" data-hoja-cerrar>Entendido</button>
+</div></div>
+<div class="hoja-fondo" id="hoja" hidden><div class="hoja"><div class="asa"></div>
+  <div class="card" id="hj-riesgo" hidden>
+    <span class="eyebrow" style="color:var(--bad)">Riesgo 7 días</span>
+    <div class="row between"><div class="kpi-n" id="hj-riesgo-n" style="font-size:44px;font-weight:700;line-height:1;letter-spacing:-.02em"></div><span class="lvl" id="hj-riesgo-lvl"></span></div>
+    <p class="small" id="hj-riesgo-txt"></p>
+    <div class="card" id="hoy-lectura" hidden style="border-top:1px solid var(--line);padding-top:10px;border-radius:0">
+      <div class="row between"><span class="eyebrow">Lectura de hoy</span><span class="small muted" id="lec-meta"></span></div>
+      <p id="lec-resumen" style="font-weight:700;margin:6px 0 4px"></p>
+      <p id="lec-texto" class="small" style="margin:0 0 6px"></p>
+      <details><summary class="small" style="color:var(--blue);cursor:pointer">Lo que no se puede saber con estos datos</summary><div id="lec-nosabemos" class="small muted" style="margin-top:6px"></div></details>
+    </div>
+    <button class="inline-link" data-nav-go="semana" style="justify-self:start">Probabilidad por día: en Semana ›</button>
+  </div>
+  <div class="card" id="hj-suelo" hidden>
+    <div class="card" id="hoy-sensores" hidden>
+      <div class="row between"><span class="eyebrow" style="color:var(--ocre)">Sensores y riego</span><button class="inline-link" data-go="mas-sensores">Dónde están ›</button></div>
+      <div class="sem" id="hoy-sensores-list"></div>
+      <p class="note">Tensiómetro: semáforo PRELIMINAR por centibares (saturado · bien · regar pronto · seco); su agrónomo lo ajusta por suelo y cultivo. Una foto del instrumento basta: el teléfono lee la aguja.</p>
+    </div>
+    <div class="card" id="hoy-verdor" hidden>
+      <div class="row between"><span class="eyebrow">Verdor del lote · satélite</span><span class="small muted" id="verdor-fecha"></span></div>
+      <div class="row between" style="align-items:flex-end;flex-wrap:nowrap" id="verdor-main">
+        <div><div class="verdor-num" id="verdor-num">—</div><div class="verdor-etq" id="verdor-etq"></div></div>
+        <svg class="spark" id="verdor-spark" viewBox="0 0 150 46" aria-hidden="true"></svg>
+      </div>
+      <div class="verdor-cambio" id="verdor-cambio"></div>
+      <div class="kv" id="verdor-parc"></div>
+      <p class="note" id="verdor-nota"></p>
+      <div class="row"><button class="btn sec" id="verdor-mapa" hidden>Ver en el mapa</button><span class="leyenda-ndvi"><i></i> suelo → vigoroso</span></div>
+    </div>
+    <p class="note" id="hj-suelo-vacio" hidden>Sin sensores en este lote todavía. Agréguelos en Recorrer → Sensores (o en Ajustes → Sensores y riego).</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-flow="lectura">Anotar una lectura</button></div>
+  </div>
+  <div class="card" id="hj-polin" hidden>
+    <div class="card" id="hoy-polin" hidden>
+      <div class="row between"><span class="eyebrow" style="color:var(--warn)">Polinización · abejorros</span><span class="small muted">preliminar</span></div>
+      <div id="hoy-polin-txt"></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-flow="polin">Recorrer ahora</button><button class="btn sec" data-go="mas-polin">Por sector ›</button></div>
+    </div>
+    <div class="card" id="hoy-plagas" hidden>
+      <div class="row between"><span class="eyebrow">Plagas · monitoreo por puntos</span><span class="small muted">preliminar</span></div>
+      <div class="sem" id="hoy-plagas-list"></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-flow="plagas">Monitorear ahora</button><button class="btn sec" data-go="mas-plagas">Ver el mapa ›</button></div>
+      <p class="note">El teléfono propone los puntos, cuenta con usted y compara su nivel con el del motor; el mapa de presión dice hacia dónde puede moverse. Funciona sin señal.</p>
+    </div>
+  </div>
+  <div class="card" id="hj-hoy" hidden>
+    <span class="eyebrow">Registrado hoy</span>
+    <div class="log" id="hj-hoy-list"></div>
+    <button class="inline-link" data-nav-go="registrar" style="justify-self:start">Bitácora del lote ›</button>
+  </div>
+  <div class="card" id="hj-contar" hidden>
+    <span class="eyebrow">Contar lo que pasó</span>
+    <button class="optrow" data-flow="voz"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota de voz</b><span class="s">Lo que hizo y lo que vio; el teléfono lo entiende sin señal</span></span><span class="chev">›</span></button>
+    <button class="optrow" data-flow="libreta"><span class="oi"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg></span><span><b>Foto de la libreta</b><span class="s">Una página → registros que usted revisa y confirma</span></span><span class="chev">›</span></button>
+    <button class="optrow" data-flow="video"><span class="oi"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></span><span><b>Video</b><span class="s">Recorra la planta y diga lo que ve</span></span><span class="chev">›</span></button>
+    <button class="optrow" data-flow="visita" id="opt-visita"><span class="oi"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Visita técnica</b><span class="s">El formulario completo del cultivo (visitador o agrónomo)</span></span><span class="chev">›</span></button>
+  </div>
+  <div class="card" id="hj-web" hidden>
+    <span class="eyebrow">EG Agro Web</span>
+    <p class="small">La misma cuenta, en la computadora: bitácora completa, memoria del campo, archivos (Excel, PDF, fotos) que el motor ordena, tendencias, mapas grandes y el panel del agrónomo.</p>
+    <p class="small" style="word-break:break-all"><b id="web-url">https://lucasbayones.github.io/web-7kq3/</b></p>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sec" id="web-copiar">Copiar el enlace</button><a class="btn acc" id="web-abrir" href="https://lucasbayones.github.io/web-7kq3/" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Abrir</a></div>
+    <p class="note">Primera versión: lo que todavía no esté ahí sigue en Ajustes → "Pasa a EG Agro Web".</p>
+  </div>
+  <div class="card" id="hj-ubicacion" hidden>
+    <span class="eyebrow">Ubicación</span>
+    <p class="small">La app usa el GPS solo mientras recorre (plagas, polinización, sensores): el punto o el sector más cercano se marca solo. No guarda su posición fuera de esos registros. En iPhone, el permiso se pide la primera vez que abre un recorrido.</p>
+  </div>
+  <button class="btn sec hoja-cerrar" data-hoja-cerrar>Cerrar</button>
+</div></div>
+<div class="listo" id="listo" hidden><div class="check">✓</div><h2>LISTO</h2><p id="listo-txt"></p><button class="btn" id="listo-otra">Registrar otra cosa</button><button class="btn sec" id="listo-inicio">Volver al inicio</button></div>
+
 
 <!-- Subpantalla de registro (una por acción): entra desde la derecha sobre la pantalla Registrar -->
 <div class="sheet" id="sheet" hidden>
@@ -878,6 +1044,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
           <div class="card">
             <span class="eyebrow">El recorrido</span>
             <p class="small" id="pl-ruta-txt"></p>
+            <div id="pl-gps" hidden></div>
             <div id="pl-map" class="lmap" style="height:280px" hidden></div>
             <div class="chips" id="pl-puntos"></div>
             <div class="row"><button class="btn sec" id="pl-terminar">Terminar el recorrido</button></div>
@@ -958,6 +1125,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
           <div class="card">
             <span class="eyebrow">El recorrido</span>
             <p class="small" id="po-ruta-txt"></p>
+            <div id="po-gps" hidden></div>
             <div id="po-map" class="lmap" style="height:260px" hidden></div>
             <div class="chips" id="po-puntos"></div>
             <div class="row"><button class="btn sec" id="po-terminar">Terminar el recorrido</button></div>
@@ -1009,7 +1177,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 
       <div class="flow" id="flow-visita" hidden>
         <div id="vis-form"></div>
-        <p class="note" id="vis-nota">Solo fecha y etapa son obligatorias; lo demás, lo que haya visto o medido. Sin productos ni dosis. La misma planilla existe en Excel: Más → Planillas de visita.</p>
+        <p class="note" id="vis-nota">Solo fecha y etapa son obligatorias; lo demás, lo que haya visto o medido. Sin productos ni dosis. La misma planilla existe en Excel: Ajustes → Planillas y archivos.</p>
       </div>
       <div class="flow" id="flow-video" hidden>
         <label class="photo" for="vid-input" id="vid-drop"><b>Filmar</b><span class="small muted">Abre la cámara en modo video. Recorra la planta o el daño despacio, 10 a 20 segundos, y diga en voz alta lo que ve.</span><input class="hiddeninput" id="vid-input" type="file" accept="video/*" capture="environment"></label>
@@ -1044,11 +1212,11 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 
 <nav class="bottom" aria-label="Secciones">
   <div class="inner">
-    <button data-nav="hoy" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>Hoy</button>
+    <button data-nav="hoy" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>Inicio</button>
     <button data-nav="semana"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Semana</button>
-    <button data-nav="registrar" class="reg"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Registrar</button>
+    <button data-nav="registrar" class="reg"><svg viewBox="0 0 24 24"><path d="M12 7v10M7 12h10"/></svg>Recorrer</button>
     <button data-nav="lote"><svg viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Lote</button>
-    <button data-nav="mas"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Más</button>
+    <button data-nav="mas"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
   </div>
 </nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1057,7 +1225,7 @@ textarea{font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--li
 <div class="login" id="login" hidden>
   <div class="box">
     <div class="logo"><img src="icon-192.png" alt=""></div>
-    <div><span class="eyebrow">Engram Analítica</span><h1>Engram Campo</h1></div>
+    <div><span class="eyebrow">Engram Technologies</span><h1>EG Agro</h1></div>
     <div id="login-paso1" class="flow">
       <div class="field"><label for="login-email">Correo con el que fue invitado</label><input id="login-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com" autocapitalize="off" autocorrect="off"></div>
       <button class="btn acc" id="login-enviar">Enviar código</button>
@@ -1149,6 +1317,7 @@ function renderHoy(){
   const n = l.memoria.length; $("#mem-n").innerHTML = `${n} <small>${n===1?"temporada":"temporadas"}</small>`;
   $("#mem-txt").textContent = l.memTxt || (n===1 ? "Este lote empieza hoy su memoria. Con tres temporadas registradas, el reporte deja de hablar de la zona y empieza a hablar de este lote." : "Tres temporadas con el mismo registro. Con cinco, el pronóstico de cosecha pasa a ser del lote.");
   $("#hoy-fecha").textContent = l.fechaTxt || "Viernes 16 de octubre de 2026";
+  { const t = $("#ini-titulo"); if(t){ const et = plEtapa(l); const dia = plDiasSiembra(l); t.textContent = [l.nombre, et || (l.sin ? "sin lote" : ""), dia!=null && dia >= 0 ? `día ${dia}` : ""].filter(Boolean).join(" · "); } }
   const lec = l.lectura; $("#hoy-lectura").hidden = !lec;
   if(lec){
     const m = lec._meta || {}; const delModelo = m.origen==="modelo";
@@ -1156,7 +1325,7 @@ function renderHoy(){
     $("#lec-meta").textContent = delModelo ? `modelo · ${m.numeros_citados!=null ? m.numeros_citados + " números verificados" : "números verificados"}` : "por reglas";
     $("#lec-nosabemos").innerHTML = (lec.no_sabemos||[]).length ? lec.no_sabemos.map(x=>`<div>· ${esc(x)}</div>`).join("") : "<div>Nada que anotar hoy.</div>";
   }
-  $("#hoy-acciones-eyebrow").textContent = lec ? "Esta semana: qué mirar y qué registrar" : "Qué hacer esta semana";
+  $("#hoy-acciones-eyebrow").textContent = lec ? "Esta semana, mirar y registrar" : "Esta semana, mirar";
   $("#hoy-temporada-acc").hidden = !(l.accTemp && l.accTemp.length);
   if(l.accTemp && l.accTemp.length) $("#hoy-acciones-temp").innerHTML = l.accTemp.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${esc(a.c)}</div></div></div>`).join("");
 }
@@ -1166,6 +1335,7 @@ function renderCicloLote(){
   const et = c.etapa || {}, o = c.observado || {}, b = c.bitacora || {};
   const pct = et.pct_ciclo!=null ? Math.max(0, Math.min(100, et.pct_ciclo)) : null;
   $("#ciclo-fill").style.width = (pct!=null ? pct : 0) + "%"; $("#ciclo-barra").hidden = pct==null;
+  { const d = plDiasSiembra(l); const total = (pct && pct > 3 && d!=null) ? Math.round(d*100/pct) : null; const e1 = $("#ciclo-dia"), e2 = $("#ciclo-dia-sub"); if(e1) e1.textContent = d!=null && d >= 0 ? `Día ${d}` : (et.nombre_es || "—"); if(e2) e2.textContent = [total ? `de ~${total}` : "", d!=null && d >= 0 && et.nombre_es ? et.nombre_es : "", et.cosecha_estimada ? `cosecha hacia el ${fmtD(et.cosecha_estimada)}` : ""].filter(Boolean).join(" · "); }
   $("#ciclo-txt").innerHTML = (et.nombre_es ? `<b>${esc(et.nombre_es)}</b>` : "") + (pct!=null ? ` · ${pct} % del ciclo térmico (${Math.round(et.gdd||0)} de ${et.gdd_madurez||"?"} °Cd)` : "") + (et.cosecha_estimada ? `<br>Cosecha estimada hacia el <b>${esc(fmtD(et.cosecha_estimada))}</b>${et.semanas_para_cosecha!=null ? ` (faltan ${et.semanas_para_cosecha} semanas)` : ""}` : "") + ((et.proximas_etapas||[]).length ? `<br>Próximas etapas: ${et.proximas_etapas.map(x=>`${esc(x.etapa_es||x.etapa)} desde el ${esc(fmtD(x.desde))}`).join(", ")}` : "");
   const s7 = o.siete_dias || {}, n7 = o.siete_dias_normal || {}, t = o.temporada || {}, tn = o.temporada_normal || {};
   const f = (v, u)=> v==null ? "—" : `${v}${u||""}`;
@@ -1314,20 +1484,20 @@ function proposePoly(){
   g.poly = [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].map(([x,y],i)=>{ const [rx,ry] = rot(x+jit[i][0], y+jit[i][1]); return [p.lat + dLat(ry), p.lon + dLon(rx)]; });
   g.confirmado = false; geoSave(); drawLot(); map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); setBase("sat");
   toast(`Polígono propuesto (${ha} ha) alrededor del punto: ajústelo con los dedos`); if(!LOTES[lotIdx].lat && !g.pin) toast("Marque primero el punto del lote en el mapa");
-  startEdit({type:"lote"});
+  g.forma = "poligono"; geoSave(); formasMarcar("poligono"); $("#circle-ctl").hidden = true; startEdit({type:"lote"});
   $("#map-hint").textContent = "Propuesta de demostración (en la versión conectada el borde sale de la imagen). Arrastre los vértices; los puntos chicos agregan un vértice; toque un vértice y \"Quitar vértice\" para borrarlo.";
 }
 function targetPoly(){ const g = G(); return editing.type==="lote" ? g.poly : (g.parcelas[editing.i] || {}).poly; }
 function setTargetPoly(arr){ const g = G(); if(editing.type==="lote"){ g.poly = arr; g.confirmado = false; } else g.parcelas[editing.i].poly = arr; geoSave(); }
 function startEdit(t){
-  if(t && t.type==="lote"){ const g = G(); if(g.forma==="circulo"){ g.forma = "poligono"; geoSave(); } $("#circle-ctl").hidden = true; }
+  if(t && t.type==="lote"){ const g = G(); if(g.forma==="circulo" || g.forma==="semicirculo" || g.forma==="rectangulo"){ g.forma = "poligono"; geoSave(); formasMarcar("poligono"); } $("#circle-ctl").hidden = true; }
   if(!map) return; editing = t; selVtx = null;
   if(t.type==="lote"){ G().confirmado = false; geoSave(); if(lotPoly) lotPoly.setStyle({dashArray:"7 5"}); }
-  $("#poly-edit").hidden = true; $("#poly-done").hidden = false; $("#poly-propose").hidden = true; $("#poly-ok").hidden = true; $("#vtx-del").hidden = true;
+  $("#poly-edit").hidden = true; $("#poly-done").hidden = false; $("#poly-ok").hidden = true; $("#vtx-del").hidden = true;
   renderHandles();
   $("#map-hint").textContent = (t.type==="lote" ? "Editando el borde del lote" : `Editando ${G().parcelas[t.i].nombre}`) + ": arrastre los vértices; toque un punto chico para agregar uno; toque un vértice y luego \"Quitar vértice\" para borrarlo. Al terminar, \"Listo\".";
 }
-function stopEdit(){ const eraParcela = editing && editing.type==="parcela"; clearHandles(); editing = null; selVtx = null; if(eraParcela) syncParcelas(); $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; drawLot(); $("#map-hint").textContent = "Borde listo. \"Confirmar\" lo fija; puede volver a ajustarlo cuando quiera."; }
+function stopEdit(){ const eraParcela = editing && editing.type==="parcela"; clearHandles(); editing = null; selVtx = null; if(eraParcela) syncParcelas(); $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; drawLot(); $("#map-hint").textContent = "Borde listo. \"Confirmar\" lo fija; puede volver a ajustarlo cuando quiera."; }
 function clearHandles(){ vtxMarkers.forEach(m=>map.removeLayer(m)); midMarkers.forEach(m=>map.removeLayer(m)); vtxMarkers = []; midMarkers = []; }
 function renderHandles(){
   clearHandles(); const pts = targetPoly(); if(!pts) return;
@@ -1360,12 +1530,40 @@ function proposeCircle(r){
   g.forma = "circulo"; g.radio = r; g.poly = circlePoly(p.lat, p.lon, r); g.confirmado = false; geoSave();
   if(editing) { clearHandles(); editing = null; selVtx = null; }
   drawLot(); if(lotPoly) map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); setBase("sat"); renderPolyKV();
-  $("#circle-ctl").hidden = false; $("#circle-r").value = r; $("#circle-r-v").textContent = r; $("#circle-ha").textContent = `${(Math.PI*r*r/10000).toFixed(1)} ha`;
-  $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true;
+  $("#circle-ctl").hidden = false; { const sd = $("#semi-dir"); if(sd) sd.hidden = true; } $("#circle-r").value = r; $("#circle-r-v").textContent = r; $("#circle-ha").textContent = `${(Math.PI*r*r/10000).toFixed(1)} ha`;
+  $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; formasMarcar("circulo");
   $("#map-hint").textContent = "Círculo de pivote centrado en el punto. Mueva el control del radio hasta que coincida con el borde regado; \"Confirmar\" lo fija. Si el pivote no cubre el círculo completo, use \"Ajustar\" para recortarlo.";
 }
 $("#poly-circle").addEventListener("click", ()=>proposeCircle());
-$("#circle-r").addEventListener("input", e=>{ const r = +e.target.value; $("#circle-r-v").textContent = r; $("#circle-ha").textContent = `${(Math.PI*r*r/10000).toFixed(1)} ha`; const g = G(); if(g.forma!=="circulo") return; const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon}; if(!p || p.lat==null) return; g.poly = circlePoly(p.lat, p.lon, r); g.radio = r; g.confirmado = false; geoSave(); if(lotPoly) lotPoly.setLatLngs(g.poly); else drawLot(); renderPolyKV(); });
+// v51: medio pivote (semicírculo hacia un rumbo) y rectángulo; la forma elegida se marca en los chips
+function semiPoly(lat, lon, r, dir){ const k = Math.PI/180, R = 6371008.8, n = 36; const base = {N:Math.PI, E:-Math.PI/2, S:0, O:Math.PI/2}[dir||"N"]; const pts = [[lat, lon]]; for(let i=0;i<=n;i++){ const a = base + i/n*Math.PI; pts.push([lat + (r*Math.cos(a))/(R*k), lon + (r*Math.sin(a))/(R*k*Math.cos(lat*k))]); } return pts; }
+function semiDir(){ const b = $$("#semi-dir .chip").find(x=>x.getAttribute("aria-pressed")==="true"); return b ? b.dataset.dir : "N"; }
+function proposeSemi(r){
+  if(LOTES[lotIdx].sin){ toast("Primero cree un lote"); return; }
+  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat ?? 23.6, lon:LOTES[lotIdx].lon ?? -102.5}; if(!g.pin) setPin(p.lat, p.lon, {zoom:true});
+  if(r==null){ const ha = parseFloat(String($("#lt-ha").value).replace(",",".")) || LOTES[lotIdx].ha; r = ha ? Math.round(Math.sqrt(2*ha*10000/Math.PI)/5)*5 : 200; r = Math.max(40, Math.min(800, r)); }
+  g.forma = "semicirculo"; g.radio = r; g.dir = semiDir(); g.poly = semiPoly(p.lat, p.lon, r, g.dir); g.confirmado = false; geoSave();
+  if(editing) { clearHandles(); editing = null; selVtx = null; }
+  drawLot(); if(lotPoly) map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); setBase("sat"); renderPolyKV();
+  $("#circle-ctl").hidden = false; $("#semi-dir").hidden = false; $("#circle-r").value = r; $("#circle-r-v").textContent = r; $("#circle-ha").textContent = `${(Math.PI*r*r/20000).toFixed(1)} ha`;
+  $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; formasMarcar("semicirculo");
+  $("#map-hint").textContent = "Medio pivote centrado en el punto: elija hacia dónde mira y mueva el radio hasta el borde regado; \"Confirmar\" lo fija. \"Ajustar\" para recortarlo a mano.";
+}
+function proposeRect(){
+  if(LOTES[lotIdx].sin){ toast("Primero cree un lote"); return; }
+  const g = G(); const p = g.pin || {lat:LOTES[lotIdx].lat ?? 23.6, lon:LOTES[lotIdx].lon ?? -102.5}; if(!g.pin) setPin(p.lat, p.lon, {zoom:true});
+  const ha = parseFloat(String($("#lt-ha").value).replace(",",".")) || LOTES[lotIdx].ha || 4; const m2 = ha*10000, w = Math.sqrt(m2*1.6), h = m2/w;
+  const k = Math.PI/180, R = 6371008.8, dLat = m=>m/(R*k), dLon = m=>m/(R*k*Math.cos(p.lat*k));
+  g.forma = "rectangulo"; g.poly = [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].map(([x,y])=>[p.lat + dLat(y), p.lon + dLon(x)]); g.confirmado = false; geoSave();
+  $("#circle-ctl").hidden = true; drawLot(); map.fitBounds(lotPoly.getBounds(), {padding:[30,30]}); setBase("sat"); formasMarcar("rectangulo");
+  toast(`Rectángulo de ${ha} ha alrededor del punto: ajústelo con los dedos`); startEdit({type:"lote"});
+  $("#map-hint").textContent = "Rectángulo propuesto. Arrastre los vértices hasta las esquinas del lote; los puntos chicos agregan un vértice. Al terminar, \"Listo\" y \"Confirmar\".";
+}
+function formasMarcar(f){ $$("#formas .chip").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.forma===f))); }
+$("#poly-semi").addEventListener("click", ()=>proposeSemi());
+$("#poly-rect").addEventListener("click", ()=>proposeRect());
+$$("#semi-dir .chip").forEach(b=>b.addEventListener("click", ()=>{ $$("#semi-dir .chip").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); const g = G(); if(g.forma==="semicirculo") proposeSemi(g.radio); }));
+$("#circle-r").addEventListener("input", e=>{ const r = +e.target.value; $("#circle-r-v").textContent = r; $("#circle-ha").textContent = `${(Math.PI*r*r/10000).toFixed(1)} ha`; const g = G(); if(g.forma!=="circulo" && g.forma!=="semicirculo") return; const p = g.pin || {lat:LOTES[lotIdx].lat, lon:LOTES[lotIdx].lon}; if(!p || p.lat==null) return; g.poly = g.forma==="semicirculo" ? semiPoly(p.lat, p.lon, r, g.dir||semiDir()) : circlePoly(p.lat, p.lon, r); g.radio = r; if(g.forma==="semicirculo") $("#circle-ha").textContent = `${(Math.PI*r*r/20000).toFixed(1)} ha`; g.confirmado = false; geoSave(); if(lotPoly) lotPoly.setLatLngs(g.poly); else drawLot(); renderPolyKV(); });
 $("#poly-ok").addEventListener("click", ()=>{ const g = G(); if(!g.poly){ toast("No hay polígono que confirmar: propóngalo o dibújelo"); return; } g.confirmado = true; geoSave(); drawLot(); toast(`Polígono confirmado: ${areaHa(g.poly).toFixed(2)} ha`); const lc = LOTES[lotIdx]; lc.ha = Math.round(areaHa(g.poly)*100)/100; $("#lt-ha").value = lc.ha; patchLote(lc, {poligono:g.poly, superficie_ha:lc.ha, lat:(g.pin||{}).lat, lon:(g.pin||{}).lon}); $("#map-hint").textContent = "Confirmado. Dentro de este borde se seguirá el verdor del lote cada 5 días (etapa 1)."; });
 
 function renderPolyKV(){
@@ -1430,9 +1628,10 @@ function renderLote(){
   { const v = lx && lx.verdor, img = v && v.imagen; const b = $("#verdor-btn"); if(b) b.hidden = !(img && (img.ruta || img.url) && img.bounds); if(verdorLayer && (!verdorLayer._engramLote || verdorLayer._engramLote !== (lx.uuid||lx.id))) quitarVerdor(); }
   if(lx.sin){ $("#lote-kv").innerHTML = kv([["Lote", "todavía no hay: cree uno con \"+ Nuevo lote\""]]); $("#poly-kv").innerHTML = ""; $("#parc-list").innerHTML = ""; if(map && !$("#s-lote").hidden){ map.setView([23.6, -102.5], 5); if(lotPoly){ map.removeLayer(lotPoly); lotPoly = null; } if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } renderRes(); } return; }
   renderLoteKV(); renderPolyKV(); renderParcelas();
-  { const g = G(); const c = $("#circle-ctl"); if(c){ c.hidden = g.forma!=="circulo" || !g.poly; if(!c.hidden){ $("#circle-r").value = g.radio || 200; $("#circle-r-v").textContent = g.radio || 200; $("#circle-ha").textContent = `${(Math.PI*(g.radio||200)**2/10000).toFixed(1)} ha`; } } }
+  { const g = G(); const c = $("#circle-ctl"); if(c){ c.hidden = (g.forma!=="circulo" && g.forma!=="semicirculo") || !g.poly; if(!c.hidden){ $("#circle-r").value = g.radio || 200; $("#circle-r-v").textContent = g.radio || 200; $("#circle-ha").textContent = `${(Math.PI*(g.radio||200)**2/10000).toFixed(1)} ha`; } } }
   if(!map || $("#s-lote").hidden) return;
-  if(editing){ clearHandles(); editing = null; selVtx = null; $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-propose").hidden = false; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; }
+  if(editing){ clearHandles(); editing = null; selVtx = null; $("#poly-edit").hidden = false; $("#poly-done").hidden = true; $("#poly-ok").hidden = false; $("#vtx-del").hidden = true; }
+  { const g0 = G(); formasMarcar(g0.poly ? (g0.forma || "poligono") : ""); const sd = $("#semi-dir"); if(sd) sd.hidden = g0.forma!=="semicirculo"; if(g0.forma==="semicirculo" && g0.dir) $$("#semi-dir .chip").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.dir===g0.dir))); }
   if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } if(accCircle){ map.removeLayer(accCircle); accCircle = null; }
   const g = G(); const sinPunto = !g.pin && (LOTES[lotIdx].lat==null || LOTES[lotIdx].lon==null);
   if(sinPunto){ drawLot(); if(pinMarker){ map.removeLayer(pinMarker); pinMarker = null; } map.setView([23.6, -102.5], 5); $("#lote-kv").innerHTML = kv([["Punto del lote", "sin marcar: toque el mapa o use su ubicación"]]); renderRes(); $("#map-hint").textContent = "Acerque el mapa hasta su lote y tóquelo (o use \"Mi ubicación\"). Después \"Proponer polígono\"."; return; }
@@ -1715,7 +1914,7 @@ async function entrarModoNube(){
   catch(e){ ok = false; if(!sesion) return; if(!cargarLotesCache()){ LOTES = [loteVacio()]; } }
   lotIdx = Math.min(lotIdx, LOTES.length-1); mostrarLogin(false); renderSesion(); renderAll(); renderSync();
   if(!ok) toast(navigator.onLine ? "No se pudo leer la nube: se muestra lo guardado en el teléfono" : "Sin señal: se muestra lo guardado en el teléfono");
-  else { avisarAlertasNuevas(); const nv = TRANSCRIPCIONES.filter(t=>t.estado==="lista").length; if(nv && !ALERTAS.some(alertaNueva)) toast(`${nv} nota${nv===1?"":"s"} de voz transcrita${nv===1?"":"s"} para revisar en Registrar`); }
+  else { avisarAlertasNuevas(); const nv = TRANSCRIPCIONES.filter(t=>t.estado==="lista").length; if(nv && !ALERTAS.some(alertaNueva)) toast(`${nv} nota${nv===1?"":"s"} de voz transcrita${nv===1?"":"s"} para revisar en Recorrer`); }
   vaciarCola();
 }
 async function nubeInit(){
@@ -1765,7 +1964,7 @@ $("#pdf-abrir").addEventListener("click", ()=>{ const u = pdfDe(LOTES[lotIdx])[0
 function waNumeroTxt(n){ const d = String(n||"").replace(/\D/g,""); if(!d) return ""; if(d.startsWith("52") && d.length>=12) return `+52 ${d.slice(-10,-8)} ${d.slice(-8,-4)} ${d.slice(-4)}`; if(d.startsWith("1") && d.length===11) return `+1 ${d.slice(1,4)} ${d.slice(4,7)} ${d.slice(7)}`; return "+" + d; }
 function renderWhatsapp(){
   const wa = estadoRig && estadoRig.detalle && estadoRig.detalle.whatsapp; const num = wa && wa.numero; const inicio = (wa && wa.inicio) || "";
-  $("#wa-numero").innerHTML = MODO!=="nube" ? "Con sesión se configura el WhatsApp." : num ? `Número de Engram Campo: <b>${esc(waNumeroTxt(num))}</b> · <a href="https://wa.me/${esc(String(num).replace(/\D/g,""))}?text=${encodeURIComponent(inicio || "hola")}" target="_blank" rel="noopener">abrir el chat</a>${inicio ? `<br><span class="small muted">Para empezar, mande exactamente el mensaje <b>${esc(inicio)}</b> (es la llave de entrada de este número; el enlace ya lo trae escrito). Después escriba o mande lo que quiera.</span>` : ""}` : (wa && wa.activo ? "El motor todavía no publicó el número (llega con la próxima corrida)." : "El canal de WhatsApp todavía no está activo en el motor; cuando lo esté, aquí aparece el número.");
+  $("#wa-numero").innerHTML = MODO!=="nube" ? "Con sesión se configura el WhatsApp." : num ? `Número de EG Agro: <b>${esc(waNumeroTxt(num))}</b> · <a href="https://wa.me/${esc(String(num).replace(/\D/g,""))}?text=${encodeURIComponent(inicio || "hola")}" target="_blank" rel="noopener">abrir el chat</a>${inicio ? `<br><span class="small muted">Para empezar, mande exactamente el mensaje <b>${esc(inicio)}</b> (es la llave de entrada de este número; el enlace ya lo trae escrito). Después escriba o mande lo que quiera.</span>` : ""}` : (wa && wa.activo ? "El motor todavía no publicó el número (llega con la próxima corrida)." : "El canal de WhatsApp todavía no está activo en el motor; cuando lo esté, aquí aparece el número.");
   const p = perfil || {};
   $("#wa-tel").value = p.telefono || ""; $("#wa-ok").checked = !!p.whatsapp_ok; $("#wa-rep").value = p.whatsapp_reporte || "semanal";
   const sel = $("#wa-lote"); const lotes = LOTES.filter(l=>!l.sin && l.nube);
@@ -2159,7 +2358,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "50 · 8 nov 2026";
+const APP_VERSION = "51 · 9 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2192,6 +2391,7 @@ function renderAlertas(){
   const vacio = MODO==="nube" ? "Sin alertas vigentes: ningún peligro cruza el umbral alto en los próximos 7 días para sus lotes. El motor vuelve a revisar cada noche." : "En la demostración no hay alertas reales; abajo, dos ejemplos de cómo se ven.";
   const lista = $("#mas-alertas-list"); if(lista) lista.innerHTML = (vigentes.length ? vigentes.map(a=>alertaHTML(a, true)).join("") : `<p class="note">${vacio}</p>`) + (cerradas.length ? `<span class="eyebrow" style="margin-top:6px">Cerradas hace poco</span>` + cerradas.map(a=>alertaHTML(a, true)).join("") : "");
   const sub = $("#mas-alertas-sub"); if(sub){ const nv = (MODO==="nube" ? ALERTAS : []).filter(a=>a.vigente).length, nn = ALERTAS.filter(alertaNueva).length; sub.innerHTML = nv ? `<span class="cnt">${nv} vigente${nv===1?"":"s"}${nn ? ` · ${nn} sin ver` : ""}</span>` : "cuando algo cruza el umbral en su etapa"; }
+  { const b = $("#campana-n"); if(b){ const nn = vig.filter(alertaNueva).length, nv = vig.length; b.textContent = nn || nv || ""; b.dataset.n = String(nn || nv || 0); b.style.background = nn ? "var(--bad)" : "var(--warn)"; } const vac = $("#hoja-alertas-vacio"); if(vac) vac.hidden = !!vig.length; }
 }
 async function responderAlerta(id, r){
   const a = listaAlertas().find(x=>x.id===id); if(!a) return;
@@ -2218,6 +2418,7 @@ function avisarAlertasNuevas(){                  // una vez por alerta: aviso al
   const nuevas = ALERTAS.filter(a=>alertaNueva(a) && !avisadas.includes(a.id)); if(!nuevas.length) return;
   const l = LOTES.find(x=>idLote(x)===nuevas[0].lote_id);
   toast(nuevas.length===1 ? `Alerta nueva${l ? " en " + l.nombre : ""}: ${PELIGRO_TXT[nuevas[0].peligro] || nuevas[0].peligro}` : `${nuevas.length} alertas nuevas del motor`);
+  { const i = LOTES.indexOf(l); if(i >= 0 && i !== lotIdx){ lotIdx = i; renderAll(); } setTimeout(()=>abrirHojaAlertas(), 700); }
   try{ localStorage.setItem(AVIS_KEY, JSON.stringify(avisadas.concat(nuevas.map(a=>a.id)).slice(-200))); }catch(e){}
 }
 
@@ -2310,7 +2511,85 @@ document.addEventListener("click", ev => {
   const chip = ev.target.closest(".chips .chip"); if(chip){ $$(".chip", chip.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); chip.setAttribute("aria-pressed","true"); onChip(chip); return; }
   const seg = ev.target.closest(".seg button"); if(seg){ $$("button", seg.parentElement).forEach(c=>c.setAttribute("aria-pressed","false")); seg.setAttribute("aria-pressed","true"); return; }
 });
-function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); renderSensoresHoy(); renderPolinHoy(); renderRecetasHoy(); renderVentana(); if(typeof renderRazonHoy==="function") renderRazonHoy(); { const o = $("#opt-polin"); if(o) o.hidden = !poCfg(LOTES[lotIdx]); } }
+
+// ---------------------------------------------------------------- v51 · Inicio: cuatro números con su hoja; hojas; LISTO
+function kpiSet(id, cls, n, q, hoja, e){ const b = $("#"+id); if(!b) return; b.className = "kpi " + (cls||""); const nn = b.querySelector(".n"); nn.innerHTML = n; nn.classList.toggle("txt", /[a-záéíóú]/i.test(nn.textContent.replace(/<[^>]+>/g,"")) && nn.textContent.length > 4); b.querySelector(".q").textContent = q || ""; if(e) b.querySelector(".e").textContent = e; if(hoja) b.dataset.hoja = hoja; }
+function riesgoKPI(l){
+  if(!l || l.sin || l.nivel==="sin") return {cls:"sin", n:"—", q: l && l.sin ? "cree un lote" : "sin reporte todavía", txt:"Todavía no hay reporte para este lote."};
+  const vig = alertasDe(l).filter(a=>a.vigente && !a.ejemplo);
+  if(vig.length){ const a = vig[0]; const det = a.detalle || {}; let p = det.probabilidad_max!=null ? +det.probabilidad_max : (det.p_max!=null ? +det.p_max : null); if(p==null){ const m = String(a.mensaje||"").match(/(\d{1,3})\s*%/); if(m) p = +m[1]; } const pct = p==null ? null : Math.round(p <= 1 ? p*100 : p);
+    return {cls:a.nivel==="medio" ? "medio" : "alto", n: pct!=null ? `${pct}<small>%</small>` : `<span style="font-size:22px">alerta</span>`, q:`${PELIGRO_TXT[a.peligro]||a.peligro} · alerta vigente${a.inicio ? " · " + fmtD(a.inicio) : ""}`, txt:(a.titulo ? a.titulo + ". " : "") + (a.mensaje||"")}; }
+  const orden = {alto:3, medio:2, bajo:1}; const sem = (l.sem||[]).slice().sort((a,b)=>(orden[b.v]||0)-(orden[a.v]||0)); const top = sem[0];
+  const campo = top ? (/tiz|hutton|mildiu/i.test(top.k) ? "tz" : /helad/i.test(top.k) ? "he" : /lluv|agua/i.test(top.k) ? "ll" : /calor|noche/i.test(top.k) ? "ca" : null) : null;
+  let mx = null; (l.dias||[]).forEach(d=>{ if(campo && !isNaN(+d[campo]) && (mx==null || +d[campo] > mx.v)) mx = {v:+d[campo], d:d.d}; });
+  if(top && mx && mx.v > 0) return {cls:top.v, n:`${Math.round(mx.v)}<small>%</small>`, q:`${top.k.toLowerCase()} · ${top.v} · ${mx.d}`, txt:`${top.k}: ${top.t||""}`};
+  if(top) return {cls:top.v, n:`<span style="font-size:22px">${esc(top.k)}</span>`, q:`${top.v} · 7 días`, txt:`${top.k}: ${top.t||""}`};
+  return {cls:l.nivel, n:`<span style="font-size:24px">Riesgo ${l.nivel}</span>`, q:"7 días", txt:`Riesgo ${l.nivel} en los próximos 7 días.`};
+}
+function ventanaKPI(l){
+  const v = l && !l.sin ? ventanaDe(l) : null; if(!v || !(v.dias||[]).length) return {cls:"sin", n:"—", q:"el motor la calcula cada noche"};
+  const D = ["dom","lun","mar","mié","jue","vie","sáb"]; const lab = d => D[new Date(d.fecha+"T12:00:00").getDay()];
+  const aptos = v.dias.filter(d=>d.nivel==="apto"), reg = v.dias.filter(d=>d.nivel==="regular");
+  if(aptos.length){ const ls = aptos.map(lab); let n = ls.length===1 ? ls[0] : (ls.length===2 || (ls.length>2 && aptos.every((d,i)=>!i || (new Date(d.fecha)-new Date(aptos[i-1].fecha))/864e5===1))) ? `${ls[0]}–${ls[ls.length-1]}` : ls.slice(0,3).join(", "); return {cls:"bajo", n, q:`${aptos.length} día${aptos.length===1?"":"s"} apto${aptos.length===1?"":"s"} · ventana del motor`}; }
+  if(reg.length) return {cls:"medio", n:reg.slice(0,2).map(lab).join(", "), q:"solo días regulares esta semana"};
+  return {cls:"alto", n:"sin ventana", q:"deriva, lavado o calor toda la semana"};
+}
+function sueloKPI(l){
+  if(!l || l.sin) return null; const ss = sensoresDe(l); if(!ss.length) return null;
+  const tens = ss.filter(s=>s.tipo==="tensiometro"), sondas = ss.filter(s=>s.tipo==="sonda_humedad");
+  const s = tens[0] || sondas[0] || ss[0]; const x = ultimaLectura(s); const t = lecturaTxt(s, x, l);
+  if(!x) return {cls:"ocre", n:"—", q:`${s.nombre} · sin lectura`, e:"Suelo"};
+  const niv = s.tipo==="tensiometro" ? tensioNivel(x.valor, l) : null; const u = s.unidad || (SENSOR_TIPOS[s.tipo]||{}).unidad || "";
+  return {cls: niv ? (niv.k==="sin" ? "ocre" : niv.k) : "ocre", n:`${Number(x.valor).toLocaleString("es-MX",{maximumFractionDigits:1})}<small>${esc(u)}</small>`, q:`${s.nombre}${s.profundidad_cm && !new RegExp(s.profundidad_cm + " ?cm").test(s.nombre) ? ` ${s.profundidad_cm} cm` : ""} · ${t.txt.replace(/^.*?·\s*/, "")}`.slice(0,60), e: s.tipo==="tensiometro" ? "Suelo" : "Sensor"};
+}
+function verdorKPI(l){ const v = l && l.verdor; if(!v || !v.ultimo) return null; return {cls:"bajo", n:`${Number(v.ultimo.mediana).toFixed(2)}`, q:`verdor (NDVI) · ${fmtD(v.ultimo.fecha)} · ${v.ultimo.etiqueta||""}`, e:"Verdor"}; }
+function polinKPI(l){
+  if(!l || l.sin || !poCfg(l)) return null; const u = poUltimo(l);
+  if(!u || u.pct==null) return {cls:"medio", n:"—", q:"sin recorrido todavía · toque para empezar", e:"Polinización"};
+  const cls = {bueno:"bajo", regular:"medio", bajo:"alto"}[u.nivel] || "medio"; return {cls, n:`${Math.round(u.pct)}<small>%</small>`, q:`flores con marca · ${fmtD(u.fecha)} · ${u.nivel}`, e:"Polinización"};
+}
+function plagasKPI(l){
+  if(!l || l.sin) return null; const lista = plLista(l); if(!lista.length) return null;
+  const est = lista.map(p=>({p, e:plEstado(l, p.clave)})).filter(x=>x.e && (x.e.puntos_revisados || x.e.n_observaciones)).sort((a,b)=>(b.e.nivel||0)-(a.e.nivel||0));
+  if(!est.length) return {cls:"sin", n:`<span style="font-size:22px">sin recorrido</span>`, q:`${lista.length} plaga${lista.length===1?"":"s"} del catálogo · toque para empezar`, e:"Plagas"};
+  const t = est[0]; return {cls:NIVEL_CLS[t.e.nivel||0], n:`<span style="font-size:22px">${esc(NIVEL_TXT[t.e.nivel||0])}</span>`, q:`${t.p.nombre} · 7 días: ${NIVEL_TXT[t.e.nivel_proy||0]}`, e:"Plagas"};
+}
+function renderInicio(){
+  const l = LOTES[lotIdx]; if(!l) return;
+  const r = riesgoKPI(l); kpiSet("kpi-riesgo", r.cls, r.n, r.q, "riesgo"); const hn = $("#hj-riesgo-n"), hl = $("#hj-riesgo-lvl"), ht = $("#hj-riesgo-txt"); if(hn){ hn.innerHTML = r.n; hn.style.color = `var(--${{bajo:"ok",medio:"warn",alto:"bad"}[r.cls]||"muted"})`; } if(hl){ hl.className = "lvl " + (l.nivel||"sin"); hl.textContent = l.nivel==="sin" ? "sin reporte" : "riesgo " + l.nivel; } if(ht) ht.textContent = r.txt || "";
+  const v = ventanaKPI(l); kpiSet("kpi-ventana", v.cls, v.n, v.q, "ventana");
+  const s = sueloKPI(l) || verdorKPI(l) || {cls:"ocre", n:"—", q:"sin sensores ni satélite todavía", e:"Suelo"}; kpiSet("kpi-3", s.cls, s.n, s.q, "suelo", s.e || "Suelo");
+  { const vac = $("#hj-suelo-vacio"); if(vac) vac.hidden = !!(sueloKPI(l) || verdorKPI(l)); }
+  const p = polinKPI(l) || plagasKPI(l) || {cls:"sin", n:"—", q:"sin catálogo de plagas para este cultivo", e:"Plagas"}; kpiSet("kpi-4", p.cls, p.n, p.q, polinKPI(l) ? "polin" : "plagas", p.e);
+  const hoy = log.filter(x=>x.lote===l.id && x.f===hoyISO); const n = hoy.length;
+  $("#hoy-reg-n").textContent = `${n} ${n===1 ? "cosa" : "cosas"}`; $("#hoy-reg-txt").textContent = n ? hoy.slice(-3).map(x=>x.t==="regue" ? "riego" : x.t==="aplique" ? "aplicación" : x.t==="vi" ? "observación" : x.t==="nada" ? "todo en orden" : x.t).join(" · ") + " ›" : "nada todavía · toque Recorrer";
+  $("#hj-hoy-list").innerHTML = n ? hoy.slice().reverse().map(x=>`<div class="log-item"><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}</span></div>`).join("") : `<p class="note">Nada registrado hoy en ${esc(l.nombre)}.</p>`;
+}
+// --- hojas: una sola capa; se abre la tarjeta pedida
+const HOJAS_IDS = ["riesgo","suelo","polin","hoy","contar","web","ubicacion"];
+function abrirHoja(k){
+  if(k==="ventana"){ go("semana"); return; }
+  if(k==="plagas") k = "polin";                                   // la misma hoja trae polinización y plagas: se ve la que tenga datos
+  HOJAS_IDS.forEach(h=>{ const el = $("#hj-"+h); if(el) el.hidden = h!==k; });
+  const f = $("#hoja"); f.hidden = false; f.querySelector(".hoja").scrollTop = 0; document.body.classList.add("noscroll");
+}
+function cerrarHojas(){ $("#hoja").hidden = true; $("#hoja-alertas").hidden = true; document.body.classList.remove("noscroll"); }
+function abrirHojaAlertas(){ renderAlertas(); $("#hoja-alertas").hidden = false; document.body.classList.add("noscroll"); }
+document.addEventListener("click", ev=>{
+  const h = ev.target.closest("[data-hoja]"); if(h){ abrirHoja(h.dataset.hoja); return; }
+  const c = ev.target.closest("[data-hoja-cerrar]"); if(c){ cerrarHojas(); return; }
+  const ng = ev.target.closest("[data-nav-go]"); if(ng){ cerrarHojas(); go(ng.dataset.navGo); return; }
+  if(ev.target.classList && ev.target.classList.contains("hoja-fondo")) cerrarHojas();
+});
+$("#campana").addEventListener("click", abrirHojaAlertas);
+document.addEventListener("click", ev=>{ const g = ev.target.closest("[data-go]"); if(g) cerrarHojas(); }, true);
+// --- LISTO (pantalla verde al guardar)
+function mostrarListo(msg){ $("#listo-txt").textContent = msg || "Guardado."; $("#listo").hidden = false; document.body.classList.add("noscroll"); renderInicio(); }
+function ocultarListo(){ $("#listo").hidden = true; document.body.classList.remove("noscroll"); }
+$("#listo-otra").addEventListener("click", ()=>{ ocultarListo(); go("registrar"); });
+$("#listo-inicio").addEventListener("click", ()=>{ ocultarListo(); go("hoy"); });
+$("#web-copiar").addEventListener("click", async ()=>{ const u = $("#web-url").textContent.trim(); try{ await navigator.clipboard.writeText(u); toast("Enlace copiado"); }catch(e){ toast(u); } });
+function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderInicio(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); renderSensoresHoy(); renderPolinHoy(); renderRecetasHoy(); renderVentana(); if(typeof renderRazonHoy==="function") renderRazonHoy(); { const o = $("#opt-polin"); if(o) o.hidden = !poCfg(LOTES[lotIdx]); } { const v = $("#opt-visita"); if(v) v.hidden = MODO==="nube" && !esEquipo(); } }
 // ---------------------------------------------------------------- verdor (Sentinel-2 dentro del polígono; lo calcula el RIG cada noche)
 function sparkline(serie){
   const pts = (serie||[]).slice(-12); if(pts.length < 2) return "";
@@ -2369,13 +2648,13 @@ const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib
 const FLOWS = Object.keys(TITULOS);
 let sheetOpen = null, ignorePop = false, sheetTimer = null;
 function openFlow(name, btn){
+  if(typeof cerrarHojas==="function") cerrarHojas();
   if(name==="nada"){                      // acción inmediata: confirmación visible, sin duplicar el mismo día
     const l = LOTES[lotIdx];
     if(log.some(x=>x.lote===l.id && x.t==="nada" && x.f===hoyISO)){ toast("Hoy ya quedó registrado: sin novedades"); return; }
     addLog("nada", "Sin novedades esta semana", hoyISO, undefined, {});
-    if(btn){ const b = btn.querySelector("b"), ic = btn.querySelector(".ic"); const t0 = b.textContent, i0 = ic.textContent; btn.classList.add("done"); b.textContent = "Registrado"; ic.textContent = "✓"; setTimeout(()=>{ btn.classList.remove("done"); b.textContent = t0; ic.textContent = i0; }, 1800); }
-    toast("Registrado: sin novedades. Eso también es memoria.");
-    showNewEntry(60);
+    if(btn){ btn.classList.add("done"); setTimeout(()=>btn.classList.remove("done"), 1800); }
+    mostrarListo(`${l.nombre}: sin novedades. Eso también cuenta: el motor sabe que miró y no había.`);
     return;
   }
   if(!FLOWS.includes(name)) return;
@@ -2389,7 +2668,7 @@ function openFlow(name, btn){
   if(name==="sensor"){ seIniciar(); }
   if(name==="lectura"){ leIniciar(); }
   if(name==="polin"){ poIniciar(); }
-  if(name==="voz"){ const nn = $("#voz-local-nota"); if(nn) nn.textContent = vozlDisponible() ? "Con el modelo de voz en el teléfono, la nota se entiende aquí mismo, sin señal; el motor la vuelve a oír cuando haya señal. Revise lo que oyó antes de guardar." : (navigator.onLine ? "La nota se transcribe en el motor en minutos y vuelve aquí para que la revise. Para entenderla sin señal: Más → Sin señal → descargar el modelo de voz." : "Sin señal: la nota se guarda en el teléfono y el motor la transcribe cuando vuelva la señal. Para entenderla aquí mismo otra vez: Más → Sin señal → descargar el modelo de voz (con wifi)."); }
+  if(name==="voz"){ const nn = $("#voz-local-nota"); if(nn) nn.textContent = vozlDisponible() ? "Con el modelo de voz en el teléfono, la nota se entiende aquí mismo, sin señal; el motor la vuelve a oír cuando haya señal. Revise lo que oyó antes de guardar." : (navigator.onLine ? "La nota se transcribe en el motor en minutos y vuelve aquí para que la revise. Para entenderla sin señal: Ajustes → Sin señal → descargar el modelo de voz." : "Sin señal: la nota se guarda en el teléfono y el motor la transcribe cuando vuelva la señal. Para entenderla aquí mismo otra vez: Ajustes → Sin señal → descargar el modelo de voz (con wifi)."); }
   const sh = $("#sheet"); clearTimeout(sheetTimer); sh.hidden = false; $("#sheet-body").scrollTop = 0;
   requestAnimationFrame(()=>requestAnimationFrame(()=>sh.classList.add("open")));
   document.body.classList.add("noscroll"); sheetOpen = name;
@@ -2414,12 +2693,12 @@ function resetFlows(){
 }
 function showNewEntry(delay){      // lleva la vista a la bitácora y resalta el registro nuevo (cuando la subpantalla ya salió)
   setTimeout(()=>{
-    const card = $("#log-card"); const head = $(".top").getBoundingClientRect().height;
+    const card = $("#log-card"); const head = $(".top").getBoundingClientRect().height; if($("#s-registrar").hidden){ $$("[data-new]", card).forEach(it=>it.classList.add("new")); flashNew = []; return; }
     const y = card.getBoundingClientRect().top + window.scrollY - head - 12; window.scrollTo({top: Math.max(0,y), behavior:"smooth"});
     $$("[data-new]", card).forEach(it=>it.classList.add("new")); flashNew = [];
   }, delay);
 }
-function afterSave(msg){ closeSheet(false); toast(msg); showNewEntry(340); }
+function afterSave(msg){ closeSheet(false); mostrarListo(msg); }
 function onChip(chip){
   if(chip.dataset.ptipo){ const c = chip.closest(".prop"); if(c){ const p = libProps[+c.dataset.i]; p.tipo = chip.dataset.ptipo; p.dudas = []; delete p.nota; withDefaults(p); renderLibRows(); } return; }
   if(chip.dataset.ult!==undefined){ const u = ULTIMOS[parseInt(chip.dataset.ult,10)]; $("#ap-prod").value = u.p; $("#ap-dosis").value = u.d; $("#ap-unidad").value = u.u; $("#ap-tipo").value = u.t; }
@@ -2453,7 +2732,7 @@ $("#vi-tipo").addEventListener("click", ()=>{ setTimeout(fotolEnVi, 50); });
 // Motor: si LECTOR.url está definido, la foto va al lector (función en la nube que llama a un modelo de visión; ver lector/worker.js)
 // y vuelve la transcripción con sus dudas y los registros. Sin lector, la transcripción es un EJEMPLO (lo dice la pantalla) y la
 // interpretación la hace el intérprete local por reglas de aquí abajo, que también es el respaldo cuando no hay señal.
-const LECTOR = { url: "https://engram-lector.lucasbayones.workers.dev", token: "ec-b077-029c-7a4f-b5c5" };     // url: se fija al desplegar lector/worker.js; también se puede guardar desde Más → Acerca
+const LECTOR = { url: "https://engram-lector.lucasbayones.workers.dev", token: "ec-b077-029c-7a4f-b5c5" };     // url: se fija al desplegar lector/worker.js; también se puede guardar desde Ajustes → Cuenta y versión
 try{ const u = localStorage.getItem("engram-campo-lector"); if(u) LECTOR.url = u; }catch(e){}
 $("#lector-url").value = LECTOR.url;
 async function lectorProbar(){ const el = $("#lector-estado"); if(!LECTOR.url){ el.textContent = "Sin lector: modo ejemplo."; return; } el.textContent = "Probando…"; try{ const r = await fetch(LECTOR.url, {method:"GET"}); const j = await r.json(); el.textContent = j && j.ok ? `Conectado · ${j.modelo || "lector"}` : "Responde, pero no es el lector."; }catch(e){ el.textContent = "No responde (¿dirección correcta?, ¿ya está publicado?)."; } }
@@ -2756,7 +3035,7 @@ $("#voz-rec").addEventListener("click", toggleRec);
 $("#voz-file").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; recBlob = f; recDur = 0; if(recURL) URL.revokeObjectURL(recURL); recURL = URL.createObjectURL(f); const a = $("#voz-play"); a.src = recURL; a.hidden = false; $("#voz-save").disabled = false; if(vozlDisponible()) vozlEntender(f, 0); });
 $("#voz-play").addEventListener("loadedmetadata", e=>{ if(!recDur && isFinite(e.target.duration)) { recDur = e.target.duration; $("#voz-time").textContent = fmtT(recDur); } });
 function vozReset(){ if(rec && rec.state==="recording"){ rec.onstop = null; try{ rec.stop(); }catch(e){} } if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream = null; } rec = null; clearInterval(recTimer); stopMeter(); $("#voz-time").textContent = "0:00"; const a = $("#voz-play"); a.hidden = true; a.removeAttribute("src"); $("#voz-rec").classList.remove("on"); $("#voz-rec").disabled = false; $("#voz-hint").textContent = VOZ_HINT; $("#voz-save").disabled = true; $("#voz-fallback").hidden = true; $("#voz-file").value = ""; recBlob = null; }
-$("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"}${MODO==="nube" ? " · se transcribe en minutos: revísela aquí en Registrar" : " · en la versión conectada se transcribe en el motor"}`, hoyISO, "voz", {duracion_s: Math.round(recDur||0), kb: Math.round(recBlob.size/1024)}, {bucket:"audios", ext: extDe(recBlob) === "bin" ? "webm" : extDe(recBlob), blob: recBlob}); afterSave(MODO==="nube" ? "Nota guardada: la transcripción aparece aquí en unos minutos" : "Nota de voz guardada en la bitácora"); });
+$("#voz-save").addEventListener("click", ()=>{ if(!recBlob) return; addLog("voz", `Nota de voz · ${recDur ? fmtT(recDur) : Math.round(recBlob.size/1024)+" KB"}${MODO==="nube" ? " · se transcribe en minutos: revísela aquí en Recorrer" : " · en la versión conectada se transcribe en el motor"}`, hoyISO, "voz", {duracion_s: Math.round(recDur||0), kb: Math.round(recBlob.size/1024)}, {bucket:"audios", ext: extDe(recBlob) === "bin" ? "webm" : extDe(recBlob), blob: recBlob}); afterSave(MODO==="nube" ? "Nota guardada: la transcripción aparece aquí en unos minutos" : "Nota de voz guardada en la bitácora"); });
 
 // ---------------------------------------------------------------- plagas v1 (3 nov 2026) · PRELIMINAR · todo esto corre en el teléfono, sin señal
 // Catálogo (config/plagas.json del RIG, incrustado al construir), puntos de muestreo que cubren el lote, conteo por punto con el nivel del productor
@@ -2910,19 +3189,27 @@ function plPaso(paso){ pl.paso = paso; ["ruta","punto","fin"].forEach(s=>{ $("#p
 function plPendientes(){ const hechos = new Set(pl.hechos.map(h=>h.punto_id)); let pend = pl.puntos.filter(p=>!hechos.has(p.id)); if(plPos){ pend = pend.slice().sort((a,b)=>plDist(plPos, a)-plDist(plPos, b)); } return pend; }
 function plDist(pos, p){ const mx = 111320*Math.cos(pos.lat*Math.PI/180); return Math.hypot((p.lon-pos.lon)*mx, (p.lat-pos.lat)*111320); }
 function plRumbo(pos, p){ const mx = 111320*Math.cos(pos.lat*Math.PI/180); const dx = (p.lon-pos.lon)*mx, dy = (p.lat-pos.lat)*111320; const a = (Math.atan2(dx, dy)*180/Math.PI + 360)%360; return ["norte","noreste","este","sureste","sur","suroeste","oeste","noroeste"][Math.round(a/45)%8]; }
+const GPS_CERCA_M = 35;                                      // v51: a menos de 35 m, el punto se marca solo
+function gpsCercano(pend){ if(!plPos || !pend || !pend.length) return null; const p = pend[0]; return plDist(plPos, p) <= GPS_CERCA_M ? p : null; }
+function gpsLinea(sel, cerca, tipo, primero){ const el = $(sel); if(!el) return; if(!plPos){ el.hidden = !plGeoWatch; el.innerHTML = plGeoWatch ? `<div class="gps-linea lejos"><span class="pin">📍</span><span>Esperando el GPS… mientras, toque un ${tipo}.</span></div>` : ""; return; }
+  el.hidden = false; if(cerca) el.innerHTML = `<div class="gps-linea"><span class="pin">📍</span><span>Está parado en <b>${esc(cerca.id)}${cerca.sector && cerca.sector!==cerca.id ? " · " + esc(cerca.sector) : ""}</b> · a ${Math.round(plDist(plPos, cerca))} m · <b>se marcó solo</b>${plPos.acc ? ` <span class="small muted">(GPS ±${Math.round(plPos.acc)} m)</span>` : ""}</span></div>`;
+  else if(primero) el.innerHTML = `<div class="gps-linea lejos"><span class="pin">📍</span><span>El ${tipo} más cercano es <b>${esc(primero.id)}</b>, a ${Math.round(plDist(plPos, primero))} m al ${plRumbo(plPos, primero)}. Camine hacia ahí o elija otro.</span></div>`;
+  else el.hidden = true; }
 function plRutaRender(){
   const l = LOTES[lotIdx]; const cfg = plCfg(l, pl.plaga); const poly = plPoly(l);
   $("#pl-donde").textContent = cfg ? `Dónde mirar: ${cfg.donde}.` : "";
   const pend = plPendientes(); const hechos = new Set(pl.hechos.map(h=>h.punto_id));
   $("#pl-ruta-txt").textContent = !poly ? "Marque el lote en el mapa (Lote) para proponer los puntos." : pl.puntos.length ? `${pl.puntos.length} puntos para cubrir el lote (${pl.puntos.filter(p=>p.clase==="orilla").length} en orillas${pl.puntos.some(p=>p.clase==="deteccion") ? ", más los de detecciones anteriores" : ""}). ${pl.hechos.length} revisado${pl.hechos.length===1?"":"s"}.` + (plPos && pend.length ? ` El más cercano: ${pend[0].id}, a ${Math.round(plDist(plPos, pend[0]))} m al ${plRumbo(plPos, pend[0])}.` : plGeoWatch ? " Esperando el GPS…" : "") : "";
-  $("#pl-puntos").innerHTML = pl.puntos.map(p=>`<button class="chip" aria-pressed="${pl.actual && pl.actual.id===p.id}" data-plpt="${p.id}" style="${hechos.has(p.id) ? "background:var(--ok-bg);color:var(--ok);border-color:transparent" : ""}">${p.id}${hechos.has(p.id) ? " ✓" : ""}${plPos ? ` · ${Math.round(plDist(plPos, p))} m` : ""}</button>`).join("");
+  const cercaP = gpsCercano(pend); gpsLinea("#pl-gps", cercaP, "punto", pend[0]);
+  $("#pl-puntos").innerHTML = pl.puntos.map(p=>`<button class="chip${cercaP && cercaP.id===p.id ? " gps" : ""}" aria-pressed="${pl.actual && pl.actual.id===p.id}" data-plpt="${p.id}" style="${hechos.has(p.id) ? "background:var(--ok-bg);color:var(--ok);border-color:transparent" : ""}">${p.id}${hechos.has(p.id) ? " ✓" : ""}${plPos ? ` · ${Math.round(plDist(plPos, p))} m` : ""}</button>`).join("");
   if(poly){ $("#pl-map").hidden = false; try{ plDibujar(poly); }catch(e){} } else $("#pl-map").hidden = true;
 }
 function plDibujar(poly){
   if(!plMap){ plMap = L.map("pl-map", {zoomControl:true, attributionControl:false}); L.tileLayer(TILE.sat, {maxZoom:20, maxNativeZoom:19}).addTo(plMap); }
   plCapas.forEach(c=>plMap.removeLayer(c)); plCapas = []; const hechos = {}; pl.hechos.forEach(h=>{ hechos[h.punto_id] = h; });
   const pg = L.polygon(poly, {color:"#F0B848", weight:2, fill:false}).addTo(plMap); plCapas.push(pg);
-  pl.puntos.forEach(p=>{ const h = hechos[p.id]; const cls = h ? ` plpt-n${h.nivel_final}` : ""; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt${cls}${pl.actual && pl.actual.id===p.id ? " plpt-sel" : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(plMap); m.on("click", ()=>{ pl.actual = p; plPaso("punto"); }); plCapas.push(m); });
+  const cercaM = gpsCercano(plPendientes());
+  pl.puntos.forEach(p=>{ const h = hechos[p.id]; const cls = h ? ` plpt-n${h.nivel_final}` : ""; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt${cls}${pl.actual && pl.actual.id===p.id ? " plpt-sel" : ""}${cercaM && cercaM.id===p.id ? " plpt-gps" : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(plMap); m.on("click", ()=>{ pl.actual = p; plPaso("punto"); }); plCapas.push(m); });
   if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(plMap); plCapas.push(me); }
   plMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ plMap.invalidateSize(); plMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380);
 }
@@ -3044,7 +3331,7 @@ function seGuardar(){
 let leFoto = null, lePre = null;
 function leIniciar(){ const l = LOTES[lotIdx]; const ss = sensoresDe(l); leFoto = null; leTel = null; { const b = $("#le-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#le-foto-prev").hidden = true; $("#le-foto-prev").innerHTML = ""; $("#le-foto-input").value = ""; $("#le-valor").value = "";
   const ahora = new Date(); $("#le-fecha").value = localISO(ahora); $("#le-hora").value = `${String(ahora.getHours()).padStart(2,"0")}:${String(ahora.getMinutes()).padStart(2,"0")}`;
-  $("#le-sensores").innerHTML = ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note">Primero agregue un sensor (Más → Sensores y riego).</p>`; lePre = null; leUnidad(); }
+  $("#le-sensores").innerHTML = ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note">Primero agregue un sensor (Ajustes → Sensores y riego).</p>`; lePre = null; leUnidad(); }
 function leSensor(){ const b = $$("#le-sensores .chip").find(x=>x.getAttribute("aria-pressed")==="true"); return b ? (SENSORES||[]).find(s=>s.id===b.dataset.les) : null; }
 function leUnidad(){ const s = leSensor(); $("#le-unidad").textContent = s ? (s.unidad || (SENSOR_TIPOS[s.tipo]||{}).unidad || "") : ""; const x = s ? ultimaLectura(s) : null; $("#le-ultima").textContent = s ? (x ? `Última: ${lecturaTxt(s, x, LOTES[lotIdx]).txt}` : "Sin lecturas todavía.") : ""; }
 $("#le-sensores").addEventListener("click", e=>{ const b = e.target.closest("[data-les]"); if(!b) return; $$("#le-sensores .chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); leUnidad(); });
@@ -3101,11 +3388,13 @@ function poPaso(paso){ po.paso = paso; ["ruta","punto","fin"].forEach(s=>{ $("#p
   $("#sheet-body").scrollTop = 0; }
 function poRutaRender(){ const l = LOTES[lotIdx]; const poly = plPoly(l); const hechos = new Set(po.hechos.map(h=>h.punto_id)); const pend = poPendientes();
   $("#po-ruta-txt").textContent = !poly ? "Marque el lote en el mapa (Lote) para proponer los puntos." : `${po.puntos.length} punto${po.puntos.length===1?"":"s"} (${po.puntos[0] && po.puntos[0].id.startsWith("S") ? "uno por parcela" : "repartidos por el lote"}). ${po.hechos.length} revisado${po.hechos.length===1?"":"s"}.` + (plPos && pend.length ? ` El más cercano: ${pend[0].id}, a ${Math.round(plDist(plPos, pend[0]))} m al ${plRumbo(plPos, pend[0])}.` : "");
-  $("#po-puntos").innerHTML = po.puntos.map(p=>`<button class="chip" data-popt="${p.id}" style="${hechos.has(p.id) ? "background:var(--ok-bg);color:var(--ok);border-color:transparent" : ""}">${p.id}${hechos.has(p.id) ? " ✓" : ""}${p.sector && p.sector!==p.id ? " · " + esc(p.sector) : ""}</button>`).join("");
+  const cercaQ = gpsCercano(pend); gpsLinea("#po-gps", cercaQ, "sector", pend[0]);
+  $("#po-puntos").innerHTML = po.puntos.map(p=>`<button class="chip${cercaQ && cercaQ.id===p.id ? " gps" : ""}" data-popt="${p.id}" style="${hechos.has(p.id) ? "background:var(--ok-bg);color:var(--ok);border-color:transparent" : ""}">${p.id}${hechos.has(p.id) ? " ✓" : ""}${p.sector && p.sector!==p.id ? " · " + esc(p.sector) : ""}</button>`).join("");
   if(poly){ $("#po-map").hidden = false; try{ poDibujar(poly); }catch(e){} } else $("#po-map").hidden = true; }
 function poDibujar(poly){ if(!poMap){ poMap = L.map("po-map", {zoomControl:true, attributionControl:false}); L.tileLayer(TILE.sat, {maxZoom:20, maxNativeZoom:19}).addTo(poMap); } poCapas.forEach(c=>poMap.removeLayer(c)); poCapas = []; const hechos = {}; po.hechos.forEach(h=>{ hechos[h.punto_id] = h; });
   const pg = L.polygon(poly, {color:"#F0B848", weight:2, fill:false}).addTo(poMap); poCapas.push(pg); const g = (typeof G==="function") ? G() : null; (g && g.parcelas || []).forEach(pc=>{ if(pc.poly && pc.poly.length >= 3){ const q = L.polygon(pc.poly, {color:"#fff", weight:1, dashArray:"4 3", fill:false}).addTo(poMap); poCapas.push(q); } });
-  po.puntos.forEach(p=>{ const h = hechos[p.id]; const col = h ? {bueno:"#17955A", regular:"#F2B04E", bajo:"#D63B2F"}[h.nivel] : null; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt" style="${col ? `background:${col};color:#fff;border-color:#fff` : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(poMap); m.on("click", ()=>{ po.actual = p; poPaso("punto"); }); poCapas.push(m); });
+  const cercaN = gpsCercano(poPendientes());
+  po.puntos.forEach(p=>{ const h = hechos[p.id]; const col = h ? {bueno:"#17955A", regular:"#F2B04E", bajo:"#D63B2F"}[h.nivel] : null; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt${cercaN && cercaN.id===p.id ? " plpt-gps" : ""}" style="${col ? `background:${col};color:#fff;border-color:#fff` : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(poMap); m.on("click", ()=>{ po.actual = p; poPaso("punto"); }); poCapas.push(m); });
   if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
   poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ poMap.invalidateSize(); poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380); }
 function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; poTel = null; { const b = $("#po-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
@@ -3333,12 +3622,12 @@ let viReco = null, plReco = null, vidReco = null;
 async function fotolEnVi(){
   viReco = null; const f = $("#vi-input").files && $("#vi-input").files[0]; const box = $("#vi-reco"); if(!box) return; box.hidden = true; box.textContent = "";
   const que = ($$("#vi-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true")||{}).textContent || ""; if(!f || !/plaga|enfermedad/.test(que)) return;
-  if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Más → Sin señal, con wifi, ~150 MB). Con señal, el motor la lee igual."; return; }   // v39.1
+  if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Ajustes → Sin señal, con wifi, ~150 MB). Con señal, el motor la lee igual."; return; }   // v39.1
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
   try{ const fr = await fotoReducida(f, 1280); viReco = await fotolClasificar(fr, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(viReco, fr, null); box.innerHTML = veredictoHTML(viReco, LOTES[lotIdx], {}); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + "); el motor la lee con señal."; }
 }
 async function fotolEnPunto(f){
-  plReco = null; const box = $("#pl-foto-reco"); if(!box) return; box.hidden = true; if(!f) return; if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Más → Sin señal, con wifi). Con señal, el motor la lee igual."; return; }
+  plReco = null; const box = $("#pl-foto-reco"); if(!box) return; box.hidden = true; if(!f) return; if(!fotolDisponible()){ box.hidden = false; box.textContent = "El teléfono no mira esta foto: el modelo de fotos no está descargado (Ajustes → Sin señal, con wifi). Con señal, el motor la lee igual."; return; }
   box.hidden = false; box.textContent = "Mirando la foto en el teléfono…";
   try{ const fr = await fotoReducida(f, 1280); plReco = await fotolClasificar(fr, LOTES[lotIdx]); if(typeof clasifAnexar==="function") await clasifAnexar(plReco, fr, null); box.innerHTML = veredictoHTML(plReco, LOTES[lotIdx], {contando: pl ? pl.plaga : null}); }catch(e){ box.textContent = "No se pudo mirar en el teléfono (" + String(e.message||e).slice(0,60) + ")."; }
 }
@@ -3400,7 +3689,7 @@ function cargaMarcar(campo, valor){ try{ const c = JSON.parse(localStorage.getIt
 document.addEventListener("visibilitychange", ()=>cargaMarcar("oculta", document.visibilityState==="hidden")); window.addEventListener("pagehide", ()=>cargaMarcar("descartar", true));
 function caidaTxt(c){ const fase = c.fase==="usando" ? `al usarlo (${c.archivo||"trabajando"}, ${c.segundos!=null ? c.segundos + " s" : "?"})` : c.fase==="done" || c.fase==="ready" ? "ya bajado, al cargarlo en memoria" : c.fase==="progress" ? `bajando ${c.archivo||""} al ${c.progreso||0} %` : c.fase ? c.fase : "al empezar"; return `${({voz:"modelo de voz", fotos:"modelo de fotos", libreta:"lector de libreta", razon:"modelo de razonamiento", clasificador:"clasificador propio"})[c.que] || c.que} · ${(c.modelo||"").split("/").pop()} · ${c.device||"?"}${c.dtype ? "/" + (typeof c.dtype==="string" ? c.dtype : "mixto") : ""} · ${fase}${c.oculta ? " · en segundo plano (cámara u otra app abierta)" : ""} · ${(c.caida||c.t||"").slice(0,16).replace("T"," ")}`; }
 function caidasTxt(){ const l = caidas(); if(!l.length) return ""; const u = l[l.length-1]; const pista = u.que==="razon" && u.device!=="webllm" && webllmPosible(RAZL_MODELOS.qwen05) ? " Desde la versión 38 el razonador usa otro motor (WebLLM) que carga por tandas y no repite ese problema: vuelva a descargarlo." : u.device==="webgpu" ? " El gráfico queda apagado para voz, fotos y libreta." : ""; return `La app se cerró sola ${l.length===1 ? "una vez" : l.length + " veces"} mientras cargaba un modelo (última: ${caidaTxt(u)}). Eso es el sistema del teléfono cerrándola por falta de memoria, o el procesador gráfico fallando: ese intento ya no se repite solo.${pista} Con señal, el motor hace ese trabajo.`; }
-if(window.__caidaReciente) setTimeout(()=>{ try{ toast("La app se cerró sola cargando el " + caidaTxt(window.__caidaReciente).split(" · ")[0] + ": vea Más → Sin señal"); }catch(e){} }, 1500);
+if(window.__caidaReciente) setTimeout(()=>{ try{ toast("La app se cerró sola cargando el " + caidaTxt(window.__caidaReciente).split(" · ")[0] + ": vea Ajustes → Sin señal"); }catch(e){} }, 1500);
 async function vozlLib(){
   if(window.__tjs) return window.__tjs;
   if(window.ENGRAM_TJS_FAKE){ window.__tjs = window.ENGRAM_TJS_FAKE; return window.__tjs; }          // pruebas: transcriptor falso inyectado
@@ -3411,7 +3700,7 @@ async function vozlLib(){
   tjs.env.allowLocalModels = false; tjs.env.useBrowserCache = true; window.__tjs = tjs; return tjs;
 }
 function errorCarga(e){                                        // v39.1: "Load failed" sin señal = el modelo no está descargado en este teléfono; que lo diga claro
-  const m = (e && e.message ? e.message : String(e)); if(/Load failed|Failed to fetch|NetworkError|network error|net::/i.test(m) && !navigator.onLine) return "sin señal y el modelo no está descargado en este teléfono: bájelo con wifi en Más → Sin señal";
+  const m = (e && e.message ? e.message : String(e)); if(/Load failed|Failed to fetch|NetworkError|network error|net::/i.test(m) && !navigator.onLine) return "sin señal y el modelo no está descargado en este teléfono: bájelo con wifi en Ajustes → Sin señal";
   if(/Load failed|Failed to fetch|NetworkError/i.test(m)) return "no se pudo bajar el modelo (" + m.slice(0,60) + "): revise la señal e intente de nuevo"; return m; }
 // v41: hilo aparte para los modelos ORT. wkModelos() lo crea y carga la biblioteca; wkRpc manda una orden y espera; wkTerminar lo mata (memoria devuelta).
 let wk = null, wkId = 0, wkPend = {};
@@ -3537,7 +3826,7 @@ function renderSinSenal(){
   $("#ss-voz-kv").innerHTML = kv(filas);
   espacioModelos().then(e=>{ if(e && (!window.__espacio || Math.abs(e.usado-window.__espacio.usado) > 1e6)){ window.__espacio = e; renderSinSenal(); } else if(e) window.__espacio = e; }); if(window.__persistido===undefined){ window.__persistido = null; (navigator.storage && navigator.storage.persisted ? navigator.storage.persisted() : Promise.resolve(null)).then(v=>{ window.__persistido = v; }).catch(()=>{}); }
   const pr = $("#ss-voz-prog"); pr.hidden = vozl.estado!=="cargando"; pr.querySelector("i").style.width = vozl.progreso + "%";
-  $("#ss-voz-txt").textContent = vozl.estado==="error" ? "No se pudo cargar: " + vozl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : vozl.estado==="listo" ? "Las notas de voz se entienden en este teléfono. Grabe en Registrar → Nota de voz." : c.listo ? "Listo para usarse sin señal." : "Con wifi, descargue el modelo una vez.";
+  $("#ss-voz-txt").textContent = vozl.estado==="error" ? "No se pudo cargar: " + vozl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : vozl.estado==="listo" ? "Las notas de voz se entienden en este teléfono. Grabe en Recorrer → Contar → Nota de voz." : c.listo ? "Listo para usarse sin señal." : "Con wifi, descargue el modelo una vez.";
   $("#ss-voz-base").disabled = vozl.estado==="cargando"; $("#ss-voz-small").disabled = vozl.estado==="cargando"; $("#ss-voz-quitar").hidden = !c.listo;
   $("#ss-voz-base").textContent = c.listo && (c.modelo||"base")==="base" ? "Volver a cargar el básico" : "Descargar modelo básico (~80 MB)";
   { const fc = fotolConf(); const estF = fotol.estado==="listo" ? "listo" : fotol.estado==="cargando" ? `descargando… ${fotol.progreso} %${fotol.archivo ? " · " + fotol.archivo : ""}` : fotol.estado==="error" ? "error" : fc.listo ? "descargado; se carga al usarlo" : "no descargado";
@@ -3664,7 +3953,7 @@ async function razlProbar(){                                 // v32.1: "Probar":
   renderSinSenal();
 }
 function razlDiagTexto(){ const c = razlConf(); const e = window.__espacio; let inst = "?"; try{ inst = (navigator.standalone || matchMedia("(display-mode: standalone)").matches) ? "instalada" : "navegador"; }catch(x){}
-  return [`Engram Campo ${APP_VERSION} · ${inst}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · ventana: ${razl.ajuste ? razl.ajuste.context_window_size : "fábrica"} · error: ${razl.error||"-"}`, `biblioteca: ${vozl.lib||"no cargada"} (${vozl.libUrl||"-"}) · gpu: ${window.__gpuOK} · gpu iPhone activado: ${gpuIOSActivo()} · memoria: ${navigator.deviceMemory||"?"} GB · núcleos: ${navigator.hardwareConcurrency||"?"} · espacio: ${e ? Math.round(e.usado/1048576) + " de " + Math.round(e.cuota/1048576) + " MB" : "?"} · permanente: ${window.__persistido}`, `ua: ${navigator.userAgent.slice(0,120)} · webllm cargado: ${!!window.__webllm} · motor razón: ${razl.motor||"-"}/${razl.dtype||"-"} · hilo de modelos: ${wk ? "vivo" : "no"} · cargados: ${[vozl.pipe && "voz", (typeof fotol!=="undefined" && fotol.pipe) && "fotos", (typeof ocrl!=="undefined" && ocrl.model) && "libreta"].filter(Boolean).join(",") || "ninguno"}`, `caídas: ${caidas().length ? caidas().slice(-4).map(caidaTxt).join(" || ") : "ninguna"}`, `voz: ${JSON.stringify(vozlConf())} · fotos: ${localStorage.getItem(FOTOL_KEY)||"{}"} · libreta: ${JSON.stringify(ocrlConf())} · clasificador: ${localStorage.getItem(CLASIF_KEY)||"{}"}`].concat(razl.diag || []).concat(vozl.diag || []).concat(["--- historial guardado (sobrevive a las caídas):"], diagGuardado().slice(-18)).join("\n"); }
+  return [`EG Agro ${APP_VERSION} · ${inst}`, `conf: ${JSON.stringify(c)}`, `estado: ${razl.estado} · motor ${razl.motor||"?"} · ventana: ${razl.ajuste ? razl.ajuste.context_window_size : "fábrica"} · error: ${razl.error||"-"}`, `biblioteca: ${vozl.lib||"no cargada"} (${vozl.libUrl||"-"}) · gpu: ${window.__gpuOK} · gpu iPhone activado: ${gpuIOSActivo()} · memoria: ${navigator.deviceMemory||"?"} GB · núcleos: ${navigator.hardwareConcurrency||"?"} · espacio: ${e ? Math.round(e.usado/1048576) + " de " + Math.round(e.cuota/1048576) + " MB" : "?"} · permanente: ${window.__persistido}`, `ua: ${navigator.userAgent.slice(0,120)} · webllm cargado: ${!!window.__webllm} · motor razón: ${razl.motor||"-"}/${razl.dtype||"-"} · hilo de modelos: ${wk ? "vivo" : "no"} · cargados: ${[vozl.pipe && "voz", (typeof fotol!=="undefined" && fotol.pipe) && "fotos", (typeof ocrl!=="undefined" && ocrl.model) && "libreta"].filter(Boolean).join(",") || "ninguno"}`, `caídas: ${caidas().length ? caidas().slice(-4).map(caidaTxt).join(" || ") : "ninguna"}`, `voz: ${JSON.stringify(vozlConf())} · fotos: ${localStorage.getItem(FOTOL_KEY)||"{}"} · libreta: ${JSON.stringify(ocrlConf())} · clasificador: ${localStorage.getItem(CLASIF_KEY)||"{}"}`].concat(razl.diag || []).concat(vozl.diag || []).concat(["--- historial guardado (sobrevive a las caídas):"], diagGuardado().slice(-18)).join("\n"); }
 async function razlAsegurar(){ if(razl.estado==="listo" && (razl.pipe || razl.engine)) return true; const c = razlConf(); if(!c.listo) return false; return razlCargar(c.modelo || "qwen05"); }
 async function razlGenerar(messages, max, avisar, opts){
   if(!(await razlAsegurar())) throw new Error(razl.error || "modelo de razonamiento no disponible");
@@ -3716,7 +4005,7 @@ const RAZL_UNIDADES = ["kg/ha","L/ha","g/ha","mL/ha","kg total","L total"], RAZL
 const RAZL_ESQUEMA_INTERP = {type:"object", properties:{registros:{type:"array", items:{type:"object", properties:{linea:{type:"integer"}, tipo:{type:"string", enum:["riego","aplicacion","observacion","cosecha"]}, fecha:{type:"string"}, horas:{type:"number"}, metodo:{type:"string"}, que:{type:"string"}, donde:{type:"string"}, sev:{type:"integer"}, producto:{type:"string"}, dosis:{type:"number"}, unidad:{type:"string"}, clase:{type:"string"}, rend:{type:"number"}, perdida:{type:"number"}}, required:["linea","tipo","fecha"]}}, sin_interpretar:{type:"array", items:{type:"object", properties:{linea:{type:"integer"}, texto:{type:"string"}, motivo:{type:"string"}}, required:["linea","texto"]}}}, required:["registros","sin_interpretar"]};   // v40: esquema para la gramática de WebLLM (JSON válido garantizado)
 function razlPromptInterpretar(lineas, ctx){
   const ayer = localISO(new Date(new Date(hoyISO+"T12:00:00").getTime() - 86400000));
-  const sys = `Eres el intérprete de notas de campo de Engram Campo. Convierte las frases de un productor en registros JSON. Responde SOLO con JSON válido, sin explicación.
+  const sys = `Eres el intérprete de notas de campo de EG Agro (Engram). Convierte las frases de un productor en registros JSON. Responde SOLO con JSON válido, sin explicación.
 Formato: {"registros":[{"linea":1,"tipo":"riego","fecha":"AAAA-MM-DD","horas":6,"metodo":"goteo"},{"linea":2,"tipo":"observacion","fecha":"AAAA-MM-DD","que":"plaga","donde":"la orilla","sev":1},{"linea":3,"tipo":"aplicacion","fecha":"AAAA-MM-DD","producto":"nombre","dosis":2,"unidad":"L/ha","clase":"insecticida"},{"linea":4,"tipo":"cosecha","fecha":"AAAA-MM-DD","rend":3.2,"perdida":0}],"sin_interpretar":[{"linea":5,"texto":"...","motivo":"..."}]}
 Reglas: hoy es ${hoyISO}; "ayer" es ${ayer}; "antier" es ${localISO(new Date(new Date(hoyISO+"T12:00:00").getTime() - 2*86400000))}; si no dice fecha, usa hoy. Una frase puede dar más de un registro. Solo los campos de cada tipo.
 "que" es uno de: enfermedad, plaga, helada, granizo, falta de agua, encharcamiento, fenología. "donde" es uno de: un manchón, la orilla, toda la parcela. "sev" es 0 a 5 (poquito = 1, bastante = 2, mucho = 3, grave = 4).
@@ -3787,7 +4076,7 @@ function razlEsFormatoDatos(t){ const x = String(t||"").trim(); return !x || /[{
 function razlLimpiar(t){ return String(t||"").replace(/```[a-z]*/gi, "").replace(/^\s*(respuesta|asistente)\s*:\s*/i, "").replace(/\*\*/g, "").trim(); }
 function razlEsBasura(t){ const x = String(t||""); return /!{4,}/.test(x) || /\uFFFD/.test(x) || (x.match(/!!/g)||[]).length >= 3; }   // v43: desborde numérico del modelo (fp16): tokens "!" en ráfaga y palabras rotas
 async function razlRedactar(instruccion, hechos, max, avisar){
-  const sys = `Eres el asistente de campo de Engram Campo. Responde en español de México, de usted, en máximo 4 frases cortas y naturales, SOLO con los datos del lote que recibes. Escribe oraciones: nunca uses llaves, corchetes, comillas ni copies el formato de los datos. Si el dato no está, diga que no lo tiene en el teléfono. Nunca recomiende, nombre ni sugiera productos, dosis ni mezclas: eso lo decide el agrónomo con una receta firmada. No invente números ni fechas; use exactamente los de los datos.`;
+  const sys = `Eres el asistente de campo de EG Agro (Engram). Responde en español de México, de usted, en máximo 4 frases cortas y naturales, SOLO con los datos del lote que recibes. Escribe oraciones: nunca uses llaves, corchetes, comillas ni copies el formato de los datos. Si el dato no está, diga que no lo tiene en el teléfono. Nunca recomiende, nombre ni sugiera productos, dosis ni mezclas: eso lo decide el agrónomo con una receta firmada. No invente números ni fechas; use exactamente los de los datos.`;
   const bruto = await razlGenerar([{role:"system", content: sys}, {role:"user", content: `Datos del lote:\n${razlHechosTexto(hechos).slice(0, 3500)}\n\n${instruccion}`}], max || 160, avisar);   // v49: tope (ventana de 2048 en iPhone)
   const txt = razlLimpiar(bruto); const basura = razlEsBasura(bruto); const formato = !basura && razlEsFormatoDatos(txt);
   if(basura) diagAnotar(razl.diag, `respuesta con desborde numérico (${razl.dtype||"?"}): ${bruto.slice(0,60)}`);
@@ -3797,7 +4086,7 @@ async function razlRedactar(instruccion, hechos, max, avisar){
 async function razlPreguntar(pregunta, avisar){
   const h = razlHechos(); const r = await razlRedactar(`Pregunta del productor: ${pregunta}`, h, 170, avisar);
   let texto = r.texto, nota = `${razlNombre()} · en el teléfono · ${razl.ultimo ? razl.ultimo.segundos + " s" : ""} · PRELIMINAR`;
-  if(!texto){ texto = razlResumenPlano(h); nota += r.basura ? " · el modelo se trabó con un desborde numérico (variante f16): se muestra lo que sí consta; en Más → Sin señal está la variante estable (f32)" : r.formato ? " · el modelo contestó en formato de datos, no en frases: se muestra lo que sí consta" : ` · la respuesta del modelo traía números sin respaldo (${r.compuerta.faltan.join(", ")}): se muestra lo que sí consta`; }
+  if(!texto){ texto = razlResumenPlano(h); nota += r.basura ? " · el modelo se trabó con un desborde numérico (variante f16): se muestra lo que sí consta; en Ajustes → Sin señal está la variante estable (f32)" : r.formato ? " · el modelo contestó en formato de datos, no en frases: se muestra lo que sí consta" : ` · la respuesta del modelo traía números sin respaldo (${r.compuerta.faltan.join(", ")}): se muestra lo que sí consta`; }
   if(r.quitadas) nota += ` · ${r.quitadas} frase${r.quitadas===1?"":"s"} sobre productos o dosis omitida${r.quitadas===1?"":"s"} (eso lo decide su agrónomo)`;
   return {texto, nota, hechos: h};
 }
@@ -3809,7 +4098,7 @@ async function razlResumenRecorrido(hechos, avisar){
 function renderRazonHoy(){
   const card = $("#hoy-razon"); if(!card) return; const l = LOTES[lotIdx]; card.hidden = !!(l && l.sin) || MODO!=="nube"; if(card.hidden) return;
   const disp = razlDisponible(); $("#rz-q").disabled = !disp || razl.ocupado; $("#rz-ask").disabled = !disp || razl.ocupado;
-  $("#rz-estado").textContent = razl.estado==="cargando" ? `Cargando el modelo… ${razl.progreso} %` : razl.estado==="error" ? "El modelo no cargó: " + (razl.error||"").slice(0,120) + " (Más → Sin señal → Copiar diagnóstico)" : razl.estado==="listo" ? `${razlNombre()} en este teléfono · sin internet · PRELIMINAR` : disp ? `${razlNombre()} descargado: la primera pregunta tarda unos segundos más mientras se carga en memoria.` : (caidaDe("razon") && !webllmPosible(RAZL_MODELOS.qwen05) ? "El modelo de razonamiento no cabe en este teléfono (cerró la app al cargar): las notas se entienden por reglas sin señal y con el motor cuando hay señal." : "Descargue el modelo de razonamiento en Más → Sin señal (una vez, con wifi).");
+  $("#rz-estado").textContent = razl.estado==="cargando" ? `Cargando el modelo… ${razl.progreso} %` : razl.estado==="error" ? "El modelo no cargó: " + (razl.error||"").slice(0,120) + " (Ajustes → Sin señal → Copiar diagnóstico)" : razl.estado==="listo" ? `${razlNombre()} en este teléfono · sin internet · PRELIMINAR` : disp ? `${razlNombre()} descargado: la primera pregunta tarda unos segundos más mientras se carga en memoria.` : (caidaDe("razon") && !webllmPosible(RAZL_MODELOS.qwen05) ? "El modelo de razonamiento no cabe en este teléfono (cerró la app al cargar): las notas se entienden por reglas sin señal y con el motor cuando hay señal." : "Descargue el modelo de razonamiento en Ajustes → Sin señal (una vez, con wifi).");
 }
 $("#rz-ask").addEventListener("click", async ()=>{
   const q = $("#rz-q").value.trim(); if(!q) return; const out = $("#rz-a"); out.hidden = false; out.innerHTML = `<p class="small muted" id="rz-hint">Pensando en el teléfono…</p>`;
@@ -3935,13 +4224,13 @@ async function vozlEnVideo(f){
   vidVoz = null; const box = $("#vid-voz"); if(!box) return; box.hidden = true; if(!f || !vozlDisponible()) return;
   box.hidden = false; box.textContent = "Escuchando el video en el teléfono…"; let etapa = "inicio"; const anotar = m => { etapa = m; diagAnotar(vozl.diag, `video: ${m}`); };
   const vigilante = setTimeout(()=>{ if(vidFile===f && !vidVoz){ diagAnotar(vozl.diag, `video: vigilante a los 120 s en «${etapa}»`); vozlVideoFallo(box, f, `se trabó en «${etapa}»`); } }, 120000);   // v50: nunca más "para siempre"
-  try{ anotar("cargando el modelo de voz"); if(!(await vozlAsegurar())){ clearTimeout(vigilante); vidVoz = {fallo: "modelo de voz no disponible", lineas: []}; box.textContent = `El modelo de voz no está listo en este teléfono (${String(vozl.error||"no descargado").slice(0,80)}): ${navigator.onLine ? "al guardar, el motor escucha el video y le propone los registros en Registrar." : "con señal, el motor escucha el video."}`; return; }
+  try{ anotar("cargando el modelo de voz"); if(!(await vozlAsegurar())){ clearTimeout(vigilante); vidVoz = {fallo: "modelo de voz no disponible", lineas: []}; box.textContent = `El modelo de voz no está listo en este teléfono (${String(vozl.error||"no descargado").slice(0,80)}): ${navigator.onLine ? "al guardar, el motor escucha el video y le propone los registros en Recorrer." : "con señal, el motor escucha el video."}`; return; }
     const r = await vozlTranscribir(f, m=>{ box.textContent = m; anotar(m.replace(/….*$/, "")); }, {msDecodificar: 12000, maxSegHiloPrincipal: 40}); clearTimeout(vigilante); if(vidFile!==f) return; vozlVideoListo(box, r); anotar(`listo (${r.segundos} s)`); }
   catch(e){ clearTimeout(vigilante); const msg = String(e.message||e).slice(0,90); anotar(`falló: ${msg}`); vozlVideoFallo(box, f, msg); }
 }
 function vozlVideoFallo(box, f, msg){                              // v50: el aviso y el botón de escuchar reproduciendo, en un solo lugar
   if(!vidVoz || !vidVoz.lineas || !vidVoz.lineas.length) vidVoz = {fallo: msg, lineas: []};
-  box.innerHTML = `<span>El teléfono no pudo separar el audio de este video directamente (${esc(msg)}). </span><button class="btn sec sm" id="vid-escuchar" style="margin:6px 0">Escuchar el video ahora</button><span class="small muted"> Lo reproduce en silencio y lo oye (dura lo que dura el video).${navigator.onLine ? " Si no, al guardar el motor lo escucha y le propone los registros en Registrar." : " Sin señal, se guarda igual y el motor lo escucha cuando vuelva la señal."}</span>`;
+  box.innerHTML = `<span>El teléfono no pudo separar el audio de este video directamente (${esc(msg)}). </span><button class="btn sec sm" id="vid-escuchar" style="margin:6px 0">Escuchar el video ahora</button><span class="small muted"> Lo reproduce en silencio y lo oye (dura lo que dura el video).${navigator.onLine ? " Si no, al guardar el motor lo escucha y le propone los registros en Recorrer." : " Sin señal, se guarda igual y el motor lo escucha cuando vuelva la señal."}</span>`;
   const b = $("#vid-escuchar"); if(b) b.addEventListener("click", ()=>vozlEnVideoReproduciendo(f));
 }
 let vidPendCid = null;
@@ -4205,7 +4494,7 @@ async function ocrlGenerar2(file, task, max, max_new_tokens){
   return {gen, res, size:[image.width, image.height]};
 }
 async function ocrlTexto(file, avisar){
-  if(!(await ocrlAsegurar())) throw new Error(ocrl.error || "lector de libreta no descargado (Más → Sin señal)");
+  if(!(await ocrlAsegurar())) throw new Error(ocrl.error || "lector de libreta no descargado (Ajustes → Sin señal)");
   if(avisar) avisar("Leyendo la pantalla en el teléfono…");
   const o = await ocrlGenerar(file, "<OCR>", 1024, 64); const plano = o.res != null ? String(o.res) : String(o.gen || "");
   return plano.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -4429,7 +4718,7 @@ function vidReset(){ vidFile = null; vidVoz = null; { const b = $("#vid-voz"); i
 $("#vid-save").addEventListener("click", ()=>{ if(!vidFile) return; const t = $$("#vid-tipo .chip").find(c=>c.getAttribute("aria-pressed")==="true").textContent;
   const tel = Object.assign({}, vidReco ? {reconocimiento: vidReco} : {}, vidVoz ? (vidVoz.fallo ? {voz: {fallo: vidVoz.fallo}} : {voz: {texto: vidVoz.texto, lineas: vidVoz.lineas, modelo: vidVoz.modelo, segundos: vidVoz.segundos}}) : {});
   const item = addLog("video", `Video · ${t} · ${(vidFile.size/1048576).toFixed(1)} MB${vidReco && vidReco.plaga ? ` · teléfono: ${plNombre(LOTES[lotIdx], vidReco.plaga)} ${Math.round(vidReco.confianza*100)} %` : " · el motor lo mira con señal"}${vidVoz ? " · con lo dicho" : ""}`, hoyISO, "video", {muestra:t, mb:+(vidFile.size/1048576).toFixed(1), ...(Object.keys(tel).length ? {telefono: tel} : {})}, {bucket:"videos", ext: extDe(vidFile), blob: vidFile}); vidReco = null;
-  const voz = vidVoz && vidVoz.lineas && vidVoz.lineas.length ? vidVoz : null; afterSave(voz ? "Video guardado; ahora lo que dijo" : (vidVoz && vidVoz.fallo && navigator.onLine) ? "Video guardado; el motor escucha el audio y le avisa en Registrar" : "Video guardado en la bitácora");
+  const voz = vidVoz && vidVoz.lineas && vidVoz.lineas.length ? vidVoz : null; afterSave(voz ? "Video guardado; ahora lo que dijo" : (vidVoz && vidVoz.fallo && navigator.onLine) ? "Video guardado; el motor escucha el audio y le avisa en Recorrer" : "Video guardado en la bitácora");
   if(voz) setTimeout(()=>vidlRevisar(item && item.cid, voz), 450); });
 
 // ---------------------------------------------------------------- toast y arranque
