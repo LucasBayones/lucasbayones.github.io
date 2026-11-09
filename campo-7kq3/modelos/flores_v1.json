@@ -1,6 +1,6 @@
 {
- "version": "flores_2026-11-07",
- "fecha": "2026-11-07",
+ "version": "flores_2026-11-08",
+ "fecha": "2026-11-08",
  "archivo": "modelos/flores_v1.onnx",
  "etiquetas": [
   "flor_con_marca",
@@ -30,35 +30,39 @@
  },
  "salida": "logits (softmax para probabilidades)",
  "metricas": {
-  "val_acc": 0.9351,
+  "val_acc": 0.9639,
   "reservado_acc": null,
   "n_reservado": 0,
-  "n_train": 682,
-  "n_val": 154,
+  "n_train": 1735,
+  "n_val": 360,
   "por_clase": {
    "flor_con_marca": {
     "n_val": 0,
     "recall": null,
-    "n_train": 58
+    "n_train": 146,
+    "n_train_reales": 1
    },
    "flor_sin_marca": {
-    "n_val": 16,
-    "recall": 0.938,
-    "n_train": 68
+    "n_val": 40,
+    "recall": 0.9,
+    "n_train": 305,
+    "n_train_reales": 160
    },
    "no_flor": {
-    "n_val": 138,
-    "recall": 0.935,
-    "n_train": 556
+    "n_val": 320,
+    "recall": 0.972,
+    "n_train": 1284,
+    "n_train_reales": 1284
    }
   },
   "arquitectura": "mobilenet",
   "dispositivo": "cuda",
-  "segundos": 20
+  "segundos": 28,
+  "reservado_por_clase": {}
  },
  "preliminar": true,
- "nota": "clasificador propio de flores de tomate (marca de abejorro en el cono de anteras), entrenado en el RIG con fotos públicas (GBIF, licencias CC) etiquetadas por el modelo de visión y marcas sintéticas; PRELIMINAR: el agrónomo confirma",
- "archivo_int8": "flores_2026-11-07_int8.onnx",
+ "nota": "clasificador propio de flores de tomate (marca de abejorro en el cono de anteras), entrenado en el RIG con fotos públicas (GBIF, licencias CC) etiquetadas por el modelo de visión, marcas sintéticas y 1 flores con marca reales; PRELIMINAR: el agrónomo confirma · la marca se aprendió sobre todo de sintéticas",
+ "archivo_int8": "flores_2026-11-08_int8.onnx",
  "prueba_onnx": {
   "forma": [
    1,
