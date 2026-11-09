@@ -749,6 +749,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
     <div class="row" id="ss-razon-btns" style="gap:8px;flex-wrap:wrap"><button class="btn acc" data-razl="qwen05">Descargar Qwen2.5 0.5B (~300 MB)</button><button class="btn sec" data-razl="qwen15">Qwen2.5 1.5B (~900 MB)</button><button class="btn sec" data-razl="qwen15f32">Qwen2.5 1.5B estable · f32 (~1 GB)</button><button class="btn sec" data-razl="qwen3_17">Qwen3 1.7B · nuevo (~1.1 GB)</button><button class="btn sec" id="ss-razon-probar" hidden>Probar</button><button class="btn sec" id="ss-razon-quitar" hidden>Quitar</button><button class="inline-link" id="ss-razon-diag" hidden>Copiar diagnóstico</button></div>
     <p class="small" id="ss-razon-prueba" hidden></p>
     <p class="note">Descárguelo desde la app instalada en la pantalla de inicio (no desde el navegador: son memorias separadas). Corre en el procesador gráfico del teléfono (WebGPU, con el motor WebLLM, que sube los pesos por tandas): iPhone 15 Pro o más nuevo con iOS 26, Android con Chrome al día y procesador gráfico compatible, y computadoras con Chrome. Sin procesador gráfico no hay razonador en el teléfono (el camino por WASM pide demasiada memoria y suele cerrar la app): las notas se entienden por reglas, sin señal, y el motor las entiende con señal. Si el sistema cierra la app mientras carga, la app lo recuerda y no vuelve a intentarlo sola. Después de descargar, toque <b>Probar</b>: si responde, ya funciona sin señal.</p>
+    <p class="note" id="ss-razon-propio-nota" hidden>El <b>modelo propio de Engram</b> es el mismo Qwen2.5 1.5B, afinado en el RIG para las tres cosas que hace aquí (entender notas, responder con los datos del lote, resumir recorridos), con datos sintéticos: ninguna nota real de productor. Pesa lo mismo y corre igual; cambia lo que sabe hacer.</p>
     <p class="note">Un modelo de lenguaje chico que vive en el teléfono: entiende las notas de voz y de libreta en registros (mejor que las reglas), resume el recorrido de plagas y responde preguntas sobre el lote con lo que la app tiene guardado (Hoy → "Pregúntele al teléfono"). Dos compuertas siempre: ningún número que no esté en los datos y nunca productos ni dosis. Con señal, el motor vuelve a entender cada nota con el modelo grande y mide el acuerdo: así se sabe cuánto confiar en el teléfono. PRELIMINAR.</p>
     <h3 class="small" style="margin-top:6px">Mapa del lote para el campo</h3>
     <div class="kv" id="ss-mapa-kv"></div>
@@ -2400,7 +2401,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "52.1 · 9 nov 2026";
+const APP_VERSION = "52.2 · 9 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3940,12 +3941,30 @@ const RAZL_MODELOS = {
 // entero en memoria, que es lo que tumba la app en iPhone). Biblioteca del CDN (el service worker la guarda), pesos de huggingface.co/mlc-ai,
 // módulo del modelo de raw.githubusercontent.com (WebLLM los deja en sus propias cachés: webllm/model, webllm/wasm, webllm/config -> sin señal).
 const WEBLLM_CDN = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.87/+esm";
+// v52.2: el modelo propio (afinado en el RIG con datos sintéticos, Entrega 10) llega por el cerebro: modelo_telefono {model (Hugging Face), model_id, base_mlc, mb, txt}.
+// Mismo tamaño y arquitectura que el Qwen2.5 1.5B de fábrica: se usa su biblioteca WebGPU precompilada y solo cambian los pesos.
+function razlPropioSpec(){ const mt = CEREBRO && CEREBRO.modelo_telefono; return (mt && mt.subido && mt.model && mt.model_id) ? mt : null; }
+function razlSincronizarPropio(){
+  const mt = razlPropioSpec(); const fila = $("#ss-razon-btns"); let b = fila ? fila.querySelector('button[data-razl="propio"]') : null;
+  if(!mt){ delete RAZL_MODELOS.propio; if(b) b.remove(); return null; }
+  RAZL_MODELOS.propio = {id: mt.model_id, mlc: mt.model_id, mb: mt.mb || 900, txt: /afinad/i.test(mt.txt || "") ? mt.txt.trim() : (mt.txt || `Modelo propio de Engram ${mt.version || ""}`).trim() + " · afinado para el campo", gpu:true, f32:true, propio:true, url: String(mt.model).replace(/\/+$/, ""), base: mt.base_mlc || "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", version: mt.version || "v1"};
+  if(fila && !b){ b = document.createElement("button"); b.className = "btn acc"; b.dataset.razl = "propio"; fila.insertBefore(b, fila.firstChild); b.addEventListener("click", ()=>razlCargar("propio")); $$('#ss-razon-btns button[data-razl="qwen05"]').forEach(x=>{ x.className = "btn sec"; }); }
+  if(b) b.textContent = `Modelo propio de Engram ${mt.version || "v1"} (~${Math.round((mt.mb || 900)/50)*50} MB)`;
+  return RAZL_MODELOS.propio;
+}
 const RAZL_AJUSTE_IPHONE = {context_window_size: 2048};   // v49: menos caché de atención en iPhone (los pedidos son cortos); el prellenado va compilado en la biblioteca
 async function webllmLib(){ if(window.__webllm) return window.__webllm; if(window.ENGRAM_WEBLLM_FAKE){ window.__webllm = window.ENGRAM_WEBLLM_FAKE; return window.__webllm; } window.__webllm = await import(WEBLLM_CDN); return window.__webllm; }
 function webllmPosible(m){ return !!(m && m.mlc) && !!navigator.gpu && window.__gpuOK !== false && !caidaDe("razon", m.mlc, "webllm"); }
 async function razlCargarWebLLM(m, avisarProg){
   const lib = await webllmLib(); diagAnotar(razl.diag, `webllm ${lib.prebuiltAppConfig ? "0.2.87" : "falso"}: ${m.mlc}`);
   const variantes = m.f32 ? [m.mlc] : [m.mlc, m.mlc.replace("q4f16_1", "q4f32_1")];              // si el gráfico no hace f16 (raro), la variante f32 (pesa más, mismo modelo)
+  let appConfig = null;                                                                                        // v52.2: modelo propio = pesos nuestros + biblioteca del modelo base
+  if(m.propio){
+    const lista = (lib.prebuiltAppConfig && lib.prebuiltAppConfig.model_list) || []; const base = lista.find(x=>x.model_id===m.base);
+    if(!base || !base.model_lib){ diagAnotar(razl.diag, `modelo propio: la biblioteca base ${m.base} no está en esta versión de WebLLM`); return false; }
+    appConfig = Object.assign({}, lib.prebuiltAppConfig, {model_list: [Object.assign({}, base, {model: m.url, model_id: m.mlc})]});
+    diagAnotar(razl.diag, `modelo propio: pesos de ${m.url} con la biblioteca de ${m.base}`);
+  }
   for(const id of variantes){
     if(id !== m.mlc && caidaDe("razon", id, "webllm")) continue;
     cargaGuard({que:"razon", modelo: id, device:"webllm", dtype: id.includes("q4f32") ? "q4f32_1" : "q4f16_1"});
@@ -3954,8 +3973,9 @@ async function razlCargarWebLLM(m, avisarProg){
       // v49: en iPhone la memoria de la pestaña es el límite; la caché de atención se reserva según la ventana de contexto (de fábrica 4096).
       // Nuestros pedidos son cortos (≤ ~1400 tokens con la respuesta): 2048 alcanza y ahorra 60–235 MB según el modelo.
       let ajuste = esIPhone() ? Object.assign({}, RAZL_AJUSTE_IPHONE) : null;
-      const crear = async () => { try{ return await lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"}, ajuste || undefined); }
-        catch(e){ const msg = String(e && e.message || e); if(ajuste && /context|window|sliding|sink|exceed|greater|larger|kv/i.test(msg)){ diagAnotar(razl.diag, `ajuste de memoria rechazado (${msg.slice(0,80)}): valores de fábrica`); ajuste = null; return lib.CreateMLCEngine(id, {initProgressCallback: cb, logLevel:"WARN"}); } throw e; } };
+      const conf = extra => Object.assign({initProgressCallback: cb, logLevel:"WARN"}, appConfig ? {appConfig} : {}, extra || {});
+      const crear = async () => { try{ return await lib.CreateMLCEngine(id, conf(), ajuste || undefined); }
+        catch(e){ const msg = String(e && e.message || e); if(ajuste && /context|window|sliding|sink|exceed|greater|larger|kv/i.test(msg)){ diagAnotar(razl.diag, `ajuste de memoria rechazado (${msg.slice(0,80)}): valores de fábrica`); ajuste = null; return lib.CreateMLCEngine(id, conf()); } throw e; } };
       let engine = await crear();
       if(primera){                                                                                            // v48: recién bajado = pico de memoria; se suelta la GPU y se recarga desde la caché del teléfono (como cerrar y abrir)
         avisarProg(100, "descargado; recargando desde la memoria del teléfono…"); diagAnotar(razl.diag, "primera descarga: recarga desde caché");
@@ -3968,6 +3988,7 @@ async function razlCargarWebLLM(m, avisarProg){
   return false;
 }
 function razlIntentos(m){                                     // v37: primero lo que menos memoria pide; en iPhone el razonador solo cabe por el gráfico (si el usuario lo activó)
+  if(m && m.propio) return [];                                   // v52.2: el modelo propio solo existe en formato WebLLM (sin variante ORT)
   const gpu = !!navigator.gpu && window.__gpuOK !== false && !motorCaido("webgpu") && (!esIPhone() || (gpuIOSActivo() && window.__gpuOK === true));
   const li = []; if(gpu) li.push(["webgpu","q4f16"], ["webgpu","q4"]); if(!m.gpu) li.push(["wasm","q8"], ["wasm","q4"]); return li;
 }
@@ -3976,13 +3997,14 @@ function razlConf(){ try{ return JSON.parse(localStorage.getItem(RAZL_KEY)) || {
 function razlGuardarConf(c){ try{ localStorage.setItem(RAZL_KEY, JSON.stringify(c)); }catch(e){} }
 function razlDisponible(){ return razl.estado==="listo" || !!razlConf().listo; }
 function razlResidente(){ return razl.estado==="listo" && !!(razl.engine || razl.pipe); }   // v46: ya cargado en memoria (no solo descargado)
-function razlNombre(){ const c = razlConf(); const m = RAZL_MODELOS[razl.modelo || c.modelo || "qwen05"]; return m ? m.txt.split(" · ")[0] : "modelo del teléfono"; }
+function razlNombre(){ const c = razlConf(); const k = razl.modelo || c.modelo || "qwen05"; if(k==="propio") razlSincronizarPropio(); const m = RAZL_MODELOS[k]; return m ? m.txt.split(" · ")[0] : "modelo del teléfono"; }
 async function razlDescargarMotor(motivo){                   // v40: un solo motor de lenguaje en la GPU; se vuelve a cargar de la caché cuando haga falta
   if(razl.engine){ try{ await razl.engine.unload(); }catch(e){} razl.engine = null; if(razl.estado==="listo") razl.estado = "no"; diagAnotar(razl.diag, `razonador descargado de la GPU (${motivo})`); return true; }
   if(razl.pipe){ try{ await razl.pipe.dispose(); }catch(e){} razl.pipe = null; if(razl.estado==="listo") razl.estado = "no"; return true; }
   return false;
 }
 async function razlCargar(modelo){
+  if(modelo==="propio" && !razlSincronizarPropio()){ toast("El modelo propio todavía no está publicado por el motor: se usa Qwen2.5 1.5B"); modelo = "qwen15"; }
   const m = RAZL_MODELOS[modelo] || RAZL_MODELOS.qwen05; await razlDescargarMotor("para cargar " + (m.txt||modelo)); if(esIPhone() && wk) wkTerminar("para cargar el razonador en iPhone"); razl.estado = "cargando"; razl.progreso = 0; razl.error = null; razl.modelo = modelo; razl.motor = vozlMotor(); renderSinSenal();
   razl.diag = []; diagAnotar(razl.diag, `razón: ${m.id} · ${navigator.userAgent.slice(0,80)} · gpu:${window.__gpuOK} · gpu iPhone:${gpuIOSActivo()}`);
   try{
@@ -4171,7 +4193,7 @@ $("#rz-q").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefaul
 $$("#rz-sug button").forEach(b=>b.addEventListener("click", ()=>{ $("#rz-q").value = b.textContent; $("#rz-ask").click(); }));
 // --- pantalla Más -> Sin señal: tarjeta del modelo de razonamiento
 function renderRazonSinSenal(){
-  const kvEl = $("#ss-razon-kv"); if(!kvEl) return; const c = razlConf();
+  const kvEl = $("#ss-razon-kv"); if(!kvEl) return; const c = razlConf(); { const pp = razlSincronizarPropio(); const nt = $("#ss-razon-propio-nota"); if(nt) nt.hidden = !pp; }
   const est = razl.estado==="listo" ? `listo (${RAZL_MODELOS[razl.modelo||"qwen05"].txt}, ${razl.motor})` : razl.estado==="cargando" ? `descargando… ${razl.progreso} %${razl.archivo ? " · " + razl.archivo : ""}` : razl.estado==="error" ? "error" : c.listo ? `descargado (${(RAZL_MODELOS[c.modelo||"qwen05"]||{}).txt}); se carga al usarlo` : "no descargado";
   const filas = [["Modelo de razonamiento", est]]; if(c.fecha) filas.push(["Descargado el", fmtD(c.fecha.slice(0,10))]); if(razl.ultimo) filas.push(["Última respuesta", `${razl.ultimo.segundos} s`]);
   kvEl.innerHTML = kv(filas);
