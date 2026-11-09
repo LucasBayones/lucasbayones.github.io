@@ -385,6 +385,22 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
 .seg2 button[aria-pressed="true"]{background:var(--accent);color:#fff}
 .vent[aria-pressed="true"]{outline-color:var(--accent)}
 @media (prefers-reduced-motion: reduce){ .hoja{animation:none} .tile{transition:none} }
+
+/* ===== v52 · limpia: chips en Inicio, listas compactas en Recorrer, detalles plegados en Lote y Ajustes ===== */
+.chips-sem{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.semchip{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;padding:7px 10px;border-radius:12px;background:var(--surface-2);border:1px solid transparent;color:var(--fg);cursor:pointer;text-align:left}
+.semchip i{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none} .semchip i.bajo{background:var(--ok)} .semchip i.medio{background:var(--warn)} .semchip i.alto{background:var(--bad)}
+.semchip b{font-weight:700;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)} .semchip b.alto{color:var(--bad)} .semchip b.medio{color:var(--warn)} .semchip b.bajo{color:var(--ok)}
+.accchip{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;font:inherit;font-size:14px;padding:9px 11px;border-radius:12px;background:var(--surface-2);border:0;color:var(--fg);cursor:pointer;text-align:left;width:100%}
+.accchip .n{font-weight:700;color:var(--accent)} .accchip span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ver-mas{font:inherit;font-size:13px;color:var(--blue);background:none;border:0;padding:4px 0;cursor:pointer;font-weight:600;justify-self:start}
+#log-card.compacta #log > .log-item:nth-child(n+5){display:none} #log-card.compacta .log-item .par,#log-card.compacta .log-item .par-btn,#log-card.compacta .log-item .tag{display:none}
+#log-card.compacta .log-item > span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#voz-pend.compacta #voz-pend-list > :nth-child(n+4){display:none}
+#poly-kv.compacta > :nth-child(n+3){display:none} #lote-kv.compacta{display:none} #lt-form.plegado{display:none}
+.lt-resumen{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:8px;font-size:14px} .lt-resumen small{display:block;color:var(--muted);font-size:12px} .lt-resumen b{font-weight:600}
+details.grupo-det{border-top:1px solid var(--line);margin-top:10px;padding-top:6px} details.grupo-det summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 4px;font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:700}
+details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-det summary::after{content:"›";font-size:18px;letter-spacing:0;transform:rotate(90deg);transition:transform .15s;color:var(--muted)} details.grupo-det[open] summary::after{transform:rotate(-90deg)}
 </style>
 </head>
 <body>
@@ -408,11 +424,10 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
     <button class="kpi ocre" id="kpi-3" data-hoja="suelo"><span class="e">Suelo</span><div class="n">—</div><span class="q"></span></button>
     <button class="kpi" id="kpi-4" data-hoja="polin"><span class="e">Polinización</span><div class="n">—</div><span class="q"></span></button>
   </div>
-  <div class="card">
+  <div class="card" data-hoja="semaforo" style="cursor:pointer">
     <div class="row between"><span class="eyebrow">Semáforo del lote</span><span class="lvl bajo" id="hoy-nivel">Riesgo bajo</span></div>
-    <h2 id="h-hoy" class="small muted" style="font-weight:600;font-size:13px">Lo que el motor vigila en su etapa</h2>
-    <div class="sem" id="hoy-sem"></div>
-    <p class="note" id="hoy-nota"></p>
+    <h2 id="h-hoy" class="small muted" style="font-weight:600;font-size:13px;margin:4px 0 0">Lo que el motor vigila en su etapa · toque para el detalle</h2>
+    <div class="chips-sem" id="hoy-sem"></div>
   </div>
   <div class="card" id="hoy-razon" hidden>
     <div class="row between"><span class="eyebrow">Pregúntele al teléfono</span><span class="tag-lite">sin señal también</span></div>
@@ -427,10 +442,8 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
     <p class="note">Receta firmada por su agrónomo: productos y dosis dentro de etiqueta. Al marcarla como aplicada, entra a la bitácora como aplicación.</p>
   </div>
   <div class="card">
-    <span class="eyebrow" id="hoy-acciones-eyebrow">Esta semana, mirar</span>
-    <div class="sem" id="hoy-acciones"></div>
-    <div id="hoy-temporada-acc" hidden><span class="eyebrow" style="display:block;margin-top:10px">Para la temporada</span><div class="sem" id="hoy-acciones-temp"></div></div>
-    <p class="note">Nacen de los hechos del reporte y pasan por las compuertas: ningún número sin respaldo, ningún producto ni dosis. Qué hacer lo decide usted con su agrónomo.</p>
+    <div class="row between"><span class="eyebrow" id="hoy-acciones-eyebrow">Esta semana, mirar</span><button class="ver-mas" data-hoja="acciones">todo el detalle ›</button></div>
+    <div class="sem" id="hoy-acciones" style="margin-top:8px"></div>
   </div>
   <button class="card" id="hoy-registrado" data-hoja="hoy" style="text-align:left;font:inherit;color:inherit;cursor:pointer;display:flex;align-items:center;gap:12px"><div><span class="eyebrow">Registrado hoy</span><div style="font-size:22px;font-weight:700" id="hoy-reg-n">0 cosas</div></div><span class="small muted" style="margin-left:auto;text-align:right" id="hoy-reg-txt">toque para ver ›</span></button>
   <p class="note" style="text-align:center">Lo demás (bitácora completa, memoria del campo, verdor, tendencias) vive en <button class="inline-link" data-hoja="web">EG Agro Web ↗</button></p>
@@ -479,15 +492,17 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
     <div class="lastreg" id="lastreg" style="margin-top:4px"></div>
   </div>
 
-  <div class="card" id="voz-pend" hidden>
+  <div class="card compacta" id="voz-pend" hidden>
     <div class="row between"><span class="eyebrow">Notas de voz transcritas · por revisar</span><span class="small muted" id="voz-pend-n"></span></div>
     <div class="flow" id="voz-pend-list"></div>
+    <button class="ver-mas" id="voz-pend-mas" hidden>ver todas ›</button>
     <p class="note">El motor transcribe sus notas de voz en minutos. Revise lo que oyó, confirme lo que entendió y queda en la bitácora. Nada se guarda sin su visto bueno.</p>
   </div>
-  <div class="card" id="log-card">
-    <div class="row between"><span class="eyebrow">Bitácora del lote · reciente</span><span class="small muted" id="log-count"></span></div>
+  <div class="card compacta" id="log-card">
+    <div class="row between"><span class="eyebrow">Últimos registros</span><span class="small muted" id="log-count"></span></div>
     <div class="log" id="log"></div>
-    <p class="note" id="sync-nota">Se guarda en este teléfono y se sincroniza con la nube cuando hay señal; de ahí pasa al motor cada noche. La bitácora completa y la memoria del campo: <button class="inline-link" data-hoja="web">EG Agro Web ↗</button></p>
+    <div class="row between"><button class="ver-mas" id="log-mas">ver con detalle ›</button><button class="inline-link" data-hoja="web" style="font-size:13px">bitácora completa en la web ↗</button></div>
+    <p class="note" id="sync-nota">Se guarda en este teléfono y sube solo cuando hay señal; de ahí pasa al motor cada noche.</p>
     <div class="syncline" id="sync-estado" hidden></div>
   </div>
 </section>
@@ -519,8 +534,9 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
       <button class="btn sec" id="vtx-del" hidden>Quitar vértice</button>
       <button class="btn acc" id="poly-ok">Confirmar</button>
     </div>
-    <div class="kv" id="poly-kv"></div>
-    <div class="kv" id="lote-kv"></div>
+    <div class="kv compacta" id="poly-kv"></div>
+    <div class="kv compacta" id="lote-kv"></div>
+    <button class="ver-mas" id="lote-detalles">zona de referencia y detalles técnicos ›</button>
     <details>
       <summary class="small" style="color:var(--blue);cursor:pointer">Definir por coordenadas</summary>
       <div class="flow" style="margin-top:10px">
@@ -540,7 +556,9 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
     <p class="note">La tendencia de cosecha y los años parecidos: <button class="inline-link" data-go="mas-temporada">cómo termina la temporada ›</button></p>
   </div>
   <div class="card">
-    <span class="eyebrow">Datos del lote</span>
+    <div class="row between"><span class="eyebrow">Datos del lote</span><button class="ver-mas" id="lt-editar">editar ›</button></div>
+    <div class="lt-resumen" id="lt-resumen"></div>
+    <div id="lt-form" class="plegado">
     <div class="grid2">
       <div class="field"><label for="lt-nombre">Nombre</label><input id="lt-nombre" placeholder="p. ej. Parcela 7"></div>
       <div class="field"><label for="lt-variedad">Variedad</label><input id="lt-variedad" placeholder="opcional"></div>
@@ -558,13 +576,14 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
       <div class="field"></div>
     </div>
     <p class="note">Con la fecha de siembra la etapa se conoce a ±3 días; sin ella se estima con la fecha típica de la zona (±3 semanas) y queda marcada como estimada.</p>
+    </div>
   </div>
   <div class="card">
     <div class="row between"><span class="eyebrow">Parcelas dentro del lote</span><button class="inline-link" id="parc-add">+ Agregar parcela</button></div>
     <div id="parc-list" class="flow"></div>
     <p class="note">Opcional. El lote es la unidad grande: clima, satélite y memoria se calculan por lote. Las parcelas sirven para registrar riegos, aplicaciones y observaciones por sección.</p>
   </div>
-  <div class="card">
+  <div class="card" hidden>
     <details><summary class="small" style="color:var(--blue);cursor:pointer;font-weight:600">Resolución del satélite</summary>
     <div class="kv" id="res-kv" style="margin-top:8px"></div>
     <p class="note">La imagen de fondo sirve para dibujar el borde. El seguimiento del cultivo se hace con Sentinel‑2 dentro del polígono (10 m por píxel, cada 5 días): en 4 ha son unos 400 píxeles por imagen, suficientes para la tendencia del lote y para ver manchones de más de media hectárea.</p>
@@ -587,21 +606,21 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
       <button data-hoja="web" class="web">EG Agro Web <span>archivos, historiales, tendencias, mapas grandes, panel del agrónomo</span></button>
       <button data-go="mas-acerca">Cuenta y versión <span>sesión, lotes, versión privada de socios</span></button>
     </div>
-    <div class="grupo">Mapas y detalle del lote</div>
+    <details class="grupo-det"><summary>Mapas y detalle del lote</summary>
     <div class="list">
       <button data-go="mas-plagas">Plagas <span>puntos de muestreo, presión hoy y a 7 días, recorridos</span></button>
       <button data-go="mas-sensores">Sensores y riego <span>tensiómetros, sondas, trampas: dónde están y qué marcan</span></button>
       <button data-go="mas-polin">Polinización <span>% de flores con marca de abejorro por sector</span></button>
-    </div>
-    <div class="grupo">Pasa a EG Agro Web · por ahora aquí</div>
+    </div></details>
+    <details class="grupo-det"><summary>Ya están en EG Agro Web · aquí por si no hay señal</summary>
     <div class="list">
       <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
       <button data-go="mas-planillas">Planillas y archivos <span>la plantilla Excel del cultivo, las que subió, el historial de 20 años</span></button>
       <button data-go="mas-panel" id="btn-panel" hidden>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
       <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
-    </div>
-    <p class="note" style="text-align:center;margin-top:6px">EG Agro · Engram Technologies · PRELIMINAR</p>
+    </div></details>
+    <p class="note" style="text-align:center;margin-top:12px">EG Agro · Engram Technologies · PRELIMINAR</p>
   </div>
 
   <div class="card" id="mas-alertas" hidden>
@@ -889,6 +908,18 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
       <p class="note">El teléfono propone los puntos, cuenta con usted y compara su nivel con el del motor; el mapa de presión dice hacia dónde puede moverse. Funciona sin señal.</p>
     </div>
   </div>
+  <div class="card" id="hj-semaforo" hidden>
+    <div class="row between"><span class="eyebrow">Semáforo del lote</span><span class="lvl" id="hj-sem-nivel"></span></div>
+    <p class="small muted" style="margin:4px 0 8px">Lo que el motor vigila en la etapa de su cultivo, con la probabilidad del ensamble y la susceptibilidad de la etapa.</p>
+    <div class="sem" id="hj-sem-list"></div>
+    <p class="note" id="hoy-nota"></p>
+  </div>
+  <div class="card" id="hj-acciones" hidden>
+    <span class="eyebrow" id="hj-acc-eyebrow">Esta semana, mirar y registrar</span>
+    <div class="sem" id="hj-acc-list" style="margin-top:8px"></div>
+    <div id="hoy-temporada-acc" hidden><span class="eyebrow" style="display:block;margin-top:12px">Para la temporada</span><div class="sem" id="hoy-acciones-temp" style="margin-top:8px"></div></div>
+    <p class="note">Nacen de los hechos del reporte y pasan por las compuertas: ningún número sin respaldo, ningún producto ni dosis. Qué hacer lo decide usted con su agrónomo.</p>
+  </div>
   <div class="card" id="hj-hoy" hidden>
     <span class="eyebrow">Registrado hoy</span>
     <div class="log" id="hj-hoy-list"></div>
@@ -1109,6 +1140,7 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
       <div class="flow" id="flow-lectura" hidden>
         <div class="card">
           <span class="eyebrow">Sensor</span>
+          <div id="le-gps" hidden></div>
           <div class="chips" id="le-sensores"></div>
           <p class="small muted" id="le-ultima"></p>
         </div>
@@ -1311,9 +1343,13 @@ function renderHoy(){
   const l = LOTES[lotIdx];
   $("#hoy-nivel").textContent = l.nivel==="sin" ? "Sin reporte" : "Riesgo " + l.nivel; $("#hoy-nivel").className = "lvl " + l.nivel;
   $("#hoy-etapa").textContent = l.etapaTxt;
-  $("#hoy-sem").innerHTML = l.sem.length ? l.sem.map(s=>`<div class="sem-item"><span class="dot ${s.v}"></span><div><b>${esc(s.k)}</b><span>${esc(s.t)}</span></div><span class="lvl ${s.v}">${s.v}</span></div>`).join("") : `<p class="note">${esc(l.semVacio || "Sin semáforo todavía.")}</p>`;
+  { const orden = {alto:3, medio:2, bajo:1}; const sem = l.sem.slice().sort((a,b)=>(orden[b.v]||0)-(orden[a.v]||0));
+    $("#hoy-sem").innerHTML = sem.length ? sem.map(s=>`<span class="semchip"><i class="${esc(s.v)}"></i>${esc(s.k)} <b class="${esc(s.v)}">${esc(s.v)}</b></span>`).join("") : `<p class="note" style="margin:0">${esc(l.semVacio || "Sin semáforo todavía.")}</p>`;
+    $("#hj-sem-list").innerHTML = sem.length ? sem.map(s=>`<div class="sem-item"><span class="dot ${s.v}"></span><div><b>${esc(s.k)}</b><span>${esc(s.t)}</span></div><span class="lvl ${s.v}">${s.v}</span></div>`).join("") : `<p class="note">${esc(l.semVacio || "Sin semáforo todavía.")}</p>`;
+    const hn = $("#hj-sem-nivel"); if(hn){ hn.textContent = l.nivel==="sin" ? "Sin reporte" : "Riesgo " + l.nivel; hn.className = "lvl " + l.nivel; } }
   $("#hoy-nota").textContent = l.nota !== undefined ? l.nota : (l.real ? `Pronóstico real del ensamble emitido el 16 de octubre (${l.miembros} escenarios), sin calibrar todavía: las probabilidades son la fracción de escenarios.` : "Lote de ejemplo para la demostración; el pronóstico de la zona (Toluca) sí es el real del 16 de octubre.");
-  $("#hoy-acciones").innerHTML = l.acciones.length ? l.acciones.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${a.c}</div></div></div>`).join("") : `<p class="note">Sin acciones todavía.</p>`;
+  $("#hoy-acciones").innerHTML = l.acciones.length ? l.acciones.slice(0,4).map((a,i)=>`<button class="accchip" data-hoja="acciones"><span class="n">${i+1}</span><span>${esc(a.a)}</span></button>`).join("") : `<p class="note" style="margin:0">Sin acciones todavía.</p>`;
+  $("#hj-acc-list").innerHTML = l.acciones.length ? l.acciones.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${a.c}</div></div></div>`).join("") : `<p class="note">Sin acciones todavía.</p>`;
   const n = l.memoria.length; $("#mem-n").innerHTML = `${n} <small>${n===1?"temporada":"temporadas"}</small>`;
   $("#mem-txt").textContent = l.memTxt || (n===1 ? "Este lote empieza hoy su memoria. Con tres temporadas registradas, el reporte deja de hablar de la zona y empieza a hablar de este lote." : "Tres temporadas con el mismo registro. Con cinco, el pronóstico de cosecha pasa a ser del lote.");
   $("#hoy-fecha").textContent = l.fechaTxt || "Viernes 16 de octubre de 2026";
@@ -1325,7 +1361,7 @@ function renderHoy(){
     $("#lec-meta").textContent = delModelo ? `modelo · ${m.numeros_citados!=null ? m.numeros_citados + " números verificados" : "números verificados"}` : "por reglas";
     $("#lec-nosabemos").innerHTML = (lec.no_sabemos||[]).length ? lec.no_sabemos.map(x=>`<div>· ${esc(x)}</div>`).join("") : "<div>Nada que anotar hoy.</div>";
   }
-  $("#hoy-acciones-eyebrow").textContent = lec ? "Esta semana, mirar y registrar" : "Esta semana, mirar";
+  $("#hoy-acciones-eyebrow").textContent = lec ? "Esta semana, mirar y registrar" : "Esta semana, mirar"; { const e2 = $("#hj-acc-eyebrow"); if(e2) e2.textContent = $("#hoy-acciones-eyebrow").textContent; }
   $("#hoy-temporada-acc").hidden = !(l.accTemp && l.accTemp.length);
   if(l.accTemp && l.accTemp.length) $("#hoy-acciones-temp").innerHTML = l.accTemp.map((a,i)=>`<div class="action"><span class="n">${i+1}</span><div><b>${esc(a.a)}</b><span>${esc(a.p)}</span><div class="conf">confianza ${esc(a.c)}</div></div></div>`).join("");
 }
@@ -1712,7 +1748,7 @@ function lotDesdeNube(f, rep){
     if(c.temporada) l.ciclo = c.temporada;
     if(sem && sem.dias && sem.dias.length){
       l.dias = sem.dias; l.sem2 = sem.sem2 || {hutton:"—", p1:"—", helada:"—", lluvia:["—","—","—"], conf:"—"}; l.lluvia14 = sem.lluvia14 || ["—","—","—"];
-      l.fuenteTxt = `Fuente: ensamble ${sem.fuente || ""} (${sem.n_miembros || "?"} escenarios) emitido el ${fmtD((c.fuentes && c.fuentes.emitido_ensamble) || rep.emitido)}. ${sem.calibrado ? "Probabilidades calibradas." : "Sin calibrar todavía: fracción de escenarios."} Lluvia 14 días: ${l.lluvia14[1]} mm (rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
+      l.fuenteTxt = `Fuente: ensamble ${String(sem.fuente || "").replace(/^ensamble\s+/i, "")} (${sem.n_miembros || "?"} escenarios) emitido el ${fmtD((c.fuentes && c.fuentes.emitido_ensamble) || rep.emitido)}. ${sem.calibrado ? "Probabilidades calibradas." : "Sin calibrar todavía: fracción de escenarios."} Lluvia 14 días: ${l.lluvia14[1]} mm (rango ${l.lluvia14[0]}–${l.lluvia14[2]}).`;
     } else { l.semanaVacia = "El reporte de este lote no trae todavía el detalle por día (la zona sin pronóstico cargado); vuelve a intentarse cada noche."; }
     const m = c.memoria || {}; const nreg = m.registros || 0;
     l.memoria = memoriaDeTemporadas(f).concat([{y: temporadaLabel(f.fecha_siembra), t:null, txt:`Temporada en curso · ${nreg} registro${nreg===1?"":"s"}${f.fecha_siembra ? ` · siembra ${fmtD(f.fecha_siembra)}` : ""}`, actual:true}]);
@@ -1939,7 +1975,11 @@ $("#nl-save").addEventListener("click", async ()=>{
   finally{ $("#nl-save").disabled = false; $("#nl-save").textContent = "Crear el lote"; }
 });
 // --- datos del lote (pantalla Lote) -> nube
-function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombre").value = l.nombre||""; $("#lt-variedad").value = l.variedad||""; $("#lt-cultivo").value = l.cultivo||"papa"; $("#lt-riego").value = l.riego||"aspersión"; $("#lt-condicion").value = l.condicion||"campo abierto"; $("#lt-siembra").value = l.siembra||""; $("#lt-ha").value = l.ha!=null ? l.ha : ""; }
+function cargarDatosLote(){ const l = LOTES[lotIdx]; if(!l) return; $("#lt-nombre").value = l.nombre||""; $("#lt-variedad").value = l.variedad||""; $("#lt-cultivo").value = l.cultivo||"papa"; $("#lt-riego").value = l.riego||"aspersión"; $("#lt-condicion").value = l.condicion||"campo abierto"; $("#lt-siembra").value = l.siembra||""; $("#lt-ha").value = l.ha!=null ? l.ha : ""; ltResumen(); }
+function ltResumen(){ const l = LOTES[lotIdx]; const r = $("#lt-resumen"); if(!r || !l) return; const g = (typeof G === "function" && !l.sin) ? G() : null; const ha = l.ha!=null ? `${l.ha} ha` : (g && g.poly ? `${areaHa(g.poly).toFixed(2)} ha (del borde)` : "—");
+  r.innerHTML = l.sin ? "" : [["Cultivo", `${nombreCultivo(l.cultivo)}${l.variedad ? " · " + l.variedad : ""}`], ["Superficie", ha], ["Riego", l.riego || "—"], ["Condición", l.condicion || "campo abierto"], ["Siembra", l.siembra ? fmtD(l.siembra) : "sin fecha (etapa estimada)"], ["Nombre", l.nombre || "—"]].map(([k,v])=>`<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join(""); }
+$("#lt-editar").addEventListener("click", ()=>{ const f = $("#lt-form"); f.classList.toggle("plegado"); $("#lt-editar").textContent = f.classList.contains("plegado") ? "editar ›" : "listo"; if(f.classList.contains("plegado")) ltResumen(); });
+$("#lote-detalles").addEventListener("click", ()=>{ const ab = $("#poly-kv").classList.toggle("compacta"); $("#lote-kv").classList.toggle("compacta", ab); $("#lote-detalles").textContent = ab ? "zona de referencia y detalles técnicos ›" : "menos detalles"; });
 [["lt-nombre","nombre","nombre"],["lt-variedad","variedad","variedad"],["lt-cultivo","cultivo","cultivo"],["lt-riego","riego","riego"],["lt-condicion","condicion","condicion"],["lt-siembra","siembra","fecha_siembra"],["lt-ha","ha","superficie_ha"]].forEach(([id, campo, col])=>{
   $("#"+id).addEventListener("change", e=>{ const l = LOTES[lotIdx]; if(!l || l.sin) return; let v = e.target.value; if(campo==="ha"){ v = parseFloat(String(v).replace(",",".")); if(isNaN(v)) v = null; } if(campo==="siembra" && !v) v = null; l[campo] = v===null ? (campo==="ha" ? null : "") : v; if(campo==="nombre" || campo==="cultivo") renderLotSel(); patchLote(l, {[col]: v}); if(MODO==="nube" && l.nube) toast("Dato del lote guardado"); });
 });
@@ -2358,7 +2398,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "51 · 9 nov 2026";
+const APP_VERSION = "52 · 9 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2566,7 +2606,7 @@ function renderInicio(){
   $("#hj-hoy-list").innerHTML = n ? hoy.slice().reverse().map(x=>`<div class="log-item"><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}</span></div>`).join("") : `<p class="note">Nada registrado hoy en ${esc(l.nombre)}.</p>`;
 }
 // --- hojas: una sola capa; se abre la tarjeta pedida
-const HOJAS_IDS = ["riesgo","suelo","polin","hoy","contar","web","ubicacion"];
+const HOJAS_IDS = ["riesgo","suelo","polin","hoy","contar","web","ubicacion","semaforo","acciones"];
 function abrirHoja(k){
   if(k==="ventana"){ go("semana"); return; }
   if(k==="plagas") k = "polin";                                   // la misma hoja trae polinización y plagas: se ve la que tenga datos
@@ -2587,6 +2627,9 @@ document.addEventListener("click", ev=>{ const g = ev.target.closest("[data-go]"
 function mostrarListo(msg){ $("#listo-txt").textContent = msg || "Guardado."; $("#listo").hidden = false; document.body.classList.add("noscroll"); renderInicio(); }
 function ocultarListo(){ $("#listo").hidden = true; document.body.classList.remove("noscroll"); }
 $("#listo-otra").addEventListener("click", ()=>{ ocultarListo(); go("registrar"); });
+$("#log-mas").addEventListener("click", ()=>{ const c = $("#log-card"); c.classList.toggle("compacta"); $("#log-mas").textContent = c.classList.contains("compacta") ? "ver con detalle ›" : "ver menos"; });
+$("#voz-pend-mas").addEventListener("click", ()=>{ const c = $("#voz-pend"); c.classList.toggle("compacta"); $("#voz-pend-mas").textContent = c.classList.contains("compacta") ? "ver todas ›" : "ver menos"; });
+(function(){ const _rv = renderVozPend; renderVozPend = function(){ _rv.apply(this, arguments); const n = $("#voz-pend-list").children.length; const b = $("#voz-pend-mas"); if(b){ b.hidden = n <= 3; if($("#voz-pend").classList.contains("compacta")) b.textContent = `ver las ${n} ›`; } }; })();
 $("#listo-inicio").addEventListener("click", ()=>{ ocultarListo(); go("hoy"); });
 $("#web-copiar").addEventListener("click", async ()=>{ const u = $("#web-url").textContent.trim(); try{ await navigator.clipboard.writeText(u); toast("Enlace copiado"); }catch(e){ toast(u); } });
 function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderInicio(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); renderSensoresHoy(); renderPolinHoy(); renderRecetasHoy(); renderVentana(); if(typeof renderRazonHoy==="function") renderRazonHoy(); { const o = $("#opt-polin"); if(o) o.hidden = !poCfg(LOTES[lotIdx]); } { const v = $("#opt-visita"); if(v) v.hidden = MODO==="nube" && !esEquipo(); } }
@@ -3331,10 +3374,23 @@ function seGuardar(){
 let leFoto = null, lePre = null;
 function leIniciar(){ const l = LOTES[lotIdx]; const ss = sensoresDe(l); leFoto = null; leTel = null; { const b = $("#le-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#le-foto-prev").hidden = true; $("#le-foto-prev").innerHTML = ""; $("#le-foto-input").value = ""; $("#le-valor").value = "";
   const ahora = new Date(); $("#le-fecha").value = localISO(ahora); $("#le-hora").value = `${String(ahora.getHours()).padStart(2,"0")}:${String(ahora.getMinutes()).padStart(2,"0")}`;
-  $("#le-sensores").innerHTML = ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note">Primero agregue un sensor (Ajustes → Sensores y riego).</p>`; lePre = null; leUnidad(); }
+  $("#le-sensores").innerHTML = ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note">Primero agregue un sensor (Ajustes → Sensores y riego).</p>`; lePre = null; leUnidad(); leGeo(ss); }
+let leGeoToken = 0, leManual = false;
+function leGeo(ss){                                               // v51: el instrumento más cercano (a menos de GPS_CERCA_M) se marca solo
+  const box = $("#le-gps"); leManual = false; const con = (ss||[]).filter(s=>s.lat!=null && s.lon!=null); if(!box) return; box.hidden = true; box.innerHTML = "";
+  if(!navigator.geolocation || con.length < 1) return; const mio = ++leGeoToken;
+  box.hidden = false; box.innerHTML = `<div class="gps-linea lejos"><span class="pin">📍</span><span>Buscando el instrumento más cercano con el GPS…</span></div>`;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    if(mio!==leGeoToken || !$("#flow-lectura") || $("#flow-lectura").hidden) return; const yo = {lat:pos.coords.latitude, lon:pos.coords.longitude, acc:pos.coords.accuracy};
+    const orden = con.map(s=>({s, d:plDist(yo, s)})).sort((a,b)=>a.d-b.d); const c = orden[0]; if(!c){ box.hidden = true; return; }
+    if(c.d <= GPS_CERCA_M && !leManual){ $$("#le-sensores .chip").forEach(x=>{ const es = x.dataset.les===c.s.id; x.setAttribute("aria-pressed", String(es)); x.classList.toggle("gps", es); }); leUnidad();
+      box.innerHTML = `<div class="gps-linea"><span class="pin">📍</span><span>Está junto a <b>${esc(c.s.nombre)}</b> · a ${Math.round(c.d)} m · <b>se marcó solo</b>${yo.acc > 25 ? ` · GPS ±${Math.round(yo.acc)} m` : ""}</span></div>`; }
+    else box.innerHTML = `<div class="gps-linea lejos"><span class="pin">📍</span><span>El más cercano es <b>${esc(c.s.nombre)}</b>, a ${Math.round(c.d)} m al ${plRumbo(yo, c.s)}. Elija cuál leyó.</span></div>`;
+  }, ()=>{ if(mio===leGeoToken) box.hidden = true; }, {enableHighAccuracy:true, timeout:8000, maximumAge:15000});
+}
 function leSensor(){ const b = $$("#le-sensores .chip").find(x=>x.getAttribute("aria-pressed")==="true"); return b ? (SENSORES||[]).find(s=>s.id===b.dataset.les) : null; }
 function leUnidad(){ const s = leSensor(); $("#le-unidad").textContent = s ? (s.unidad || (SENSOR_TIPOS[s.tipo]||{}).unidad || "") : ""; const x = s ? ultimaLectura(s) : null; $("#le-ultima").textContent = s ? (x ? `Última: ${lecturaTxt(s, x, LOTES[lotIdx]).txt}` : "Sin lecturas todavía.") : ""; }
-$("#le-sensores").addEventListener("click", e=>{ const b = e.target.closest("[data-les]"); if(!b) return; $$("#le-sensores .chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); leUnidad(); });
+$("#le-sensores").addEventListener("click", e=>{ const b = e.target.closest("[data-les]"); if(!b) return; leManual = true; $$("#le-sensores .chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); leUnidad(); });
 $("#le-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; leFoto = f; const u = URL.createObjectURL(f); $("#le-foto-prev").hidden = false; $("#le-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; if(typeof leAnalizar==="function") leAnalizar(f); });
 function leGuardar(){
   const l = LOTES[lotIdx]; const s = leSensor(); if(!s){ toast("Elija el sensor"); return; } const v = $("#le-valor").value.trim().replace(",","."); if(v==="" && !leFoto){ toast("Anote el valor o tome la foto del instrumento"); return; }
