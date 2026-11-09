@@ -379,6 +379,8 @@ nav.bottom button.reg svg{background:var(--accent);box-shadow:0 8px 18px rgba(30
 /* listas de Ajustes agrupadas */
 .grupo{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px}
 .list button.web{border-style:dashed}
+.list button{grid-template-columns:36px 1fr 16px} .list button .li{grid-column:1;grid-row:1/3;width:36px;height:36px;border-radius:11px;background:var(--accent-bg);display:grid;place-items:center;font-size:17px;line-height:1;color:var(--accent)}
+.list button span:not(.li):not(.cnt){grid-column:2;grid-row:2} .list button::after{grid-column:3}
 .btn{background:var(--accent);color:#fff} .btn.sec{background:var(--surface-2);color:var(--fg)} .btn.acc{background:var(--accent);color:#fff}
 .chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -481,7 +483,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
     <div class="ini-cab"><span class="eyebrow">Recorrer</span><h2 id="h-reg" style="font-size:21px">¿Qué va a registrar?</h2><p class="small muted">Dos o tres toques y termina en «Listo». Con GPS, el punto más cercano se marca solo.</p></div>
     <div class="tiles">
       <button class="tile" data-flow="plagas"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 7a3 3 0 0 1 6 0v1H9z"/><path d="M6 12a6 6 0 0 1 12 0v3a6 6 0 0 1-12 0z"/><path d="M3 10l3 2M21 10l-3 2M3 17l3-1M21 17l-3-1M12 12v9"/></svg></span><b>Plagas</b><small>puntos del lote · conteo</small></button>
-      <button class="tile ambar" data-flow="polin" id="opt-polin" hidden><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/></svg></span><b>Polinización</b><small>flores con marca · por sector</small></button>
+      <button class="tile ambar" data-flow="polin" id="opt-polin"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/></svg></span><b>Polinización</b><small>flores con marca · por sector</small></button>
       <button class="tile azul" data-flow="regue"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></svg></span><b>Riego</b><small>horas · método</small></button>
       <button class="tile" data-flow="aplique"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 3h8v4l3 3v11H5V10l3-3z"/><path d="M9 14h6"/></svg></span><b>Aplicación</b><small>foto de la etiqueta</small></button>
       <button class="tile ocre" data-flow="lectura"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 12l4-3M12 4v2M20 12h-2M4 12h2"/></svg></span><b>Sensores</b><small>tensiómetro · trampa · sonda</small></button>
@@ -597,28 +599,28 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
     <h2 id="h-mas" style="font-size:21px">Ajustes</h2>
     <span id="mem-n" hidden></span><span id="mem-txt" hidden></span>
     <div class="list">
-      <button data-go="mas-sinsenal">Sin señal <span id="btn-sinsenal-sub">modelos del teléfono: voz, fotos, libreta, razonador · pendientes por subir</span></button>
-      <button data-hoja="ubicacion">Ubicación <span>GPS solo mientras recorre: el punto más cercano se marca solo</span></button>
-      <button data-go="mas-avisos">Avisos al teléfono <span id="btn-avisos-sub">alertas y revisiones, aunque la app esté cerrada</span></button>
-      <button data-go="mas-whatsapp">WhatsApp <span id="btn-wa-sub">notas, fotos y planillas desde el chat; reportes y alertas al chat</span></button>
-      <button data-go="mas-pdf">Reporte en PDF <span id="btn-pdf-sub">el reporte del lote, para guardar o compartir</span></button>
-      <button data-go="mas-alertas">Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
-      <button data-hoja="web" class="web">EG Agro Web <span>archivos, historiales, tendencias, mapas grandes, panel del agrónomo</span></button>
-      <button data-go="mas-acerca">Cuenta y versión <span>sesión, lotes, versión privada de socios</span></button>
+      <button data-go="mas-sinsenal"><span class="li">☁</span>Sin señal <span id="btn-sinsenal-sub">modelos del teléfono: voz, fotos, libreta, razonador · pendientes por subir</span></button>
+      <button data-hoja="ubicacion"><span class="li">📍</span>Ubicación <span>GPS solo mientras recorre: el punto más cercano se marca solo</span></button>
+      <button data-go="mas-avisos"><span class="li">✉</span>Avisos al teléfono <span id="btn-avisos-sub">alertas y revisiones, aunque la app esté cerrada</span></button>
+      <button data-go="mas-whatsapp"><span class="li">💬</span>WhatsApp <span id="btn-wa-sub">notas, fotos y planillas desde el chat; reportes y alertas al chat</span></button>
+      <button data-go="mas-pdf"><span class="li">📄</span>Reporte en PDF <span id="btn-pdf-sub">el reporte del lote, para guardar o compartir</span></button>
+      <button data-go="mas-alertas"><span class="li">🔔</span>Alertas <span id="mas-alertas-sub">cuando algo cruza el umbral en su etapa</span></button>
+      <button data-hoja="web" class="web"><span class="li">🌐</span>EG Agro Web <span>archivos, historiales, tendencias, mapas grandes, panel del agrónomo</span></button>
+      <button data-go="mas-acerca"><span class="li">👤</span>Cuenta y versión <span>sesión, lotes, versión privada de socios</span></button>
     </div>
     <details class="grupo-det"><summary>Mapas y detalle del lote</summary>
     <div class="list">
-      <button data-go="mas-plagas">Plagas <span>puntos de muestreo, presión hoy y a 7 días, recorridos</span></button>
-      <button data-go="mas-sensores">Sensores y riego <span>tensiómetros, sondas, trampas: dónde están y qué marcan</span></button>
-      <button data-go="mas-polin">Polinización <span>% de flores con marca de abejorro por sector</span></button>
+      <button data-go="mas-plagas"><span class="li">🐛</span>Plagas <span>puntos de muestreo, presión hoy y a 7 días, recorridos</span></button>
+      <button data-go="mas-sensores"><span class="li">◎</span>Sensores y riego <span>tensiómetros, sondas, trampas: dónde están y qué marcan</span></button>
+      <button data-go="mas-polin"><span class="li">🐝</span>Polinización <span>% de flores con marca de abejorro por sector</span></button>
     </div></details>
     <details class="grupo-det"><summary>Ya están en EG Agro Web · aquí por si no hay señal</summary>
     <div class="list">
-      <button data-go="mas-memoria">Memoria del campo <span>temporadas y resultados</span></button>
-      <button data-go="mas-temporada">Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
-      <button data-go="mas-planillas">Planillas y archivos <span>la plantilla Excel del cultivo, las que subió, el historial de 20 años</span></button>
-      <button data-go="mas-panel" id="btn-panel" hidden>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
-      <button data-go="mas-como">Cómo lo sabemos <span>métodos y acierto medido</span></button>
+      <button data-go="mas-memoria"><span class="li">📚</span>Memoria del campo <span>temporadas y resultados</span></button>
+      <button data-go="mas-temporada"><span class="li">🌾</span>Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
+      <button data-go="mas-planillas"><span class="li">📊</span>Planillas y archivos <span>la plantilla Excel del cultivo, las que subió, el historial de 20 años</span></button>
+      <button data-go="mas-panel" id="btn-panel" hidden><span class="li">📋</span>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
+      <button data-go="mas-como"><span class="li">🔬</span>Cómo lo sabemos <span>métodos y acierto medido</span></button>
     </div></details>
     <p class="note" style="text-align:center;margin-top:12px">EG Agro · Engram Technologies · PRELIMINAR</p>
   </div>
@@ -2398,7 +2400,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "52 · 9 nov 2026";
+const APP_VERSION = "52.1 · 9 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2632,7 +2634,7 @@ $("#voz-pend-mas").addEventListener("click", ()=>{ const c = $("#voz-pend"); c.c
 (function(){ const _rv = renderVozPend; renderVozPend = function(){ _rv.apply(this, arguments); const n = $("#voz-pend-list").children.length; const b = $("#voz-pend-mas"); if(b){ b.hidden = n <= 3; if($("#voz-pend").classList.contains("compacta")) b.textContent = `ver las ${n} ›`; } }; })();
 $("#listo-inicio").addEventListener("click", ()=>{ ocultarListo(); go("hoy"); });
 $("#web-copiar").addEventListener("click", async ()=>{ const u = $("#web-url").textContent.trim(); try{ await navigator.clipboard.writeText(u); toast("Enlace copiado"); }catch(e){ toast(u); } });
-function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderInicio(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); renderSensoresHoy(); renderPolinHoy(); renderRecetasHoy(); renderVentana(); if(typeof renderRazonHoy==="function") renderRazonHoy(); { const o = $("#opt-polin"); if(o) o.hidden = !poCfg(LOTES[lotIdx]); } { const v = $("#opt-visita"); if(v) v.hidden = MODO==="nube" && !esEquipo(); } }
+function renderAll(){ renderLotSel(); renderAlertas(); renderHoy(); renderInicio(); renderVerdor(); renderVozPend(); renderSemana(); renderLog(); renderMemoria(); renderTemporada(); renderLote(); renderCicloLote(); renderPlagasHoy(); renderSensoresHoy(); renderPolinHoy(); renderRecetasHoy(); renderVentana(); if(typeof renderRazonHoy==="function") renderRazonHoy(); { const o = $("#opt-polin"); if(o) o.hidden = false; } { const v = $("#opt-visita"); if(v) v.hidden = MODO==="nube" && !esEquipo(); } }
 // ---------------------------------------------------------------- verdor (Sentinel-2 dentro del polígono; lo calcula el RIG cada noche)
 function sparkline(serie){
   const pts = (serie||[]).slice(-12); if(pts.length < 2) return "";
@@ -2708,7 +2710,7 @@ function openFlow(name, btn){
   if(name==="libreta"){ libShow("step1"); }                              // los botones de interpretar/guardar aparecen por etapa
   if(name==="visita"){ visRender(); }
   if(name==="plagas"){ plIniciar(); }
-  if(name==="sensor"){ seIniciar(); }
+  if(name==="sensor"){ seIniciar(); $("#le-save").disabled = false; }
   if(name==="lectura"){ leIniciar(); }
   if(name==="polin"){ poIniciar(); }
   if(name==="voz"){ const nn = $("#voz-local-nota"); if(nn) nn.textContent = vozlDisponible() ? "Con el modelo de voz en el teléfono, la nota se entiende aquí mismo, sin señal; el motor la vuelve a oír cuando haya señal. Revise lo que oyó antes de guardar." : (navigator.onLine ? "La nota se transcribe en el motor en minutos y vuelve aquí para que la revise. Para entenderla sin señal: Ajustes → Sin señal → descargar el modelo de voz." : "Sin señal: la nota se guarda en el teléfono y el motor la transcribe cuando vuelva la señal. Para entenderla aquí mismo otra vez: Ajustes → Sin señal → descargar el modelo de voz (con wifi)."); }
@@ -3374,7 +3376,8 @@ function seGuardar(){
 let leFoto = null, lePre = null;
 function leIniciar(){ const l = LOTES[lotIdx]; const ss = sensoresDe(l); leFoto = null; leTel = null; { const b = $("#le-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#le-foto-prev").hidden = true; $("#le-foto-prev").innerHTML = ""; $("#le-foto-input").value = ""; $("#le-valor").value = "";
   const ahora = new Date(); $("#le-fecha").value = localISO(ahora); $("#le-hora").value = `${String(ahora.getHours()).padStart(2,"0")}:${String(ahora.getMinutes()).padStart(2,"0")}`;
-  $("#le-sensores").innerHTML = ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note">Primero agregue un sensor (Ajustes → Sensores y riego).</p>`; lePre = null; leUnidad(); leGeo(ss); }
+  $("#le-sensores").innerHTML = (ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note" style="margin:0 0 8px">Todavía no hay instrumentos en este lote. Agregue el primero aquí mismo: nombre, tipo y dónde está (con su ubicación).</p>`) + `<button class="chip" data-flow="sensor" style="border-style:dashed">${ss.length ? "+ otro instrumento" : "+ Agregar el primer instrumento"}</button>`; lePre = null; leUnidad(); leGeo(ss);
+  const sv = $("#le-save"); if(sv) sv.disabled = !ss.length; }
 let leGeoToken = 0, leManual = false;
 function leGeo(ss){                                               // v51: el instrumento más cercano (a menos de GPS_CERCA_M) se marca solo
   const box = $("#le-gps"); leManual = false; const con = (ss||[]).filter(s=>s.lat!=null && s.lon!=null); if(!box) return; box.hidden = true; box.innerHTML = "";
