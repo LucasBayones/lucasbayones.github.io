@@ -1,28 +1,144 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Engram Technologies">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 870 920" width="100%" height="100%">
   <defs>
-    <linearGradient id="eg" gradientUnits="userSpaceOnUse" x1="70" y1="56" x2="140" y2="144"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#2563EB"/></linearGradient>
-    <linearGradient id="orb" gradientUnits="userSpaceOnUse" x1="16" y1="100" x2="184" y2="100"><stop offset="0" stop-color="#10B981"/><stop offset="0.5" stop-color="#22D3EE"/><stop offset="1" stop-color="#2563EB"/></linearGradient>
-    <radialGradient id="core" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.35" stop-color="#22D3EE"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bgGlow" cx="50%" cy="38%" r="62%" fx="54%" fy="36%">
+      <stop offset="0%" stop-color="#0D2538" />
+      <stop offset="55%" stop-color="#081723" />
+      <stop offset="100%" stop-color="#050E16" />
+    </radialGradient>
+    <radialGradient id="coreHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.78" />
+      <stop offset="35%" stop-color="#2563EB" stop-opacity="0.40" />
+      <stop offset="70%" stop-color="#1D4ED8" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#1E3A8A" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="coreCenter" cx="42%" cy="42%" r="58%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="38%" stop-color="#38F2FF" />
+      <stop offset="82%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </radialGradient>
+    <linearGradient id="gradRibbonMain" x1="8%" y1="50%" x2="92%" y2="50%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="28%" stop-color="#38BDF8" />
+      <stop offset="52%" stop-color="#2DD4BF" />
+      <stop offset="78%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+    <linearGradient id="gradRibbonSecondary" x1="5%" y1="30%" x2="95%" y2="70%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="35%" stop-color="#38BDF8" />
+      <stop offset="68%" stop-color="#22D3EE" />
+      <stop offset="100%" stop-color="#34D399" />
+    </linearGradient>
+    <linearGradient id="gradCenterBridge" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.85" />
+      <stop offset="45%" stop-color="#38BDF8" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#67E8F9" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="gradBracket" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="35%" stop-color="#22D3EE" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <filter id="neonGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="3.2" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="strongGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7.5" result="blur1" />
+      <feGaussianBlur stdDeviation="2.5" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur1" />
+        <feMergeNode in="blur2" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
   </defs>
-  <!-- órbitas: la conexión -->
-  <g fill="none" stroke="url(#orb)" stroke-width="2.4" stroke-linecap="round">
-    <ellipse cx="100" cy="100" rx="84" ry="30" transform="rotate(-32 100 100)" opacity="0.95"/>
-    <ellipse cx="100" cy="100" rx="84" ry="30" transform="rotate(32 100 100)" opacity="0.75"/>
-    <ellipse cx="100" cy="100" rx="92" ry="92" stroke-dasharray="2 7" stroke-width="1.4" opacity="0.45"/>
+
+  <!-- Fondo oscuro (quitar esta línea si se desea transparente) -->
+  <rect width="870" height="920" rx="28" fill="url(#bgGlow)" />
+
+  <!-- Símbolo: The Core Connection -->
+  <g id="CoreConnectionSymbol">
+    <circle cx="543" cy="343.5" r="118" fill="url(#coreHalo)" />
+    <path d="M 630 204 L 381 204 L 381 483 L 630 483" fill="none" stroke="url(#gradBracket)" stroke-width="5.2" stroke-linecap="round" opacity="0.92" filter="url(#neonGlow)" />
+    <path d="M 616 211 L 389 211 L 389 476 L 616 476" fill="none" stroke="#38BDF8" stroke-width="1.1" opacity="0.35" />
+
+    <g fill="none" stroke-linecap="round" opacity="0.72">
+      <path d="M 630 204 C 662 128, 608 78, 520 132 C 440 182, 315 310, 276 412 C 242 500, 312 595, 428 572 C 518 554, 585 512, 630 483" stroke="url(#gradRibbonMain)" stroke-width="2.1" stroke-dasharray="2 6.5" />
+      <path d="M 630 483 C 662 559, 608 609, 520 555 C 440 505, 315 377, 276 275 C 242 187, 312 92, 428 115 C 518 133, 585 175, 630 204" stroke="url(#gradRibbonMain)" stroke-width="2.1" stroke-dasharray="2 6.5" />
+      <path d="M 605 190 C 505 112, 350 92, 282 162 C 235 210, 265 290, 348 343.5 C 430 397, 515 462, 630 483" stroke="#60A5FA" stroke-width="1.8" stroke-dasharray="1.5 6" />
+      <path d="M 605 497 C 505 575, 350 595, 282 525 C 235 477, 265 397, 348 343.5 C 430 290, 515 225, 630 204" stroke="#60A5FA" stroke-width="1.8" stroke-dasharray="1.5 6" />
+    </g>
+
+    <g fill="none" stroke="url(#gradCenterBridge)" stroke-linecap="round">
+      <path d="M 381 298 C 425 304, 468 302, 512 292" stroke-width="2.2" opacity="0.75" />
+      <path d="M 381 389 C 425 383, 468 385, 512 395" stroke-width="2.2" opacity="0.75" />
+      <path d="M 356 286 C 405 318, 455 343.5, 524 343.5" stroke-width="2.8" opacity="0.9" />
+      <path d="M 356 401 C 405 369, 455 343.5, 524 343.5" stroke-width="2.8" opacity="0.9" />
+      <path d="M 342 315 C 398 352, 448 372, 502 378" stroke-width="1.9" opacity="0.65" />
+      <path d="M 342 372 C 398 335, 448 315, 502 309" stroke-width="1.9" opacity="0.65" />
+      <path d="M 390 290 C 440 294, 480 284, 528 272" stroke-width="1.7" stroke-dasharray="2 5" opacity="0.75" />
+      <path d="M 390 397 C 440 393, 480 403, 528 415" stroke-width="1.7" stroke-dasharray="2 5" opacity="0.75" />
+    </g>
+
+    <g fill="none" stroke-linecap="round" filter="url(#neonGlow)">
+      <path d="M 630 204 C 662 142, 622 86, 540 128 C 468 165, 412 252, 354 343.5 C 296 435, 258 495, 298 548 C 342 605, 485 572, 630 483" stroke="url(#gradRibbonMain)" stroke-width="5.8" />
+      <path d="M 630 483 C 662 545, 622 601, 540 559 C 468 522, 412 435, 354 343.5 C 296 252, 258 192, 298 139 C 342 82, 485 115, 630 204" stroke="url(#gradRibbonMain)" stroke-width="5.8" />
+      <path d="M 642 152 C 592 132, 512 178, 438 255 C 372 324, 272 402, 278 482 C 284 552, 405 568, 535 518 C 585 498, 622 486, 630 483" stroke="url(#gradRibbonSecondary)" stroke-width="4.0" opacity="0.90" />
+      <path d="M 642 535 C 592 555, 512 509, 438 432 C 372 363, 272 285, 278 205 C 284 135, 405 119, 535 169 C 585 189, 622 201, 630 204" stroke="url(#gradRibbonSecondary)" stroke-width="4.0" opacity="0.90" />
+      <path d="M 595 142 C 470 132, 325 142, 286 208 C 254 262, 338 322, 422 338 C 465 346, 502 343.5, 536 343.5" stroke="url(#gradCenterBridge)" stroke-width="4.6" opacity="0.95" />
+      <path d="M 595 545 C 470 555, 325 545, 286 479 C 254 425, 338 365, 422 349 C 465 341, 502 343.5, 536 343.5" stroke="url(#gradCenterBridge)" stroke-width="4.6" opacity="0.95" />
+    </g>
+
+    <circle cx="630" cy="204" r="10" fill="#34D399" filter="url(#neonGlow)" />
+    <circle cx="630" cy="204" r="4.2" fill="#D1FAE5" />
+    <circle cx="630" cy="483" r="10" fill="#38BDF8" filter="url(#neonGlow)" />
+    <circle cx="630" cy="483" r="4.2" fill="#E0F2FE" />
+
+    <g transform="translate(543, 343.5)">
+      <circle cx="0" cy="0" r="60" fill="none" stroke="#3B82F6" stroke-width="1.3" opacity="0.34" />
+      <circle cx="0" cy="0" r="46" fill="none" stroke="#38BDF8" stroke-width="1.8" opacity="0.55" />
+      <circle cx="0" cy="0" r="34" fill="#1D4ED8" fill-opacity="0.28" stroke="#67E8F9" stroke-width="2.2" opacity="0.82" />
+      <circle cx="0" cy="0" r="22" fill="url(#coreCenter)" filter="url(#strongGlow)" />
+      <circle cx="0" cy="0" r="19" fill="#38F2FF" />
+      <circle cx="-4" cy="-4" r="6.5" fill="#F0F9FF" opacity="0.88" />
+      <circle cx="30" cy="-58" r="4.5" fill="#60A5FA" filter="url(#neonGlow)" />
+      <circle cx="54" cy="-3" r="5.2" fill="#67E8F9" filter="url(#neonGlow)" />
+      <circle cx="33" cy="53" r="4.5" fill="#60A5FA" filter="url(#neonGlow)" />
+      <circle cx="-18" cy="70" r="2.8" fill="#38BDF8" opacity="0.85" />
+      <circle cx="-35" cy="-66" r="3.2" fill="#38BDF8" opacity="0.85" />
+      <circle cx="10" cy="-70" r="2.2" fill="#93C5FD" opacity="0.7" />
+    </g>
   </g>
-  <!-- la E: tres barras y la espina, trazo grueso con esquinas redondeadas -->
-  <g fill="none" stroke="url(#eg)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M70 56 H140"/>
-    <path d="M70 100 H122"/>
-    <path d="M70 144 H140"/>
-    <path d="M70 56 V144"/>
+
+  <!-- Logotipo Vectorial: ENGRAM TECHNOLOGIES -->
+  <g id="Wordmark">
+    <g fill="#FFFFFF">
+      <path d="M 120 681 H 198 V 697 H 136 V 703 H 120 Z" />
+      <path d="M 192 715 H 140 C 127 715, 120 722, 120 735 V 747 C 120 759, 127 765, 140 765 H 198 V 749 H 138 V 731 H 192 Z" />
+      <path d="M 222 681 H 240 L 291 738 V 681 H 309 V 765 H 291 L 240 708 V 765 H 222 Z" />
+      <path d="M 357 681 H 426 V 697 H 359 C 353 697, 350 700, 350 706 V 740 C 350 746, 353 749, 359 749 H 411 V 730 H 382 V 715 H 429 V 765 H 357 C 341 765, 333 757, 333 741 V 705 C 333 689, 341 681, 357 681 Z" />
+      <path d="M 453 681 H 516 C 531 681, 539 689, 539 703 V 713 C 539 725, 532 733, 519 735 L 542 765 H 521 L 500 736 H 471 V 765 H 453 Z M 471 697 V 721 H 513 C 519 721, 522 718, 522 712 V 704 C 522 699, 519 697, 513 697 Z" />
+      <path d="M 596 681 H 614 L 654 765 H 635 L 626 746 H 592 L 599 731 H 619 L 605 700 L 575 765 H 556 Z" />
+      <path d="M 672 681 H 691 L 728 730 L 765 681 H 784 V 765 H 766 V 708 L 728 756 L 690 708 V 765 H 672 Z" />
+    </g>
+    <g fill="none" stroke="#94A3B8" stroke-width="4.2" stroke-linecap="square" stroke-linejoin="miter">
+      <path d="M 158 800 H 182 M 170 800 V 833" />
+      <path d="M 226 800 H 204 V 833 H 226 M 204 816.5 H 222" />
+      <path d="M 272 805 C 268 801, 264 800, 259 800 C 251 800, 246 806, 246 816.5 C 246 827, 251 833, 259 833 C 264 833, 268 832, 272 828" />
+      <path d="M 294 800 V 833 M 318 800 V 833 M 294 816.5 H 318" />
+      <path d="M 342 833 V 800 L 368 833 V 800" />
+      <rect x="392" y="800" width="26" height="33" rx="12" />
+      <path d="M 442 800 V 833 H 464" />
+      <rect x="484" y="800" width="26" height="33" rx="12" />
+      <path d="M 558 805 C 554 801, 550 800, 545 800 C 537 800, 532 806, 532 816.5 C 532 827, 537 833, 545 833 C 552 833, 557 830, 558 825 V 817 H 547" />
+      <path d="M 584 800 V 833" />
+      <path d="M 630 800 H 608 V 833 H 630 M 608 816.5 H 626" />
+      <path d="M 675 805 C 672 801, 667 800, 662 800 C 655 800, 651 803, 651 808 C 651 813, 655 815, 664 816.5 C 673 818, 677 820, 677 825.5 C 677 830.5, 672 833, 664 833 C 658 833, 653 831, 650 827" />
+    </g>
   </g>
-  <!-- nodos donde las órbitas tocan la E -->
-  <g fill="#0B1220" stroke="#22D3EE" stroke-width="2.2">
-    <circle cx="140" cy="56" r="5.5"/><circle cx="140" cy="144" r="5.5"/><circle cx="70" cy="100" r="5.5"/>
-  </g>
-  <!-- núcleo: el recuerdo -->
-  <circle cx="128" cy="100" r="22" fill="url(#core)" opacity="0.9"/>
-  <circle cx="128" cy="100" r="7" fill="#FFFFFF"/>
-  <circle cx="128" cy="100" r="11" fill="none" stroke="#22D3EE" stroke-width="2"/>
 </svg>
