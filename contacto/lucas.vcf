@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Bayonés;Lucas;;;
+FN:Lucas Bayonés
+ORG:Engram Technologies
+TITLE:CTO & co-founder
+TEL;TYPE=CELL,VOICE:+525554763155
+EMAIL;TYPE=INTERNET,WORK:lucas@engram-analitica.com
+URL:https://www.engram-analitica.com/
+URL;TYPE=LinkedIn:https://www.linkedin.com/in/lucas-bayones
+NOTE:Dato es Dato · sistemas complejos e IA para decisiones críticas. EG Agro: la primera solución, en el campo.
+END:VCARD
