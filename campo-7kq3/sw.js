@@ -1,10 +1,22 @@
 // Engram Campo — service worker: red primero (siempre la versión más nueva), caché de respaldo para abrir sin señal.
-const CACHE = "engram-campo-v26";
+const CACHE = "engram-campo-v28";
+const LIB = "engram-lib-v1";   // v52.5: bibliotecas (./lib/ de ORT y transformers.js, y las del CDN como WebLLM) en una caché que sobrevive a las actualizaciones:
+                               // antes vivían en la caché de la app y cada versión nueva las borraba; sin señal fallaban voz, fotos, libreta y razonador ("Importing a module script failed") hasta volver a bajarlas
 const SHELL = ["./", "./index.html", "./manifest.json", "./leaflet.js", "./leaflet.css", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./worker_modelos.js"];
+const esLib = url => (url.origin === self.location.origin && /\/lib\//.test(url.pathname)) || url.hostname === "cdn.jsdelivr.net";
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {
-  // v14: solo se borran las cachés viejas de la app (engram-campo-v*); las de modelos (transformers-cache) y del mapa (engram-tiles) se quedan: antes cada actualización obligaba a bajar los modelos de nuevo
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith("engram-campo-v") && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  // v14: solo se borran las cachés viejas de la app (engram-campo-v*); las de modelos (transformers-cache, webllm/*) y del mapa (engram-tiles) se quedan: antes cada actualización obligaba a bajar los modelos de nuevo
+  // v52.5: antes de borrar una caché vieja, sus bibliotecas pasan a engram-lib (una sola vez; de ahí en adelante se guardan directo allí)
+  e.waitUntil((async () => {
+    const ks = (await caches.keys()).filter(k => k.startsWith("engram-campo-v") && k !== CACHE);
+    const lib = await caches.open(LIB);
+    for (const k of ks) {
+      try { const c = await caches.open(k); for (const req of await c.keys()) { try { if (esLib(new URL(req.url)) && !(await lib.match(req))) { const r = await c.match(req); if (r) await lib.put(req, r); } } catch (err) {} } } catch (err) {}
+      await caches.delete(k);
+    }
+    await self.clients.claim();
+  })());
 });
 const TILES = "engram-tiles-v1";   // mapa guardado para el campo (Más -> Sin señal): primero la caché, si no la red (y se guarda)
 self.addEventListener("fetch", e => {
@@ -14,8 +26,8 @@ self.addEventListener("fetch", e => {
     e.respondWith(caches.open(TILES).then(c => c.match(e.request.url).then(r => r || fetch(e.request).then(res => { if (res && (res.ok || res.type === "opaque")) c.put(e.request.url, res.clone()); return res; }))));
     return;
   }
-  if (url.hostname === "cdn.jsdelivr.net") {   // biblioteca de voz del CDN (si no está en ./lib/): se guarda para la próxima vez sin señal
-    e.respondWith(caches.open(CACHE).then(c => c.match(e.request).then(r => r || fetch(e.request).then(res => { if (res && res.ok) c.put(e.request, res.clone()); return res; }))));
+  if (esLib(url)) {   // bibliotecas: primero la caché persistente, si no la red (y se guarda)
+    e.respondWith(caches.open(LIB).then(c => c.match(e.request).then(r => r || fetch(e.request).then(res => { if (res && res.ok) c.put(e.request, res.clone()); return res; }))));
     return;
   }
   if (url.origin !== self.location.origin) return;

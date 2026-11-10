@@ -1044,6 +1044,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
         </div>
         <div class="flow" id="lib-review" hidden>
           <div class="row between"><span class="eyebrow" id="lib-found"></span><button class="inline-link" id="lib-backlines">‹ Corregir la lectura</button></div>
+          <div id="lib-enlace" class="card" hidden></div>
           <div id="lib-rows" class="flow"></div>
           <div class="card" id="lib-unparsed" hidden><span class="eyebrow">No lo tomé como registro</span><div id="lib-unparsed-list" class="flow"></div></div>
           <button class="btn sec" id="lib-add">+ Agregar un registro que faltó</button>
@@ -1095,6 +1096,13 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <span class="eyebrow">Su nivel</span>
             <div class="seg" id="pl-nivel" style="grid-template-columns:repeat(4,1fr)"><button data-n="0" aria-pressed="false">Nada</button><button data-n="1" aria-pressed="false">Bajo</button><button data-n="2" aria-pressed="false">Medio</button><button data-n="3" aria-pressed="false">Alto</button></div>
             <div id="pl-motor"></div>
+          </div>
+          <div class="card" id="pl-nota-card">
+            <span class="eyebrow">Nota del punto (opcional)</span>
+            <p class="small muted" style="margin:4px 0 8px">Lo que vio aquí, con su voz o escrito: queda en este punto y en la bitácora. Sin señal, el teléfono la transcribe si tiene el modelo de voz; si no, el motor la oye después.</p>
+            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sec sm" id="pl-nota-rec" type="button">🎙 Grabar</button><span class="small muted" id="pl-nota-hint"></span></div>
+            <textarea id="pl-nota" rows="2" placeholder="Ej.: la trampa estaba llena de mosquita, el daño es en la orilla este" style="width:100%;margin-top:8px"></textarea>
+            <audio id="pl-nota-audio" controls hidden style="width:100%;margin-top:6px"></audio>
           </div>
           <label class="photo" for="pl-foto-input"><b>Foto (opcional)</b><span class="small muted">De la hoja, la trampa o el daño: el motor la lee con señal y su agrónomo la confirma.</span><input class="hiddeninput" id="pl-foto-input" type="file" accept="image/*" capture="environment"></label>
           <label class="inline-link" for="pl-foto-gal" style="justify-self:center;cursor:pointer;text-align:center;display:block">o elegir una foto de la galería<input class="hiddeninput" id="pl-foto-gal" type="file" accept="image/*"></label>
@@ -1175,6 +1183,13 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
               <div class="field"><label>Con marca de abejorro</label><div class="row" style="flex-wrap:nowrap"><button class="btn sec sm" data-pom="marca" data-d="-1">−</button><input id="po-marca" inputmode="numeric" placeholder="0" style="text-align:center;font-weight:700;font-size:18px"><button class="btn sec sm" data-pom="marca" data-d="1">+</button></div></div>
             </div>
             <div id="po-calc"></div>
+          </div>
+          <div class="card" id="po-nota-card">
+            <span class="eyebrow">Nota del punto (opcional)</span>
+            <p class="small muted" style="margin:4px 0 8px">Lo que vio aquí, con su voz o escrito: queda en este punto y en la bitácora. Sin señal, el teléfono la transcribe si tiene el modelo de voz; si no, el motor la oye después.</p>
+            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sec sm" id="po-nota-rec" type="button">🎙 Grabar</button><span class="small muted" id="po-nota-hint"></span></div>
+            <textarea id="po-nota" rows="2" placeholder="Ej.: colmena 2 con poca actividad; marcas sobre todo en las flores del borde" style="width:100%;margin-top:8px"></textarea>
+            <audio id="po-nota-audio" controls hidden style="width:100%;margin-top:6px"></audio>
           </div>
           <label class="photo" for="po-foto-input"><b>Foto de las flores (opcional)</b><span class="small muted">De cerca, con las anteras visibles: el motor cuenta las marcas con señal.</span><input class="hiddeninput" id="po-foto-input" type="file" accept="image/*" capture="environment"></label>
           <div id="po-foto-prev" hidden></div>
@@ -2401,7 +2416,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "52.4 · 9 nov 2026";
+const APP_VERSION = "53 · 10 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2797,9 +2812,9 @@ const PROP_DEFAULTS = {aplicacion:{unidad:"kg/ha", clase:"fungicida"}, riego:{me
 function withDefaults(p){ const d = PROP_DEFAULTS[p.tipo] || {}; Object.keys(d).forEach(k=>{ if(p[k]===undefined || p[k]==="") p[k] = d[k]; }); if(!Array.isArray(p.dudas)) p.dudas = []; return p; }
 let libLines = [], libProps = [], libUnparsed = [], libSim = true, libEdited = false, libTimers = [], libURL = null, libFile = null, libLinesOrig = [], libPropsOrig = [], libModelo = null;
 
-function libShow(stage){ ["step1","reading","trans","review"].forEach(s=>{ $("#lib-"+s).hidden = s!==stage; }); $("#lib-interp").hidden = stage!=="trans"; $("#lib-save").hidden = stage!=="review"; $("#sheet-body").scrollTop = 0; }
+function libShow(stage){ ["step1","reading","trans","review"].forEach(s=>{ $("#lib-"+s).hidden = s!==stage; }); $("#lib-interp").hidden = stage!=="trans"; $("#lib-save").hidden = stage!=="review"; $("#sheet-body").scrollTop = 0; if(stage==="review" && typeof enlaceIniciar==="function") enlaceIniciar(); }
 function libProgress(pasos){ libTimers.forEach(clearTimeout); libTimers = pasos.map(([t,msg,pct,fn])=>setTimeout(()=>{ $("#lib-status").textContent = msg; $("#lib-bar").style.width = pct+"%"; if(fn) fn(); }, t)); }
-function libReset(){ { const m = $("#lib-mejorar"); if(m) m.hidden = true; } libTimers.forEach(clearTimeout); libTimers = []; libLines = []; libProps = []; libUnparsed = []; libEdited = false; libFuente = "libreta"; libTrans = null; { const ey = $("#lib-leido-eyebrow"); if(ey) ey.textContent = "Lo que leí"; const ay = $("#lib-leido-ayuda"); if(ay) ay.textContent = "Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada."; const sm = $("#lib-fuente-sum"); if(sm) sm.textContent = "Ver la página"; const im = $("#lib-img2"); if(im) im.hidden = false; const au = $("#lib-audio"); if(au){ au.hidden = true; au.removeAttribute("src"); } } $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-lines").innerHTML = ""; $("#lib-rows").innerHTML = ""; $("#lib-banner").textContent = ""; libShow("step1"); }
+function libReset(){ { const m = $("#lib-mejorar"); if(m) m.hidden = true; } libTimers.forEach(clearTimeout); libTimers = []; libLines = []; libProps = []; libUnparsed = []; libEdited = false; libFuente = "libreta"; libTrans = null; if(typeof libEnlace!=="undefined"){ libEnlace = null; libEnlaceCands = []; const le = $("#lib-enlace"); if(le){ le.hidden = true; le.innerHTML = ""; } } { const ey = $("#lib-leido-eyebrow"); if(ey) ey.textContent = "Lo que leí"; const ay = $("#lib-leido-ayuda"); if(ay) ay.textContent = "Corrija cualquier palabra mal leída antes de interpretar. El punto ámbar marca lectura con duda; al editar una línea, queda confirmada."; const sm = $("#lib-fuente-sum"); if(sm) sm.textContent = "Ver la página"; const im = $("#lib-img2"); if(im) im.hidden = false; const au = $("#lib-audio"); if(au){ au.hidden = true; au.removeAttribute("src"); } } $("#lib-bar").style.width = "0"; $("#lib-status").textContent = "Enderezando la página…"; $("#lib-input").value = ""; $("#lib-gal").value = ""; $("#lib-lines").innerHTML = ""; $("#lib-rows").innerHTML = ""; $("#lib-banner").textContent = ""; libShow("step1"); }
 
 // --- motor remoto (opcional)
 function downscale(file, max=1600, q=.85){
@@ -3002,6 +3017,29 @@ async function libInterpretar(conModelo){
   $("#lib-interp").disabled = false;
 }
 let libRazon = null;
+// v53: enlace de la nota con un punto de hoy (polinización o plagas). Candidatos: lo que dice el texto («punto 3», «S2», «sector norte»), el GPS (≤ 35 m)
+// y lo más reciente. Siempre con confirmación: un toque; nada se enlaza en silencio. El enlace va en datos.enlace de cada registro que se guarda.
+let libEnlace = null, libEnlaceCands = [], libEnlacePos = null;
+function enlacePuntosHoy(){ const l = LOTES[lotIdx]; if(!l) return []; const lid = l.uuid || l.id; const out = []; const vistos = new Set();
+  (typeof POLINIZACION!=="undefined" && POLINIZACION || []).forEach(r=>{ if(r.lote_id!==lid || r.fecha!==hoyISO) return; const k = "po:" + r.punto_id; if(vistos.has(k)) return; vistos.add(k); out.push({tabla:"polinizacion", recorrido: r.recorrido, punto_id: r.punto_id, sector: r.sector, lat: r.lat, lon: r.lon, fecha: r.fecha, txt: `Polinización · ${r.punto_id}${r.sector && r.sector!==r.punto_id ? " · " + r.sector : ""}`, orden: out.length}); });
+  (typeof MONITOREOS!=="undefined" && MONITOREOS || []).forEach(m=>{ if(m.lote_id!==lid || m.fecha!==hoyISO) return; const k = "pl:" + m.punto_id + ":" + m.plaga; if(vistos.has(k)) return; vistos.add(k); const pc = plCfg(l, m.plaga); out.push({tabla:"monitoreos", recorrido: m.conteos && m.conteos.recorrido, punto_id: m.punto_id, plaga: m.plaga, lat: m.lat, lon: m.lon, fecha: m.fecha, txt: `Plagas · ${m.punto_id} · ${pc ? pc.nombre : m.plaga}`, orden: out.length}); });
+  return out; }
+function enlaceTexto(){ return (libLines || []).map(x=>typeof x==="string" ? x : (x && x.texto) || "").join(" ").toLowerCase(); }
+function enlaceCandidatos(){ const pts = enlacePuntosHoy(); if(!pts.length) return []; const t = enlaceTexto();
+  const esPo = /abejorr|colmena|poliniz|flor|marca/.test(t), esPl = /plaga|trampa|pulg|mosquita|mosca|trips|larva|gusano|daño|dano|hoja|minad|paratrioza|tizon|tizón/.test(t);
+  const mNum = t.match(/\b(?:punto|sector|parcela)\s*(?:n[úu]mero\s*)?(\d{1,2}|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b/) || t.match(/\b([sp])\s?(\d{1,2})\b/);
+  const nums = {uno:1, dos:2, tres:3, cuatro:4, cinco:5, seis:6, siete:7, ocho:8, nueve:9, diez:10}; const num = mNum ? (nums[mNum[mNum.length-1]] || +mNum[mNum.length-1]) : null;
+  return pts.map(p=>{ let puntaje = 0, por = [];
+    if(num!=null){ const pid = String(p.punto_id||"").toLowerCase(); const psec = String(p.sector||"").toLowerCase(); if(pid === "s" + num || pid === "p" + num || pid.endsWith(String(num)) && /\D/.test(pid.replace(String(num), "")) || psec.includes(String(num))){ puntaje += 3; por.push(`dice «${mNum[0].trim()}»`); } }
+    if(esPo && p.tabla==="polinizacion"){ puntaje += 1; por.push("habla de polinización"); } if(esPl && p.tabla==="monitoreos"){ puntaje += 1; por.push("habla de plagas"); }
+    if(libEnlacePos && p.lat!=null && p.lon!=null){ const d = plDist(libEnlacePos, p); p.dist = Math.round(d); if(d <= GPS_CERCA_M){ puntaje += 2; por.push(`está a ${Math.round(d)} m`); } else if(d <= 120){ puntaje += 0.5; } }
+    puntaje += Math.max(0, 0.4 - 0.1 * p.orden); return Object.assign({}, p, {puntaje, por}); }).sort((a,b)=>b.puntaje - a.puntaje).slice(0, 3); }
+function enlaceRender(){ const box = $("#lib-enlace"); if(!box) return; libEnlaceCands = enlaceCandidatos(); if(!libEnlaceCands.length){ box.hidden = true; libEnlace = null; return; }
+  const mejor = libEnlaceCands[0]; if(!libEnlace && mejor.puntaje >= 2) libEnlace = mejor;   // propuesta: se preselecciona solo con evidencia (mención del punto o GPS encima)
+  box.hidden = false; box.innerHTML = `<span class="eyebrow">¿Esta nota es de un punto de hoy?</span><p class="small muted" style="margin:4px 0 8px">Si la enlaza, queda guardada con ese punto (y en la bitácora). ${mejor.por.length ? "Pista: " + esc(mejor.por.join(", ")) + "." : "Sin pistas claras: elija solo si está seguro."}</p><div class="chips">${libEnlaceCands.map((c,i)=>`<button class="chip" data-enl="${i}" aria-pressed="${libEnlace && libEnlace.tabla===c.tabla && libEnlace.punto_id===c.punto_id && libEnlace.plaga===c.plaga}">${esc(c.txt)}${c.dist!=null ? ` · ${c.dist} m` : ""}</button>`).join("")}<button class="chip" data-enl="-1" aria-pressed="${!libEnlace}">Sin enlazar</button></div>`; }
+function enlaceIniciar(){ libEnlace = null; libEnlacePos = plPos || null; enlaceRender(); if(!navigator.geolocation) return; try{ navigator.geolocation.getCurrentPosition(pos=>{ libEnlacePos = {lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy}; if(!$("#lib-review").hidden) enlaceRender(); }, ()=>{}, {enableHighAccuracy:true, maximumAge:30000, timeout:8000}); }catch(e){} }
+function enlaceDatos(){ if(!libEnlace) return {}; const e = libEnlace; return {enlace: {tabla: e.tabla, recorrido: e.recorrido, punto_id: e.punto_id, sector: e.sector, plaga: e.plaga, lat: e.lat, lon: e.lon, fecha: e.fecha, por: e.por, elegido_por: "productor"}}; }
+document.addEventListener("click", e=>{ const b = e.target.closest("#lib-enlace [data-enl]"); if(!b) return; const i = +b.dataset.enl; libEnlace = i >= 0 ? libEnlaceCands[i] : null; enlaceRender(); });
 $("#lib-backlines").addEventListener("click", ()=>{ renderLibLines(); libShow("trans"); });
 function sel(k, opts, val){ return `<select data-k="${k}">${opts.map(o=>`<option${o===val?" selected":""}>${esc(o)}</option>`).join("")}</select>`; }
 function propCard(p, i){
@@ -3029,7 +3067,7 @@ $("#lib-rows").addEventListener("change", e=>{ const c = e.target.closest(".prop
 $("#lib-add").addEventListener("click", ()=>{ libProps.push(withDefaults({tipo:"aplicacion", fecha:hoyISO, dudas:[], nota:""})); renderLibRows(); const cards = $$("#lib-rows .prop"); cards[cards.length-1].scrollIntoView({behavior:"smooth", block:"center"}); });
 $("#lib-save").addEventListener("click", ()=>{
   const n = libProps.length; if(!n) return;
-  const src = (libFuente==="voz" || libFuente==="voz-local") ? "voz" : libFuente==="video-local" ? "video" : "libreta"; const extra = libFuente==="voz" && libTrans ? {transcripcion: libTrans.id} : (libFuente==="voz-local" || libFuente==="video-local") ? {telefono:true, ...(libFuente==="video-local" && vidPendCid ? {video_cliente_id: vidPendCid} : {}), entendido_por: libRazon && libRazon.modelo ? libRazon.modelo + " (teléfono)" : "reglas (teléfono)"} : (libRazon && libRazon.modelo ? {entendido_por: libRazon.modelo + " (teléfono)"} : {});
+  const src = (libFuente==="voz" || libFuente==="voz-local") ? "voz" : libFuente==="video-local" ? "video" : "libreta"; const extra = Object.assign(libFuente==="voz" && libTrans ? {transcripcion: libTrans.id} : (libFuente==="voz-local" || libFuente==="video-local") ? {telefono:true, ...(libFuente==="video-local" && vidPendCid ? {video_cliente_id: vidPendCid} : {}), entendido_por: libRazon && libRazon.modelo ? libRazon.modelo + " (teléfono)" : "reglas (teléfono)"} : (libRazon && libRazon.modelo ? {entendido_por: libRazon.modelo + " (teléfono)"} : {}), enlaceDatos());
   libProps.forEach(p=>{
     if(p.tipo==="aplicacion") addLog("aplique", `${p.clase||"otro"}: ${p.producto||"(sin nombre)"}${p.dosis?` · ${p.dosis} ${p.unidad||""}`:""}`, p.fecha||hoyISO, src, {producto:p.producto||"", dosis:p.dosis||"", unidad:p.unidad||"", clase:p.clase||"otro", leido:p.leido||"", ...extra});
     else if(p.tipo==="riego") addLog("regue", `Riego ${p.metodo||"aspersión"} · ${p.horas||"?"} h`, p.fecha||hoyISO, src, {horas:p.horas||"", metodo:p.metodo||"aspersión", leido:p.leido||"", ...extra});
@@ -3040,7 +3078,7 @@ $("#lib-save").addEventListener("click", ()=>{
   else if(libFuente==="voz-local"){ vozlGuardarNota(); }
   else if(libFuente==="video-local"){ const propuestos = libProps.map(p=>({linea:p.linea, tipo:p.tipo, fecha:p.fecha, horas:p.horas, producto:p.producto, dosis:p.dosis, unidad:p.unidad, que:p.que, donde:p.donde, sev:p.sev, rend:p.rend})); vidlActualizarCola(vidPendCid, {voz_confirmada:true, registros:n, propuestos, razonador: libRazon && libRazon.modelo ? {modelo: libRazon.modelo, origen:"llm", segundos: libRazon.segundos} : {modelo:"reglas locales", origen:"reglas"}}); vidPendCid = null; }
   else guardarLectura(libFile, libLinesOrig, libLines, libPropsOrig, libProps, (libSim ? "ejemplo+local" : (libModelo || "lector")) + (libRazon && libRazon.modelo ? ` + ${libRazon.modelo} (teléfono)` : ""));
-  afterSave(`${n} registro${n===1?"":"s"} ${libFuente==="voz" ? "de la nota de voz" : libFuente==="voz-local" ? "de la nota de voz (entendida en el teléfono)" : libFuente==="video-local" ? "de lo dicho en el video" : "de la libreta"} guardado${n===1?"":"s"} en la bitácora`);
+  afterSave(`${n} registro${n===1?"":"s"} ${libFuente==="voz" ? "de la nota de voz" : libFuente==="voz-local" ? "de la nota de voz (entendida en el teléfono)" : libFuente==="video-local" ? "de lo dicho en el video" : "de la libreta"} guardado${n===1?"":"s"} en la bitácora${libEnlace ? ` · enlazado${n===1?"":"s"} a ${libEnlace.punto_id}` : ""}`);
 });
 
 // ---------------------------------------------------------------- nota de voz: grabadora propia (micrófono) con respaldo de archivo
@@ -3267,7 +3305,7 @@ function plPuntoRender(){
   const meds = Object.entries(cfg.medidas||{}).sort((a,b)=>(a[1].informativa?1:0)-(b[1].informativa?1:0));
   $("#pl-medidas").innerHTML = meds.map(([k,m])=>{ const mt = (PLAGAS.medidas||{})[k] || {}; return `<div class="field"><label>${esc(mt.txt||k)}${m.informativa ? " <span class='tag'>informativo</span>" : ""} <span class="small muted">· bajo ≥ ${m.umbrales[0]}, medio ≥ ${m.umbrales[1]}, alto ≥ ${m.umbrales[2]}</span></label><div class="row" style="flex-wrap:nowrap"><button class="btn sec sm" data-plm="${k}" data-d="-1">−</button><input data-plk="${k}" inputmode="decimal" placeholder="0" style="text-align:center;font-weight:700;font-size:18px"><button class="btn sec sm" data-plm="${k}" data-d="1">+</button></div><div class="note">${esc(mt.como||"")}</div></div>`; }).join("")
     + `<div class="grid2"><div class="field"><label>Hojas o plantas revisadas</label><input data-plk="_n" inputmode="numeric" value="10"></div><div class="field"><label>Estadio que más vio</label><select data-plk="_estadio">${(cfg.estadios||[]).map(e=>`<option>${esc(e)}</option>`).join("")}<option>ninguno</option></select></div></div>`;
-  $$("#pl-nivel button").forEach(b=>b.setAttribute("aria-pressed","false")); pl.foto = null; plTelTrampa = null; { const b = $("#pl-foto-trampa"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#pl-foto-prev").hidden = true; $("#pl-foto-prev").innerHTML = ""; $("#pl-foto-input").value = "";
+  $$("#pl-nivel button").forEach(b=>b.setAttribute("aria-pressed","false")); pl.foto = null; plTelTrampa = null; npReset("pl"); { const b = $("#pl-foto-trampa"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#pl-foto-prev").hidden = true; $("#pl-foto-prev").innerHTML = ""; $("#pl-foto-input").value = "";
   plMotorRender();
 }
 function plConteos(){ const c = {}; $$("#pl-medidas [data-plk]").forEach(i=>{ const k = i.dataset.plk; if(k.startsWith("_")){ c[k] = i.value; return; } const v = String(i.value||"").replace(",","."); if(v!=="" && !isNaN(+v)) c[k] = +v; }); return c; }
@@ -3294,11 +3332,38 @@ async function plFinRazon(hs, sect, mapa, cfg, mx){       // v31: el modelo chic
   catch(e){ el.hidden = true; }
 }
 $("#pl-otro").addEventListener("click", ()=>plPaso("ruta"));
+// v53: nota de voz o texto dentro del punto (Polinización "po" y Plagas "pl"). La transcripción usa el modelo de voz del teléfono si está (vozlTranscribir).
+const notaPunto = {};
+function npReset(pref){ const n = notaPunto[pref] || (notaPunto[pref] = {}); if(n.rec && n.rec.state==="recording"){ try{ n.rec.onstop = null; n.rec.stop(); }catch(e){} } if(n.stream){ try{ n.stream.getTracks().forEach(t=>t.stop()); }catch(e){} }
+  Object.assign(n, {rec:null, stream:null, blob:null, dur:0, t0:0, transcrito:false}); const ta = $(`#${pref}-nota`); if(ta) ta.value = ""; const au = $(`#${pref}-nota-audio`); if(au){ au.hidden = true; au.removeAttribute("src"); }
+  const b = $(`#${pref}-nota-rec`); if(b){ b.textContent = "🎙 Grabar"; b.classList.remove("on"); b.disabled = false; } const h = $(`#${pref}-nota-hint`); if(h) h.textContent = ""; }
+async function npGrabar(pref){ const n = notaPunto[pref] || (notaPunto[pref] = {}); const b = $(`#${pref}-nota-rec`), h = $(`#${pref}-nota-hint`); const avisar = m => { if(h) h.textContent = m; };
+  if(n.rec && n.rec.state==="recording"){ try{ n.rec.stop(); }catch(e){} return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder==="undefined"){ toast("Este navegador no graba audio aquí: escriba la nota"); return; }
+  try{ n.stream = await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e){ toast("Sin permiso de micrófono: escriba la nota"); return; }
+  const tipo = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", ""].find(t=>!t || MediaRecorder.isTypeSupported(t)); const partes = [];
+  try{ n.rec = new MediaRecorder(n.stream, tipo ? {mimeType: tipo} : undefined); }catch(e){ n.rec = new MediaRecorder(n.stream); }
+  n.t0 = Date.now(); n.rec.ondataavailable = e=>{ if(e.data && e.data.size) partes.push(e.data); };
+  n.rec.onstop = async ()=>{ try{ n.stream.getTracks().forEach(t=>t.stop()); }catch(e){} n.stream = null; n.dur = Math.round((Date.now() - n.t0) / 1000); n.blob = new Blob(partes, {type: (n.rec && n.rec.mimeType) || tipo || "audio/webm"}); n.transcrito = false;
+    b.textContent = "🎙 Grabar otra"; b.classList.remove("on"); const au = $(`#${pref}-nota-audio`); if(au){ au.src = URL.createObjectURL(n.blob); au.hidden = false; }
+    if(typeof vozlDisponible==="function" && vozlDisponible()){ b.disabled = true; try{ const r = await vozlTranscribir(n.blob, avisar); const ta = $(`#${pref}-nota`); if(r && r.texto){ ta.value = (ta.value ? ta.value.trim() + " " : "") + r.texto; n.transcrito = true; } avisar(r && r.texto ? `Oído en el teléfono (${r.segundos} s): corrija lo que haga falta.` : "No se oyó nada claro: el audio se guarda y el motor lo oye con señal."); }
+      catch(e){ avisar("No se pudo transcribir aquí (" + String(e && e.message || e).slice(0, 60) + "): el audio se guarda y el motor lo oye con señal."); } b.disabled = false; }
+    else avisar(`Audio de ${n.dur} s guardado: el motor lo transcribe con señal (para oírlo aquí mismo: Ajustes → Sin señal → modelo de voz).`); };
+  n.rec.start(250); b.textContent = "■ Detener"; b.classList.add("on"); avisar("Grabando… toque para detener."); }
+function npTomar(pref){ const n = notaPunto[pref] || {}; const ta = $(`#${pref}-nota`); const texto = (ta && ta.value || "").trim(); return (texto || n.blob) ? {texto, audio: n.blob || null, dur: n.dur || 0, transcrito: !!n.transcrito} : null; }
+function npRegistrar(h, tabla, extraTxt, enlace){   // la nota del punto va a la bitácora como registro enlazado al punto; el audio sube como nota de voz (el motor lo oye con señal)
+  if(!h || !(h.nota || h.audio)) return;
+  const ext = h.audio ? (extDe(h.audio) === "bin" ? "webm" : extDe(h.audio)) : null; const cab = `Nota en ${h.punto_id}${extraTxt ? " · " + extraTxt : ""}: `;
+  const datos = {texto: h.nota || null, duracion_s: h.audio_s || 0, enlace, ...(h.audio ? {telefono: {texto: h.nota || null, confirmada: !!h.nota, transcrito_en_telefono: !!h.nota_transcrita}} : {})};
+  addLog(h.audio ? "voz" : "nota", (cab + (h.nota || `audio de ${h.audio_s || 0} s`)).slice(0, 300), hoyISO, h.audio ? "voz" : "punto", datos, h.audio ? {bucket:"audios", ext, blob: h.audio} : null);
+}
+["po", "pl"].forEach(pref=>{ const b = $(`#${pref}-nota-rec`); if(b) b.addEventListener("click", ()=>npGrabar(pref)); });
 function plGuardarPunto(){
   const p = pl.actual; const c = plConteos(); const conteos = Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith("_"))); const np = plNivelProductor();
-  if(!Object.keys(conteos).length && np==null){ toast("Anote al menos un conteo o marque el nivel"); return; }
+  const nota = npTomar("pl");
+  if(!Object.keys(conteos).length && np==null && !nota){ toast("Anote al menos un conteo, marque el nivel o deje una nota"); return; }
   plMotorRender(); const idx = pl.idx, g = pl.gate; const pos = plPos && plDist(plPos, p) <= 30 ? plPos : null;
-  pl.hechos = pl.hechos.filter(h=>h.punto_id!==p.id); pl.hechos.push({punto_id:p.id, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, conteos:{...conteos, hojas_o_plantas: +c._n || null, estadio: c._estadio || null, ...(plReco ? {reconocimiento_telefono: plReco} : {}), ...(plTelTrampa ? {trampa_telefono: plTelTrampa} : {})}, nivel_productor: np, nivel_motor: idx.nivel, nivel_final: g.nivel_final, acuerdo: g.acuerdo, motivo_motor: (idx.razones.concat(idx.agravantes.map(a=>"agravante: "+a)).join(" · ")).slice(0,400), foto: pl.foto, motivo: p.motivo});
+  pl.hechos = pl.hechos.filter(h=>h.punto_id!==p.id); pl.hechos.push({punto_id:p.id, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, conteos:{...conteos, hojas_o_plantas: +c._n || null, estadio: c._estadio || null, ...(plReco ? {reconocimiento_telefono: plReco} : {}), ...(plTelTrampa ? {trampa_telefono: plTelTrampa} : {}), ...(nota && nota.texto ? {nota: nota.texto} : {})}, nivel_productor: np, nivel_motor: idx.nivel, nivel_final: g.nivel_final, acuerdo: g.acuerdo, motivo_motor: (idx.razones.concat(idx.agravantes.map(a=>"agravante: "+a)).join(" · ")).slice(0,400), foto: pl.foto, motivo: p.motivo, nota: nota ? nota.texto : null, audio: nota ? nota.audio : null, audio_s: nota ? nota.dur : 0, nota_transcrita: nota ? nota.transcrito : false});
   toast(`${p.id} guardado: ${NIVEL_TXT[g.nivel_final]}`); pl.actual = null; plPaso("ruta");
 }
 function plFinRender(){
@@ -3320,6 +3385,7 @@ function plGuardarRecorrido(){
   pl.hechos.forEach(h=>{ const cid = uuid(); const fila = {_tabla:"monitoreos", cliente_id: cid, lote_id: lid, usuario: uid, fecha: hoyISO, plaga: pl.plaga, punto_id: h.punto_id, lat: h.lat, lon: h.lon, conteos: {...h.conteos, recorrido: grupo}, nivel_productor: h.nivel_productor, nivel_motor: h.nivel_motor, nivel_final: h.nivel_final, acuerdo: h.acuerdo, motivo_motor: h.motivo_motor, fuente: "app"};
     const local = {...fila, id: "local-" + cid}; delete local._tabla; monsLocal.push(local); MONITOREOS.unshift(local);
     if(MODO==="nube" && l.nube){ const arch = h.foto ? {bucket:"fotos", ext: extDe(h.foto), blob: h.foto} : null; if(arch) fila._campo_archivo = "foto"; encolarRegistro(fila, arch); } });
+  pl.hechos.forEach(h=>npRegistrar(h, "monitoreos", (cfg ? cfg.nombre : pl.plaga), {tabla:"monitoreos", recorrido: grupo, punto_id: h.punto_id, plaga: pl.plaga, lat: h.lat, lon: h.lon, fecha: hoyISO}));
   addLog("monitoreo", `Monitoreo de ${cfg ? cfg.nombre : pl.plaga} · ${pl.hechos.length} punto${pl.hechos.length===1?"":"s"} · nivel ${NIVEL_TXT[mx]}${des ? ` · ${des} con desacuerdo` : ""}`, hoyISO, undefined, {plaga: pl.plaga, puntos: pl.hechos.length, nivel: mx, desacuerdos: des, recorrido: grupo, resumen_mapa: pl.mapa ? pl.mapa.resumen : null});
   cacheGuardar(); renderPlagasHoy(); plGeoParar(); afterSave(`Recorrido guardado: ${pl.hechos.length} punto${pl.hechos.length===1?"":"s"}, nivel ${NIVEL_TXT[mx]}${des ? "; " + des + " para el agrónomo" : ""}`);
 }
@@ -3457,15 +3523,15 @@ function poDibujar(poly){ if(!poMap){ poMap = L.map("po-map", {zoomControl:true,
   po.puntos.forEach(p=>{ const h = hechos[p.id]; const col = h ? {bueno:"#17955A", regular:"#F2B04E", bajo:"#D63B2F"}[h.nivel] : null; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt${cercaN && cercaN.id===p.id ? " plpt-gps" : ""}" style="${col ? `background:${col};color:#fff;border-color:#fff` : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(poMap); m.on("click", ()=>{ po.actual = p; poPaso("punto"); }); poCapas.push(m); });
   if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
   poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ poMap.invalidateSize(); poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380); }
-function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; poTel = null; { const b = $("#po-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
+function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; poTel = null; npReset("po"); { const b = $("#po-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
 function poCalc(){ const fl = +$("#po-flores").value || 0, cm = +$("#po-marca").value; const cfg = poCfg(LOTES[lotIdx]); const box = $("#po-calc"); if(!fl || isNaN(cm) || $("#po-marca").value===""){ box.innerHTML = `<p class="note">Revise ${fl || 20} flores abiertas de 2 a 3 días y cuente las que tienen la marca (moretón café en el cono de anteras). Si prefiere, tome la foto y el motor cuenta con señal.</p>`; return; } const pct = Math.round(1000*Math.min(cm, fl)/fl)/10; const n = poNivel(pct, cfg); box.innerHTML = `<div class="row between"><span class="big" style="font-size:32px">${pct} %<small> con marca</small></span><span class="lvl ${PO_CLS[n]}">${n}</span></div><p class="note">${esc(cfg ? cfg.txt : "")}</p>`; }
 $("#po-flores").addEventListener("input", poCalc); $("#po-marca").addEventListener("input", poCalc);
 $("#po-medidas").addEventListener("click", e=>{ const b = e.target.closest("[data-pom]"); if(!b) return; const inp = $("#po-"+b.dataset.pom); inp.value = Math.max(0, (+inp.value||0) + (+b.dataset.d)); poCalc(); });
 $("#po-puntos").addEventListener("click", e=>{ const b = e.target.closest("[data-popt]"); if(!b) return; po.actual = po.puntos.find(p=>p.id===b.dataset.popt); poPaso("punto"); });
 $("#po-foto-input").addEventListener("change", e=>{ const f = e.target.files && e.target.files[0]; if(!f) return; poFoto = f; const u = URL.createObjectURL(f); $("#po-foto-prev").hidden = false; $("#po-foto-prev").innerHTML = `<img src="${u}" style="max-width:100%;border-radius:10px">`; if(typeof poAnalizar==="function") poAnalizar(f); });
 $("#po-volver").addEventListener("click", ()=>poPaso("ruta")); $("#po-terminar").addEventListener("click", ()=>poPaso("fin")); $("#po-otro").addEventListener("click", ()=>poPaso("ruta"));
-function poGuardarPunto(){ const p = po.actual; const fl = +$("#po-flores").value || 0; const cmTxt = $("#po-marca").value; if(cmTxt==="" && !poFoto){ toast("Cuente las flores con marca o tome la foto"); return; } const cm = cmTxt==="" ? null : Math.min(+cmTxt, fl); const pct = cm==null ? null : Math.round(1000*cm/fl)/10; const pos = plPos && plDist(plPos, p) <= 30 ? plPos : null;
-  po.hechos = po.hechos.filter(h=>h.punto_id!==p.id); po.hechos.push({punto_id:p.id, sector:p.sector, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, flores: cm==null ? null : fl, marca: cm, pct, nivel: poNivel(pct, poCfg(LOTES[lotIdx])), foto: poFoto, telefono: poTel ? {flores: poTel.flores, con_marca: poTel.con_marca, pct: poTel.pct, confianza: poTel.confianza, modelo: poTel.modelo, usado: cm!=null && poTel.con_marca===cm && poTel.flores===fl} : null}); toast(`${p.id} guardado${pct!=null ? `: ${pct} %` : " (foto para el motor)"}`); po.actual = null; poPaso("ruta"); }
+function poGuardarPunto(){ const p = po.actual; const fl = +$("#po-flores").value || 0; const cmTxt = $("#po-marca").value; const nota = npTomar("po"); if(cmTxt==="" && !poFoto && !nota){ toast("Cuente las flores con marca, tome la foto o deje una nota"); return; } const cm = cmTxt==="" ? null : Math.min(+cmTxt, fl); const pct = cm==null ? null : Math.round(1000*cm/fl)/10; const pos = plPos && plDist(plPos, p) <= 30 ? plPos : null;
+  po.hechos = po.hechos.filter(h=>h.punto_id!==p.id); po.hechos.push({punto_id:p.id, sector:p.sector, lat: pos ? pos.lat : p.lat, lon: pos ? pos.lon : p.lon, flores: cm==null ? null : fl, marca: cm, pct, nivel: poNivel(pct, poCfg(LOTES[lotIdx])), foto: poFoto, nota: nota ? nota.texto : null, audio: nota ? nota.audio : null, audio_s: nota ? nota.dur : 0, nota_transcrita: nota ? nota.transcrito : false, telefono: poTel ? {flores: poTel.flores, con_marca: poTel.con_marca, pct: poTel.pct, confianza: poTel.confianza, modelo: poTel.modelo, usado: cm!=null && poTel.con_marca===cm && poTel.flores===fl} : null}); toast(`${p.id} guardado${pct!=null ? `: ${pct} %` : poFoto ? " (foto para el motor)" : " (con nota)"}`); po.actual = null; poPaso("ruta"); }
 function poFinRender(){ const hs = po.hechos; const con = hs.filter(h=>h.pct!=null); const pct = con.length ? Math.round(10*con.reduce((a,h)=>a+h.pct,0)/con.length)/10 : null; const cfg = poCfg(LOTES[lotIdx]); const n = poNivel(pct, cfg);
   $("#po-fin-h").innerHTML = pct!=null ? `Polinización · <b>${pct} %</b> de flores con marca <span class="lvl ${PO_CLS[n]}">${n}</span>` : "Polinización · fotos para que el motor cuente";
   $("#po-fin-tabla").innerHTML = hs.map(h=>`<div class="sem-item" style="grid-template-columns:1fr auto"><div><b>${h.punto_id} · ${esc(h.sector)}</b><span>${h.pct!=null ? `${h.marca} de ${h.flores} flores con marca` : "foto: el motor cuenta con señal"}${h.foto ? " · con foto" : ""}</span></div>${h.nivel ? `<span class="lvl ${PO_CLS[h.nivel]}">${h.nivel}</span>` : ""}</div>`).join("");
@@ -3473,6 +3539,7 @@ function poFinRender(){ const hs = po.hechos; const con = hs.filter(h=>h.pct!=nu
 function poGuardarRecorrido(){ const l = LOTES[lotIdx]; if(!po.hechos.length) return; const uid = sesion && sesion.user ? sesion.user.id : null; const lid = l.uuid||l.id; const grupo = uuid(); const con = po.hechos.filter(h=>h.pct!=null); const pct = con.length ? Math.round(10*con.reduce((a,h)=>a+h.pct,0)/con.length)/10 : null; const n = poNivel(pct, poCfg(l));
   po.hechos.forEach(h=>{ const cid = uuid(); const fila = {_tabla:"polinizacion", cliente_id:cid, lote_id:lid, usuario:uid, fecha:hoyISO, sector:h.sector, punto_id:h.punto_id, lat:h.lat, lon:h.lon, flores_revisadas:h.flores, flores_con_marca:h.marca, pct_marca:h.pct, nivel:h.nivel, recorrido:grupo}; const local = {...fila, id:"local-"+cid}; delete local._tabla; POLINIZACION.unshift(local);
     if(MODO==="nube" && l.nube){ const arch = h.foto ? {bucket:"fotos", ext:extDe(h.foto), blob:h.foto} : null; if(arch) fila._campo_archivo = "foto"; encolarRegistro(fila, arch); } });
+  po.hechos.forEach(h=>npRegistrar(h, "polinizacion", h.sector && h.sector!==h.punto_id ? `${h.sector} · polinización` : "polinización", {tabla:"polinizacion", recorrido: grupo, punto_id: h.punto_id, sector: h.sector, lat: h.lat, lon: h.lon, fecha: hoyISO}));
   addLog("polinizacion", `Polinización · ${po.hechos.length} punto${po.hechos.length===1?"":"s"}${pct!=null ? ` · ${pct} % con marca · ${n}` : " · fotos para el motor"}`, hoyISO, undefined, {puntos:po.hechos.length, pct, nivel:n, recorrido:grupo, telefono: po.hechos.filter(h=>h.telefono).map(h=>({punto_id:h.punto_id, ...h.telefono}))});
   cacheGuardar(); renderPolinHoy(); plGeoParar(); afterSave(pct!=null ? `Recorrido guardado: ${pct} % de flores con marca (${n})` : "Recorrido guardado: el motor cuenta las flores con señal"); }
 $("#po-save").addEventListener("click", ()=>{ if(!po) return; if(po.paso==="ruta"){ const pend = poPendientes(); if(pend.length){ po.actual = pend[0]; poPaso("punto"); } else if(po.hechos.length) poPaso("fin"); } else if(po.paso==="punto") poGuardarPunto(); else poGuardarRecorrido(); });
@@ -3869,7 +3936,7 @@ function vozlGuardarNota(){            // al "Guardar" de la revisión: los regi
   const propuestos = libProps.map(p=>({linea:p.linea, tipo:p.tipo, fecha:p.fecha, horas:p.horas, producto:p.producto, dosis:p.dosis, unidad:p.unidad, que:p.que, donde:p.donde, sev:p.sev, rend:p.rend}));   // v31: lo que el teléfono entendió, para que el motor mida el acuerdo
   const razonador = libRazon && libRazon.modelo ? {modelo: libRazon.modelo, origen:"llm", segundos: libRazon.segundos} : {modelo:"reglas locales", origen:"reglas", error: libRazon && libRazon.error ? libRazon.error : undefined};
   addLog("voz", `Nota de voz · ${v.dur ? fmtT(v.dur) : Math.round(v.blob.size/1024)+" KB"} · entendida en el teléfono (${n} registro${n===1?"":"s"})`, hoyISO, "voz",
-    {duracion_s: Math.round(v.dur||0), kb: Math.round(v.blob.size/1024), telefono:{texto:v.texto, lineas:libLines, modelo:v.modelo, segundos:v.segundos, confirmada:true, registros:n, propuestos, razonador}}, {bucket:"audios", ext, blob:v.blob});
+    {duracion_s: Math.round(v.dur||0), kb: Math.round(v.blob.size/1024), telefono:{texto:v.texto, lineas:libLines, modelo:v.modelo, segundos:v.segundos, confirmada:true, registros:n, propuestos, razonador}, ...enlaceDatos()}, {bucket:"audios", ext, blob:v.blob});
 }
 // --- pantalla Más -> Sin señal
 function renderSinSenal(){
@@ -3988,8 +4055,12 @@ async function webllmPrecargar(lib, id, appConfig, avisar, diag){
   const tf = conf.tokenizer_files || []; const principal = tf.includes("tokenizer.json") ? "tokenizer.json" : tf.includes("tokenizer.model") ? "tokenizer.model" : null;
   if(principal) await bajar(cMod, new URL(principal, base).href, principal, 0);
   for(const f of tf.filter(x=>x !== principal && /^[\w.-]+$/.test(x))){ try{ await bajar(cMod, new URL(f, base).href, f, 0); }catch(e){ diagAnotar(diag, `tokenizador: ${f} no se pudo bajar (${String(e && e.message || e).slice(0, 60)}); se sigue`); } }
-  const uCache = new URL("ndarray-cache.json", base).href; await bajar(cMod, uCache, "ndarray-cache.json", 0);
-  const nd = await leerJson(cMod, uCache); const tandas = (nd && nd.records) || []; total = tandas.reduce((a, t)=>a + (t.nbytes || 0), 0); hecho = 0;
+  // v52.5: el índice de tandas tiene dos nombres (TVM renombró ndarray-cache.json -> tensor-cache.json; WebLLM 0.2.87 pide el nuevo). Se baja el que haya y se guarda bajo los dos.
+  const uCache = new URL("ndarray-cache.json", base).href, uTensor = new URL("tensor-cache.json", base).href; let indice = null;
+  for(const [u, nm] of [[uTensor, "tensor-cache.json"], [uCache, "ndarray-cache.json"]]){ try{ await bajar(cMod, u, nm, 0); indice = indice || u; }catch(e){ diagAnotar(diag, `${nm}: ${String(e && e.message || e).slice(0, 70)}`); } }
+  if(!indice) throw new Error("el repositorio no tiene el índice de tandas (ni tensor-cache.json ni ndarray-cache.json)");
+  for(const u of [uTensor, uCache]){ if(!(await cMod.match(new Request(u)))){ const r = await cMod.match(new Request(indice)); if(r) await cMod.put(new Request(u), new Response(await r.clone().arrayBuffer(), {status: 200, headers: {"content-type": "application/json"}})); diagAnotar(diag, `índice de tandas copiado como ${u.split("/").pop()}`); } }
+  const nd = await leerJson(cMod, indice); const tandas = (nd && nd.records) || []; total = tandas.reduce((a, t)=>a + (t.nbytes || 0), 0); hecho = 0;
   for(let i = 0; i < tandas.length; i++){ const t = tandas[i]; avisar(Math.round(100 * hecho / Math.max(1, total)), `bajando ${i + 1}/${tandas.length} · ${Math.round(hecho / 1048576)} de ${Math.round(total / 1048576)} MB`); await bajar(cMod, new URL(t.dataPath, base).href, t.dataPath, t.nbytes || 0); }
   diagAnotar(diag, `precarga: ${tandas.length} tandas, ${Math.round(total / 1048576)} MB, ${bajados} archivos bajados ahora`); avisar(100, `archivos listos (${Math.round(total / 1048576)} MB); armando el modelo…`); return true;
 }
