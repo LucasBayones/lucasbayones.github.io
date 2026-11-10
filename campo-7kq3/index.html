@@ -2401,7 +2401,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "52.3 · 9 nov 2026";
+const APP_VERSION = "52.4 · 9 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3985,12 +3985,28 @@ async function webllmPrecargar(lib, id, appConfig, avisar, diag){
   avisar(0, "comprobando los archivos del modelo…");
   const uConf = new URL("mlc-chat-config.json", base).href; await bajar(cConf, uConf, "mlc-chat-config.json", 0); const conf = await leerJson(cConf, uConf) || {};
   if(rec.model_lib) await bajar(cWasm, rec.model_lib, "biblioteca WebGPU", 0);
-  const tf = conf.tokenizer_files || []; const tok = tf.includes("tokenizer.json") ? ["tokenizer.json"] : tf.includes("tokenizer.model") ? ["tokenizer.model"] : tf.filter(f=>f==="vocab.json" || f==="merges.txt");
-  for(const f of tok) await bajar(cMod, new URL(f, base).href, f, 0);
+  const tf = conf.tokenizer_files || []; const principal = tf.includes("tokenizer.json") ? "tokenizer.json" : tf.includes("tokenizer.model") ? "tokenizer.model" : null;
+  if(principal) await bajar(cMod, new URL(principal, base).href, principal, 0);
+  for(const f of tf.filter(x=>x !== principal && /^[\w.-]+$/.test(x))){ try{ await bajar(cMod, new URL(f, base).href, f, 0); }catch(e){ diagAnotar(diag, `tokenizador: ${f} no se pudo bajar (${String(e && e.message || e).slice(0, 60)}); se sigue`); } }
   const uCache = new URL("ndarray-cache.json", base).href; await bajar(cMod, uCache, "ndarray-cache.json", 0);
   const nd = await leerJson(cMod, uCache); const tandas = (nd && nd.records) || []; total = tandas.reduce((a, t)=>a + (t.nbytes || 0), 0); hecho = 0;
   for(let i = 0; i < tandas.length; i++){ const t = tandas[i]; avisar(Math.round(100 * hecho / Math.max(1, total)), `bajando ${i + 1}/${tandas.length} · ${Math.round(hecho / 1048576)} de ${Math.round(total / 1048576)} MB`); await bajar(cMod, new URL(t.dataPath, base).href, t.dataPath, t.nbytes || 0); }
   diagAnotar(diag, `precarga: ${tandas.length} tandas, ${Math.round(total / 1048576)} MB, ${bajados} archivos bajados ahora`); avisar(100, `archivos listos (${Math.round(total / 1048576)} MB); armando el modelo…`); return true;
+}
+// v52.4: durante la carga se envuelven caches.open y fetch para anotar qué clave no encuentra WebLLM y qué dirección responde con error.
+function webllmEspiar(diag){
+  if(typeof caches === "undefined" || window.__espiaWebllm) return () => {};
+  const abrir0 = caches.open.bind(caches), fetch0 = window.fetch; const corto = u => String(u || "").replace(/^https?:\/\/(www\.)?/, "").replace(/\/resolve\/main\//, "/…/").slice(-70);
+  const envolver = c => {
+    if(c.__espiado) return c; const add0 = c.add.bind(c), match0 = c.match.bind(c);
+    c.add = async req => { const u = typeof req === "string" ? req : (req && req.url) || ""; try{ await add0(req); diagAnotar(diag, `caché add ok: ${corto(u)}`); }catch(e){ diagAnotar(diag, `caché add FALLÓ: ${corto(u)} · ${String(e && e.message || e).slice(0, 50)}`); razl.urlFallida = u; throw e; } };
+    c.match = async (req, o) => { const r = await match0(req, o); if(!r){ const u = typeof req === "string" ? req : (req && req.url) || ""; diagAnotar(diag, `caché sin: ${corto(u)}`); } return r; };
+    c.__espiado = true; return c;
+  };
+  caches.open = async nm => envolver(await abrir0(nm));
+  window.fetch = async (u, o) => { const r = await fetch0(u, o); try{ const url = typeof u === "string" ? u : (u && u.url) || ""; if(!r.ok && /huggingface|githubusercontent|jsdelivr/.test(url)){ diagAnotar(diag, `red ${r.status}: ${corto(url)}`); razl.urlFallida = url; } }catch(e){} return r; };
+  window.__espiaWebllm = true;
+  return () => { caches.open = abrir0; window.fetch = fetch0; window.__espiaWebllm = false; };
 }
 async function razlCargarWebLLM(m, avisarProg){
   const lib = await webllmLib(); diagAnotar(razl.diag, `webllm ${lib.prebuiltAppConfig ? "0.2.87" : "falso"}: ${m.mlc}`);
@@ -4014,14 +4030,18 @@ async function razlCargarWebLLM(m, avisarProg){
       const crear = async () => { try{ return await lib.CreateMLCEngine(id, conf(), ajuste || undefined); }
         catch(e){ const msg = String(e && e.message || e); if(ajuste && /context|window|sliding|sink|exceed|greater|larger|kv/i.test(msg)){ diagAnotar(razl.diag, `ajuste de memoria rechazado (${msg.slice(0,80)}): valores de fábrica`); ajuste = null; return lib.CreateMLCEngine(id, conf()); } throw e; } };
       await webllmPrecargar(lib, id, appConfig, (pr, txt)=>{ avisarProg(pr, txt); cargaProgreso({status: pr >= 100 ? "done" : "progress", progress: pr, file:"webllm"}); }, razl.diag);
-      let engine = await crear();
+      razl.urlFallida = null; let engine = null; const quitarEspia = webllmEspiar(razl.diag);
+      try{ engine = await crear(); }
+      catch(e){ const msg = String(e && e.message || e); if(!/Response is not OK|Load failed|Failed to fetch|NetworkError|network error/i.test(msg)) throw e;
+        diagAnotar(razl.diag, `carga: ${msg.slice(0, 80)}${razl.urlFallida ? " · en " + razl.urlFallida.split("/").pop() : ""}; se espera 30 s y se reintenta`); avisarProg(0, "una descarga falló; se reintenta en 30 s…"); await new Promise(r_=>setTimeout(r_, 30000)); engine = await crear(); }
+      finally{ quitarEspia(); }
       if(primera){                                                                                            // v48: recién bajado = pico de memoria; se suelta la GPU y se recarga desde la caché del teléfono (como cerrar y abrir)
         avisarProg(100, "descargado; recargando desde la memoria del teléfono…"); diagAnotar(razl.diag, "primera descarga: recarga desde caché");
         try{ await engine.unload(); }catch(e){} engine = null; await new Promise(r_=>setTimeout(r_, 800));
         engine = await crear(); }
       razl.ajuste = ajuste; diagAnotar(razl.diag, ajuste ? `memoria: ventana de contexto ${ajuste.context_window_size}` : "memoria: valores de fábrica de la biblioteca");
       cargaFin(); razl.engine = engine; razl.pipe = null; razl.motor = "webllm"; razl.dtype = id.includes("q4f32") ? "q4f32_1" : "q4f16_1"; razl.mlc = id; diagAnotar(razl.diag, `cargado con webllm (${id})${primera ? " · recargado desde caché" : ""}`); return true;
-    }catch(e){ cargaFin(); const msg = (e && e.message ? e.message : String(e)); diagAnotar(razl.diag, `webllm ${id}: ${msg.slice(0, 220)}`); razl.engine = null; razl.webllmError = msg.slice(0, 240); if(!/f16|feature|shader/i.test(msg)) return false; }
+    }catch(e){ cargaFin(); const msg = (e && e.message ? e.message : String(e)); diagAnotar(razl.diag, `webllm ${id}: ${msg.slice(0, 220)}`); razl.engine = null; razl.webllmError = msg.slice(0, 240) + (razl.urlFallida ? ` (archivo: ${String(razl.urlFallida).split("/").pop().slice(0, 60)})` : ""); if(!/f16|feature|shader/i.test(msg)) return false; }
   }
   return false;
 }
@@ -4051,7 +4071,7 @@ async function razlCargar(modelo){
     let intentos = razlIntentos(m), ok = false, omitidos = 0;                                       // v32.1/v37: si una variante no existe o el motor falla, se prueba la siguiente; lo que tumbó la app no se repite
     if(webllmPosible(m)){ ok = await razlCargarWebLLM(m, (pr, txt)=>{ razl.progreso = pr; razl.archivo = txt; renderSinSenal(); }); if(ok) intentos = []; }   // v38: WebLLM primero (GPU por tandas)
     else if(m.mlc && caidaDe("razon", m.mlc, "webllm")){ diagAnotar(razl.diag, "webllm: omitido (tumbó la app antes)"); omitidos++; }
-    if(!ok && !intentos.length && !omitidos) throw new Error(razl.webllmError ? (/Response is not OK/i.test(razl.webllmError) ? "una descarga respondió con error (Hugging Face limita las descargas por un rato): vuelva a tocar el botón en unos minutos; lo ya bajado queda guardado" : razl.webllmError) : (m.gpu ? "este modelo necesita el procesador gráfico (WebGPU): este teléfono no lo tiene o el navegador no lo activa" : "no hay motor disponible: sin WebGPU, las notas se entienden por reglas"));
+    if(!ok && !intentos.length && !omitidos) throw new Error(razl.webllmError ? (/Response is not OK/i.test(razl.webllmError) ? `una descarga respondió con error${razl.urlFallida ? " (" + String(razl.urlFallida).split("/").pop().slice(0, 60) + ")" : ""}: vuelva a tocar el botón en unos minutos; lo ya bajado queda guardado. Copie el diagnóstico y mándelo` : razl.webllmError) : (m.gpu ? "este modelo necesita el procesador gráfico (WebGPU): este teléfono no lo tiene o el navegador no lo activa" : "no hay motor disponible: sin WebGPU, las notas se entienden por reglas"));
     for(const [device, dtype] of intentos){
       if(caidaDe("razon", m.id, device)){ diagAnotar(razl.diag, `${device}/${dtype}: omitido (tumbó la app antes)`); omitidos++; continue; }
       if(!tjs){ try{ tjs = await vozlLib(); diagAnotar(razl.diag, `biblioteca: ${vozl.lib || "?"}`); }catch(e){ diagAnotar(razl.diag, `biblioteca ORT: ${String(e && e.message || e).slice(0,100)}`); break; } }
