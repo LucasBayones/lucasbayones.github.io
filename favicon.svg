@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Engram Technologies">
+  <defs>
+    <linearGradient id="eg" gradientUnits="userSpaceOnUse" x1="70" y1="56" x2="140" y2="144"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#2563EB"/></linearGradient>
+    <linearGradient id="orb" gradientUnits="userSpaceOnUse" x1="16" y1="100" x2="184" y2="100"><stop offset="0" stop-color="#10B981"/><stop offset="0.5" stop-color="#22D3EE"/><stop offset="1" stop-color="#2563EB"/></linearGradient>
+    <radialGradient id="core" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.35" stop-color="#22D3EE"/><stop offset="1" stop-color="#22D3EE" stop-opacity="0"/></radialGradient>
+  </defs>
+  <!-- órbitas: la conexión -->
+  <g fill="none" stroke="url(#orb)" stroke-width="2.4" stroke-linecap="round">
+    <ellipse cx="100" cy="100" rx="84" ry="30" transform="rotate(-32 100 100)" opacity="0.95"/>
+    <ellipse cx="100" cy="100" rx="84" ry="30" transform="rotate(32 100 100)" opacity="0.75"/>
+    <ellipse cx="100" cy="100" rx="92" ry="92" stroke-dasharray="2 7" stroke-width="1.4" opacity="0.45"/>
+  </g>
+  <!-- la E: tres barras y la espina, trazo grueso con esquinas redondeadas -->
+  <g fill="none" stroke="url(#eg)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M70 56 H140"/>
+    <path d="M70 100 H122"/>
+    <path d="M70 144 H140"/>
+    <path d="M70 56 V144"/>
+  </g>
+  <!-- nodos donde las órbitas tocan la E -->
+  <g fill="#0B1220" stroke="#22D3EE" stroke-width="2.2">
+    <circle cx="140" cy="56" r="5.5"/><circle cx="140" cy="144" r="5.5"/><circle cx="70" cy="100" r="5.5"/>
+  </g>
+  <!-- núcleo: el recuerdo -->
+  <circle cx="128" cy="100" r="22" fill="url(#core)" opacity="0.9"/>
+  <circle cx="128" cy="100" r="7" fill="#FFFFFF"/>
+  <circle cx="128" cy="100" r="11" fill="none" stroke="#22D3EE" stroke-width="2"/>
+</svg>

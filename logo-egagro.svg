@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="EG Agro">
+  <defs>
+    <linearGradient id="hoja" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="1" stop-color="#059669"/></linearGradient>
+  </defs>
+  <!-- la hoja -->
+  <path d="M100 18 C148 50 160 104 126 150 C116 164 106 172 100 182 C94 172 84 164 74 150 C40 104 52 50 100 18 Z" fill="url(#hoja)" fill-opacity="0.14" stroke="url(#hoja)" stroke-width="4.5" stroke-linejoin="round"/>
+  <!-- curvas de nivel: el lote leído desde arriba -->
+  <g fill="none" stroke="#34D399" stroke-linecap="round">
+    <path d="M100 42 C136 68 144 108 118 144 C110 154 104 160 100 166 C96 160 90 154 82 144 C56 108 64 68 100 42 Z" stroke-width="2.2" opacity="0.85"/>
+    <path d="M100 64 C126 84 130 112 112 138 C106 146 102 150 100 152 C98 150 94 146 88 138 C70 112 74 84 100 64 Z" stroke-width="2" opacity="0.7"/>
+    <path d="M100 86 C116 100 118 118 108 132 C104 137 101 140 100 141 C99 140 96 137 92 132 C82 118 84 100 100 86 Z" stroke-width="1.8" opacity="0.55"/>
+    <path d="M100 108 C106 114 107 122 103 128 C102 130 101 131 100 132 C99 131 98 130 97 128 C93 122 94 114 100 108 Z" stroke-width="1.6" opacity="0.4"/>
+  </g>
+  <!-- nervadura como red: nodos y enlaces -->
+  <g fill="none" stroke="#22D3EE" stroke-width="1.8" stroke-linecap="round">
+    <path d="M100 30 V170" stroke-dasharray="3 6" opacity="0.8"/>
+    <path d="M100 76 L136 90 M100 76 L66 92 M100 112 L128 130 M100 112 L70 128 M66 92 L52 118 M136 90 L150 116"/>
+  </g>
+  <g fill="#0B1220" stroke="#22D3EE" stroke-width="2.4">
+    <circle cx="100" cy="76" r="5"/><circle cx="100" cy="112" r="5"/><circle cx="136" cy="90" r="4.5"/><circle cx="66" cy="92" r="4.5"/><circle cx="128" cy="130" r="4.5"/><circle cx="70" cy="128" r="4.5"/>
+    <circle cx="52" cy="118" r="4" fill="#22D3EE"/><circle cx="150" cy="116" r="4" fill="#22D3EE"/>
+  </g>
+  <!-- tallo -->
+  <path d="M100 182 L100 194" stroke="#059669" stroke-width="4.5" stroke-linecap="round"/>
+</svg>
