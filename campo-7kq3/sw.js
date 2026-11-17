@@ -1,5 +1,5 @@
-// Engram Campo — service worker: red primero (siempre la versión más nueva), caché de respaldo para abrir sin señal.
-const CACHE = "engram-campo-v28";
+// Engram Campo — service worker: red primero (la versión más nueva), con tope de espera; si la red no contesta a tiempo o no hay señal, se abre la copia guardada.
+const CACHE = "engram-campo-v30";
 const LIB = "engram-lib-v1";   // v52.5: bibliotecas (./lib/ de ORT y transformers.js, y las del CDN como WebLLM) en una caché que sobrevive a las actualizaciones:
                                // antes vivían en la caché de la app y cada versión nueva las borraba; sin señal fallaban voz, fotos, libreta y razonador ("Importing a module script failed") hasta volver a bajarlas
 const SHELL = ["./", "./index.html", "./manifest.json", "./leaflet.js", "./leaflet.css", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./worker_modelos.js"];
@@ -18,6 +18,10 @@ self.addEventListener("activate", e => {
     await self.clients.claim();
   })());
 });
+// v53.2: con señal mala la red no falla, se queda colgada, y la app esperaba con la pantalla en blanco aunque estaba guardada en el teléfono.
+// Ahora la red tiene 3 segundos; si no contesta se abre la copia guardada y lo nuevo termina de bajar por detrás (queda para la próxima vez).
+// Tras un primer corte por lentitud, durante 30 segundos lo guardado sale de inmediato, para no sumar esperas archivo por archivo.
+const ESPERA_MS = 3000, PAUSA_MS = 30000; let redLentaHasta = 0;
 const TILES = "engram-tiles-v1";   // mapa guardado para el campo (Más -> Sin señal): primero la caché, si no la red (y se guarda)
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
@@ -31,12 +35,20 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (url.origin !== self.location.origin) return;
-  e.respondWith(
-    fetch(e.request, { cache: "no-cache" }).then(res => {       // no-cache = revalidar con el servidor (GitHub Pages manda max-age=600: sin esto, hasta 10 min con la versión vieja)
-      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const guardada = (await cache.match(e.request, { ignoreSearch: true })) || (e.request.mode === "navigate" ? await cache.match("./index.html") : undefined);
+    const red = fetch(e.request, { cache: "no-cache" }).then(res => {   // no-cache = revalidar con el servidor (GitHub Pages manda max-age=600: sin esto, hasta 10 min con la versión vieja)
+      if (res.ok) cache.put(e.request, res.clone());
       return res;
-    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || (e.request.mode === "navigate" ? caches.match("./index.html") : Response.error())))
-  );
+    });
+    if (!guardada) return red.catch(() => Response.error());          // nada guardado todavía: solo queda la red
+    const porDetras = () => e.waitUntil(red.catch(() => {}));         // que termine de bajar aunque ya se haya respondido con lo guardado
+    if (Date.now() < redLentaHasta) { porDetras(); return guardada; }
+    const res = await Promise.race([red.catch(() => null), new Promise(r => setTimeout(() => r(undefined), ESPERA_MS))]);
+    if (res === undefined) { redLentaHasta = Date.now() + PAUSA_MS; porDetras(); return guardada; }   // la red no contestó a tiempo
+    return res && res.ok ? res : guardada;                            // sin red, o respuesta mala: la copia guardada
+  })());
 });
 // avisos al teléfono: el RIG manda {titulo, cuerpo, url, tipo}; tocar el aviso abre (o trae al frente) la app
 self.addEventListener("push", e => {
