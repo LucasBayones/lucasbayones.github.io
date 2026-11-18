@@ -8,7 +8,7 @@
 <link rel="icon" href="icon.svg">
 <link rel="stylesheet" href="leaflet.css">
 <style>
-/* EG Agro Web v2 (17 nov 2026; v1: 9 nov 2026) · la misma paleta de la app: verde profundo para la marca y la acción, ocre para lo del suelo y el lote, semáforo aparte.
+/* EG Agro Web v3 (17 nov 2026: tablero de control; v2: trabajos por campaña; v1: 9 nov 2026) · la misma paleta de la app: verde profundo para la marca y la acción, ocre para lo del suelo y el lote, semáforo aparte.
    Escritorio primero (barra lateral + contenido ancho); en pantallas angostas la barra pasa arriba. Tipografía del sistema: sin descargas. */
 :root{
   --bg:#F2F5F1; --surface:#FFFFFF; --surface-2:#EBF0EC; --ink:#14241C; --fg:#182A20; --muted:#5E7066; --line:#DDE5DF;
@@ -94,6 +94,26 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
 .foto{max-width:260px;border-radius:10px;display:block;margin-top:6px}
 .steps{display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))} .step{background:var(--surface-2);border-radius:12px;padding:12px} .step .n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:13px;margin-bottom:6px}
 @media (max-width:760px){.steps{grid-template-columns:1fr 1fr}}
+/* v3 · tablero de control (solo administradores) */
+.vivo{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)} .vivo i{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none} .vivo.mal i{background:var(--bad)} .vivo.pausa i{background:var(--muted)}
+@media (prefers-reduced-motion: no-preference){ .vivo:not(.mal):not(.pausa) i{animation:tb-late 2.4s ease-in-out infinite} } @keyframes tb-late{0%,100%{opacity:1}50%{opacity:.35}}
+.tb-aviso{border:1px solid var(--warn);background:var(--warn-bg);color:var(--ink);border-radius:12px;padding:10px 14px;font-size:14px}
+.tb-dos{display:grid;gap:16px;grid-template-columns:minmax(0,3fr) minmax(0,2fr);align-items:start} @media (max-width:1100px){.tb-dos{grid-template-columns:1fr}}
+.tb-traba{display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:start;padding:11px 0;border-top:1px solid var(--line)} .tb-traba:first-child{border-top:0}
+.tb-traba .gr{font-size:11px;letter-spacing:.8px;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap;background:var(--surface-2);color:var(--muted)}
+.tb-traba .gr.alto{background:var(--bad-bg);color:var(--bad)} .tb-traba .gr.medio{background:var(--warn-bg);color:var(--warn)}
+.tb-traba b{display:block;overflow-wrap:anywhere} .tb-traba .acc{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap} .tb-traba .det{font-size:13px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere} .tb-traba.hecho b{text-decoration:line-through;color:var(--muted)}
+.tb-traba details{font-size:12.5px;color:var(--muted);margin-top:4px} .tb-traba pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin:6px 0 0;padding:8px;border-radius:8px;background:var(--surface-2);max-height:220px;overflow:auto}
+.tb-feed{max-height:640px;overflow:auto;margin-top:8px} .tb-dia{position:sticky;top:0;background:var(--surface);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700;padding:8px 0 4px;z-index:1}
+.tb-it{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px} .tb-it .h{color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px;padding-top:1px}
+.tb-it .q{font-weight:700} .tb-it .t{color:var(--muted);font-size:13px;overflow-wrap:anywhere} .tb-it .cl{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-left:6px}
+.tb-it.nuevo{background:var(--accent-bg)} .tb-it .estado{margin-left:6px}
+@media (max-width:760px){ .tb-traba{grid-template-columns:1fr;gap:6px} .tb-traba .gr{justify-self:start} .tb-traba .acc{justify-content:flex-start} .tb-feed{max-height:520px} }
+#tb-personas td,#tb-personas th{padding:8px 6px} #tb-personas tr[data-persona]{cursor:pointer} #tb-personas tr[data-persona]:hover td{background:var(--surface-2)} #tb-personas tr.sel td{background:var(--accent-bg)}
+#tb-personas .cor{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.tb-form{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px} @media (max-width:900px){.tb-form{grid-template-columns:1fr}}
+.tb-form label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)} .tb-form select,.tb-form input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 10px;min-width:0;width:100%}
+.tb-par{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;font-size:14px}
 </style>
 </head>
 <body>
@@ -116,6 +136,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
     <button data-sec="reportes"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h6M9 16h6"/></svg>Reportes PDF</button>
     <button data-sec="alertas"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Alertas<small id="nav-alertas" hidden></small></button>
     <div class="grupo" id="grupo-equipo" hidden>Equipo</div>
+    <button data-sec="tablero" id="nav-tablero" hidden><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 14l3-3 3 2 4-5"/><path d="M9 21h6"/></svg>Tablero de control<small id="nav-trabas" hidden></small></button>
     <button data-sec="panel" id="nav-panel" hidden><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg>Panel del agrónomo<small id="nav-cola" hidden></small></button>
     <div class="grupo">Cuenta</div>
     <button data-sec="cuenta"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Cuenta y teléfono</button>
@@ -196,6 +217,28 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
     <section class="vista" id="sec-alertas">
       <div class="cab-sec"><div><span class="eyebrow">Alertas</span><h1>Le avisamos cuando importa</h1><p>El motor abre una alerta cuando el riesgo (probabilidad del ensamble × sensibilidad de la etapa) cruza el umbral alto en alguno de los próximos 7 días, la actualiza cada noche mientras siga y la cierra cuando baja. Sus respuestas («Visto», «No aplica») quedan guardadas y ajustan los umbrales de su lote.</p></div></div>
       <div class="card"><div class="filtros"><select id="al-lote"><option value="">Todos los lotes</option></select><select id="al-estado"><option value="">Vigentes y cerradas</option><option value="vigente">Solo vigentes</option><option value="cerrada">Solo cerradas</option></select></div><div id="al-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:12px"></div></div>
+    </section>
+
+    <section class="vista" id="sec-tablero">
+      <div class="cab-sec"><div><span class="eyebrow">Tablero de control</span><h1>Todo lo que pasa en la red</h1><p>Quién entra, qué registra y qué sube cada persona, y dónde se traba algo. Solo lo ven los administradores. Mientras esta pantalla esté abierta se actualiza sola cada 30 segundos.</p></div>
+        <div class="row"><span class="vivo pausa" id="tb-vivo"><i></i><span id="tb-vivo-txt">cargando…</span></span><button class="btn sec sm" id="tb-ahora">Actualizar ahora</button></div></div>
+      <div class="tb-aviso" id="tb-falta" hidden></div>
+      <div class="grid g4" id="tb-kpis"></div>
+      <div class="card"><div class="row between"><h2>Problemas y trabas</h2><label class="small muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="tb-resueltos"> ver también los resueltos</label></div><div id="tb-trabas" style="margin-top:6px"></div>
+        <p class="note">Arriba va lo del motor y lo que alguien avisó o la app registró sola; después, lo que está esperando a una persona. Lo que sale de los datos (un archivo en cola, un lote sin ubicación) se va solo cuando se arregla; lo avisado se marca «resuelto» a mano.</p></div>
+      <div class="tb-dos">
+        <div class="card"><div class="row between"><h2>Actividad</h2><div class="row"><select id="tb-f-persona" class="chip" aria-label="Persona"></select><select id="tb-f-clase" class="chip" aria-label="Qué"></select></div></div><div class="tb-feed" id="tb-feed"></div></div>
+        <div class="card"><div class="row between"><h2>Personas</h2><span class="small muted" id="tb-personas-meta"></span></div><div class="tw" style="margin-top:6px"><table id="tb-personas"><thead><tr><th>Persona</th><th>Lotes</th><th>Entró</th><th>Hizo algo</th><th>7 días</th></tr></thead><tbody></tbody></table></div><p class="note">Toque una persona para ver solo lo suyo en Actividad. «7 días» cuenta registros, fotos, notas de voz, recorridos y archivos.</p></div>
+      </div>
+      <div class="card" id="tb-subir-card"><h2>Subir por un cliente</h2><p class="small muted" style="margin:4px 0 0">Cualquier tipo de archivo. Queda en la carpeta y en la lista de Archivos de esa persona, con la marca de que lo subió el equipo. Lo que el motor lee sigue el camino de siempre: se ordena y espera confirmación; nada entra solo a la memoria del campo.</p>
+        <div class="tb-form"><label>De quién es<select id="tb-up-persona"></select></label><label>Lote<select id="tb-up-lote"></select></label><label>Qué es<select id="tb-up-destino"><option value="cliente">Archivo del cliente: el motor lo lee</option><option value="referencia">Material de referencia: se guarda aparte</option></select></label></div>
+        <label class="drop" id="tb-drop" style="display:block;margin-top:12px;padding:22px 16px"><b>Suelte los archivos aquí o toque para elegir</b><span class="small muted" id="tb-drop-txt" style="display:block"></span><input id="tb-drop-input" type="file" multiple hidden></label>
+        <p class="note">El material de referencia (fotos, tablas o documentos para estudiar) no pasa por ningún lector ni entra a ningún entrenamiento: queda guardado hasta que se decida qué hacer con él.</p></div>
+      <div class="card" id="tb-alias-card"><h2>Productos: nombres equivalentes</h2><p class="small muted" style="margin:4px 0 0">Cuando un mismo producto aparece escrito de dos maneras, aquí se anota cuál es cuál. Los registros de cada persona no se tocan: quedan como los escribió. Solo cambia cómo se agrupan en «Lo aplicado, por campaña». Lo confirma el agrónomo.</p>
+        <div class="tw" style="margin-top:8px"><table id="tb-alias"><thead><tr><th>Como aparece escrito</th><th>Se muestra como</th><th>Tipo</th><th>Confirmó</th><th></th></tr></thead><tbody></tbody></table></div>
+        <div class="tb-form"><label>Como aparece escrito<input id="tb-al-alias" placeholder="Cletodin" autocomplete="off"></label><label>Se muestra como<input id="tb-al-producto" placeholder="Cletodim" autocomplete="off"></label><label>Tipo<select id="tb-al-tipo"><option value="">sin dato</option><option>herbicida</option><option>fungicida</option><option>insecticida</option><option>fertilizante</option><option>coadyuvante</option><option>semilla</option><option>otro</option></select></label></div>
+        <div class="row" style="margin-top:10px"><button class="btn sm" id="tb-al-guardar">Guardar equivalencia</button></div>
+        <div id="tb-parecidos" style="margin-top:12px"></div></div>
     </section>
 
     <section class="vista" id="sec-panel">
@@ -284,6 +327,7 @@ async function cargar(){
   D.trabajos = [];                                                    // v2: los trabajos de cada campaña. La nube entrega como mucho 1000 filas por pedido: de a páginas, lo más nuevo primero (hasta 6000)
   for(let i=0; i<6; i++){ const r = await G("temporada_eventos", {select:"id,temporada_id,lote_id,fecha,tipo,texto,detalle", order:"fecha.desc,id.asc", limit:"1000", offset:String(i*1000)}); if(!r) break;
     const vistos = new Set(D.trabajos.map(x => x.id)); const nuevos = r.filter(x => !vistos.has(x.id)); D.trabajos = D.trabajos.concat(nuevos); if(r.length < 1000 || !nuevos.length) break; }
+  D.alias = (await G("productos_alias", {select:"alias,producto,tipo,confirmado_nombre,confirmado_en", order:"producto.asc"})) || [];      // v3: nombres equivalentes (si la tabla todavía no existe, queda vacío)
   if(esEquipo()){ D.recon = await G("reconocimientos", {select:"*", order:"creado_en.desc", limit:"300"}) || []; }
   const porLote = {}; D.rep.forEach(r => { porLote[r.lote_id] = r; });
   LOTES = D.lotes.map(f => armarLote(f, porLote[f.id]));
@@ -307,7 +351,7 @@ function tensioNivel(v){ if(v==null || isNaN(+v)) return null; v = +v; return v 
 
 /* ============================== sesión / arranque ============================== */
 function mostrarLogin(on){ $("#login").hidden = !on; }
-function cerrarSesion(silencio){ sesGuardar(null); perfil = null; D = {}; LOTES = []; if(!silencio) toast("Sesión cerrada"); $("#who").textContent = ""; $("#salir").hidden = true; mostrarLogin(true); }
+function cerrarSesion(silencio){ sesGuardar(null); perfil = null; D = {}; LOTES = []; clearInterval(tbTimer); TB = null; $("#nav-tablero").hidden = true; if(!silencio) toast("Sesión cerrada"); $("#who").textContent = ""; $("#salir").hidden = true; mostrarLogin(true); }
 $("#lg-enviar").addEventListener("click", async () => { const email = $("#lg-email").value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ $("#lg-msg").textContent = "Escriba el correo con el que fue invitado."; return; } $("#lg-enviar").disabled = true; $("#lg-msg").textContent = "Enviando…";
   try{ await authPost("otp", {email, create_user:false}); $("#lg-1").hidden = true; $("#lg-2").hidden = false; $("#lg-msg2").textContent = `Revise el correo de ${email} (también en spam) y escriba el código.`; $("#lg-code").focus(); }
   catch(e){ $("#lg-msg").textContent = /signups? not allowed|not found|invalid/i.test(e.message) ? "Ese correo no está invitado todavía: pídale la invitación a Engram." : "No se pudo enviar el código: " + e.message; }
@@ -322,16 +366,16 @@ async function arrancar(){
   $("#who").textContent = "cargando…";
   try{ await cargar(); }catch(e){ toast("No se pudo cargar: " + String(e.message||e).slice(0,100)); if(!sesion) return; }
   $("#who").textContent = `${perfil && perfil.nombre ? perfil.nombre + " · " : ""}${sesion.user.email}${perfil && perfil.rol ? " · " + perfil.rol : ""}`; $("#salir").hidden = false;
-  $("#grupo-equipo").hidden = !esEquipo(); $("#nav-panel").hidden = !esEquipo();
+  $("#grupo-equipo").hidden = !esEquipo(); $("#nav-panel").hidden = !esEquipo(); $("#nav-tablero").hidden = !esEquipo(); tbArrancar();
   renderLoteSel(); renderTodo(); const h = (location.hash||"").replace("#","").split("/")[0]; ir(SECS.includes(h) ? h : "inicio", true);
 }
-const SECS = ["inicio","lote","bitacora","semana","memoria","archivos","reportes","alertas","panel","cuenta"];
-function ir(sec, silencio){ if(!SECS.includes(sec)) sec = "inicio"; if(sec === "panel" && !esEquipo()) sec = "inicio"; $$(".vista").forEach(s => s.classList.toggle("on", s.id === "sec-" + sec)); $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.sec === sec)); try{ history.replaceState(null, "", "#" + sec + (loteSel ? "/" + loteSel.id : "")); }catch(e){} if(!silencio) window.scrollTo({top:0}); if(sec === "lote") setTimeout(renderMapaLote, 50); }
+const SECS = ["inicio","lote","bitacora","semana","memoria","archivos","reportes","alertas","tablero","panel","cuenta"];
+function ir(sec, silencio){ if(!SECS.includes(sec)) sec = "inicio"; if((sec === "panel" || sec === "tablero") && !esEquipo()) sec = "inicio"; $$(".vista").forEach(s => s.classList.toggle("on", s.id === "sec-" + sec)); $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.sec === sec)); try{ history.replaceState(null, "", "#" + sec + (loteSel ? "/" + loteSel.id : "")); }catch(e){} if(!silencio) window.scrollTo({top:0}); if(sec === "lote") setTimeout(renderMapaLote, 50); }
 $$("#nav button").forEach(b => b.addEventListener("click", () => ir(b.dataset.sec)));
 document.addEventListener("click", e => { const b = e.target.closest("[data-ir]"); if(b) ir(b.dataset.ir); const lt = e.target.closest("[data-lote]"); if(lt){ loteSel = loteDe(lt.dataset.lote) || loteSel; $("#lote-sel").value = loteSel ? loteSel.id : ""; renderTodo(); if(lt.dataset.ir2) ir(lt.dataset.ir2); } });
 function renderLoteSel(){ const s = $("#lote-sel"); s.hidden = !LOTES.length; s.innerHTML = LOTES.map(l => `<option value="${esc(l.id)}">${esc(l.nombre)} · ${esc(CULTIVO[l.cultivo]||l.cultivo||"")}</option>`).join(""); if(loteSel) s.value = loteSel.id; }
 $("#lote-sel").addEventListener("change", () => { loteSel = loteDe($("#lote-sel").value) || loteSel; renderTodo(); });
-function renderTodo(){ renderInicio(); renderLote(); renderBitacora(true); renderSemana(); renderMemoria(); renderArchivos(); renderReportes(); renderAlertas(); renderPanel(); renderCuenta(); }
+function renderTodo(){ renderInicio(); renderLote(); renderBitacora(true); renderSemana(); renderMemoria(); renderArchivos(); renderReportes(); renderAlertas(); renderPanel(); renderCuenta(); renderTablero(); }
 
 /* ============================== Inicio ============================== */
 function renderInicio(){
@@ -343,7 +387,7 @@ function renderInicio(){
   $("#ini-alertas").innerHTML = vig.length ? vig.map(a => alertaHTML(a, true)).join("") : `<p class="note">Sin alertas vigentes. La mayoría de los días la app no dice nada: ese silencio es parte del diseño.</p>`;
   const n = D.alertas.filter(a => a.vigente).length; const nb = $("#nav-alertas"); nb.hidden = !n; nb.textContent = n;
   $("#ini-reg").innerHTML = D.registros.slice(0, 8).map(r => regHTML(r)).join("") || `<p class="note">Sin registros todavía.</p>`;
-  const rig = D.rig; $("#rig-txt").textContent = rig ? `último latido ${fmtDT(rig.latido || rig.actualizado_en || rig.ultimo)}${rig.estado ? " · " + rig.estado : ""}` : "sin estado del motor";
+  const rig = D.rig; $("#rig-txt").textContent = rig ? `${rig.ultima_corrida ? "corrida de la noche: " + fmtDT(rig.ultima_corrida) : "sin corrida registrada"}${rig.latido ? " · último latido " + fmtDT(rig.latido) : ""}` : "sin estado del motor";
 }
 function alertaHTML(a, corta){ const l = loteDe(a.lote_id); const det = a.detalle || {}; const p = det.probabilidad_max!=null ? det.probabilidad_max : det.p_max; const pct = p==null ? null : Math.round(p <= 1 ? p*100 : p);
   return `<div class="alerta ${a.nivel==="medio" ? "medio" : ""} ${a.vigente ? "" : "cerrada"}"><div class="row between"><h3>${esc(a.titulo || PELIGRO[a.peligro] || a.peligro)}</h3><span class="small muted">${l ? esc(l.nombre) + " · " : ""}${esc(fmtD(a.emitida))}${a.vigente ? "" : " · cerrada " + esc(fmtD(a.cerrada_en))}${pct!=null ? ` · ${pct} %` : ""}</span></div><p>${esc(a.mensaje||"")}</p>${a.respuesta ? `<p class="small muted">Respuesta del productor: <b>${esc(a.respuesta==="no_aplica" ? "no aplica a mi lote" : a.respuesta)}</b>${a.respondida_en ? " · " + esc(fmtDT(a.respondida_en)) : ""}</p>` : ""}${corta ? "" : (det.dias ? `<p class="small muted">Días: ${esc(Array.isArray(det.dias) ? det.dias.join(", ") : String(det.dias))}</p>` : "")}</div>`; }
@@ -452,7 +496,8 @@ function renderMemoria(){
 }
 // v2 · trabajos de cada campaña (tabla temporada_eventos: lo que entra con el historial del campo) y lo aplicado por campaña
 const TIPO_TRABAJO = {siembra:"Siembra", aplicacion:"Aplicación", fertilizacion:"Fertilización", riego:"Riego", cosecha:"Cosecha", observacion:"Nota", labor:"Labor", otro:"Otro"};
-const llano = x => String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const canon = nombre => { const a = (D.alias || []).find(x => x.alias === llano(nombre)); return a ? a.producto : nombre; };      // v3: el nombre con el que se agrupa; los registros no se tocan
+const llano = x => String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
 const dosisTxt = dt => { if(!dt || dt.dosis==null || dt.dosis==="") return ""; const n = Number(dt.dosis); return (isFinite(n) ? String(Math.round(n*1000)/1000).replace(".",",") : String(dt.dosis)) + (dt.unidad ? " " + dt.unidad : ""); };
 function renderTrabajos(l, mias){
   const todos = D.trabajos || []; const porFecha = (a,b) => String(a.fecha||"").localeCompare(String(b.fecha||"")); const de = id => todos.filter(x => x.temporada_id === id).sort(porFecha);
@@ -473,24 +518,24 @@ function renderTrabajos(l, mias){
   $("#mm-trabajos").innerHTML = camps.map((t,i) => `<details${i===0 ? " open" : ""}><summary>${esc(t.campana||t.anio_cosecha||"")} · ${esc(CULTIVO[t.cultivo]||t.cultivo||"")}${t.variedad ? " · " + esc(t.variedad) : ""} <span>${de(t.id).length} trabajo${de(t.id).length===1?"":"s"}</span></summary>${tabla(de(t.id))}</details>`).join("")
     + (sueltos.length ? `<details><summary>Sin campaña asignada <span>${sueltos.length} trabajo${sueltos.length===1?"":"s"}</span></summary>${tabla(sueltos)}</details>` : "");
   const cols = camps.slice(0, 8).reverse(); const filas = {};
-  cols.forEach(t => de(t.id).forEach(e => { const dt = e.detalle||{}; if(!["aplicacion","fertilizacion"].includes(e.tipo) || !dt.producto) return; const k = llano(dt.producto); filas[k] = filas[k] || {nombre: dt.producto, por:{}}; (filas[k].por[t.id] = filas[k].por[t.id] || []).push(dosisTxt(dt) || "sin dosis"); }));
+  cols.forEach(t => de(t.id).forEach(e => { const dt = e.detalle||{}; if(!["aplicacion","fertilizacion"].includes(e.tipo) || !dt.producto) return; const nom = canon(dt.producto), k = llano(nom); filas[k] = filas[k] || {nombre: nom, por:{}, escritos: new Set()}; if(llano(dt.producto) !== k) filas[k].escritos.add(dt.producto); (filas[k].por[t.id] = filas[k].por[t.id] || []).push(dosisTxt(dt) || "sin dosis"); }));
   const ks = Object.keys(filas).sort(); $("#mm-apl-card").hidden = !ks.length; if(!ks.length) return;
   const celda = a => !a ? `<span class="muted">—</span>` : [...new Set(a)].map(x => { const n = a.filter(y => y === x).length; return esc(x) + (n > 1 ? ` ×${n}` : ""); }).join("<br>");
   $("#mm-aplicado thead").innerHTML = `<tr><th>Producto</th>${cols.map(t => `<th>${esc(t.campana||t.anio_cosecha||"")}<div class="small muted" style="font-weight:400;letter-spacing:0">${esc(CULTIVO[t.cultivo]||t.cultivo||"")}</div></th>`).join("")}</tr>`;
   $("#mm-aplicado").style.minWidth = cols.length > 4 ? (130 + 84*cols.length) + "px" : "";
-  $("#mm-aplicado tbody").innerHTML = ks.map(k => `<tr><td>${esc(filas[k].nombre)}</td>${cols.map(t => `<td>${celda(filas[k].por[t.id])}</td>`).join("")}</tr>`).join("");
+  $("#mm-aplicado tbody").innerHTML = ks.map(k => `<tr><td>${esc(filas[k].nombre)}${filas[k].escritos.size ? `<div class="small muted" style="font-weight:400">también escrito: ${esc([...filas[k].escritos].join(", "))}</div>` : ""}</td>${cols.map(t => `<td>${celda(filas[k].por[t.id])}</td>`).join("")}</tr>`).join("");
 }
 
 /* ============================== Archivos ============================== */
 const EXT = f => (f.split(".").pop()||"").toLowerCase();
 const CLS_EXT = e => ["xlsx","xls","csv"].includes(e) ? "xlsx" : e==="pdf" ? "pdf" : ["jpg","jpeg","png","heic","webp"].includes(e) ? "img" : ["docx","doc","txt","md"].includes(e) ? "doc" : "";
 function tipoDe(nombre){ const e = EXT(nombre); if(["xlsx","xls","csv"].includes(e)) return /visita|plantilla/i.test(nombre) && e !== "csv" ? "visitas" : "historial"; return "archivo"; }
-const ESTADOS = {subida:["subido: el motor lo lee esa noche","warn"], por_confirmar:["el motor lo entendió: falta su confirmación","warn"], confirmada:["confirmado: se carga en minutos","ok"], rechazada:["rechazado","bad"], ingerida:["cargado: todo entró","ok"], con_errores:["cargado: entró parte","warn"], error:["no se pudo leer","bad"], en_cola:["en cola para el lector de documentos","warn"], leido:["leído: quedó ordenado en esta lista","ok"], incluida:["ya incluido: sus trabajos ya estaban en el historial","ok"]};
+const ESTADOS = {subida:["subido: el motor lo lee esa noche","warn"], por_confirmar:["el motor lo entendió: falta su confirmación","warn"], confirmada:["confirmado: se carga en minutos","ok"], rechazada:["rechazado","bad"], ingerida:["cargado: todo entró","ok"], con_errores:["cargado: entró parte","warn"], error:["no se pudo leer","bad"], en_cola:["en cola para el lector de documentos","warn"], leido:["leído: quedó ordenado en esta lista","ok"], incluida:["ya incluido: sus trabajos ya estaban en el historial","ok"], guardado:["guardado aparte: no se lee ni se usa","ok"]};
 function renderArchivos(){
   const sl = $("#ar-lote"); const antes = sl.value; sl.innerHTML = LOTES.map(l => `<option value="${esc(l.id)}">${esc(l.nombre)}</option>`).join("") + `<option value="">ninguno en particular</option>`; sl.value = LOTES.some(l => l.id === antes) ? antes : (loteSel ? loteSel.id : "");
   const lista = D.planillas.slice(0, 80);
   $("#ar-lista").innerHTML = lista.length ? lista.map(p => { const e = EXT(p.nombre||p.archivo||""); const est = ESTADOS[p.estado] || [p.estado||"", ""]; const l = loteDe(p.lote_id);
-    return `<div class="arch"><div class="ic ${CLS_EXT(e)}">${esc(e.toUpperCase().slice(0,4))}</div><div><b>${esc(p.nombre||p.archivo)}</b><div class="small muted">${esc(fmtDT(p.creado_en))}${l ? " · " + esc(l.nombre) : ""} · ${esc(p.tipo||"visitas")}${p.filas_ok!=null ? ` · ${p.filas_ok} filas entraron${p.filas_error ? `, ${p.filas_error} no` : ""}` : ""}</div>${p.informe && p.informe.length ? `<details class="small muted"><summary>informe (${p.informe.length} líneas)</summary><div class="informe">${p.informe.slice(0,80).map(x => `<div>${esc(x)}</div>`).join("")}</div></details>` : ""}</div><div class="row" style="justify-content:flex-end"><span class="estado ${esc(est[1])}">${esc(est[0])}</span>${p.estado==="por_confirmar" ? `<button class="btn sm" data-hrev="${esc(p.id)}">Revisar y confirmar</button>` : ""}${p.archivo ? `<button class="link small" data-arch="${esc(p.archivo)}">abrir</button>` : ""}</div></div>`; }).join("") : `<p class="vacio">Nada subido todavía.</p>`;
+    return `<div class="arch"><div class="ic ${CLS_EXT(e)}">${esc(e.toUpperCase().slice(0,4))}</div><div><b>${esc(p.nombre||p.archivo)}</b><div class="small muted">${esc(fmtDT(p.creado_en))}${l ? " · " + esc(l.nombre) : ""} · ${esc(p.tipo||"visitas")}${p.subido_por && p.subido_por !== p.usuario ? " · lo subió el equipo" : ""}${p.filas_ok!=null ? ` · ${p.filas_ok} filas entraron${p.filas_error ? `, ${p.filas_error} no` : ""}` : ""}</div>${p.informe && p.informe.length ? `<details class="small muted"><summary>informe (${p.informe.length} líneas)</summary><div class="informe">${p.informe.slice(0,80).map(x => `<div>${esc(x)}</div>`).join("")}</div></details>` : ""}</div><div class="row" style="justify-content:flex-end"><span class="estado ${esc(est[1])}">${esc(est[0])}</span>${p.estado==="por_confirmar" ? `<button class="btn sm" data-hrev="${esc(p.id)}">Revisar y confirmar</button>` : ""}${p.archivo ? `<button class="link small" data-arch="${esc(p.archivo)}">abrir</button>` : ""}</div></div>`; }).join("") : `<p class="vacio">Nada subido todavía.</p>`;
 }
 const drop = $("#drop"); ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); })); ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
 drop.addEventListener("drop", e => subirVarios(Array.from(e.dataTransfer.files||[]))); $("#drop-input").addEventListener("change", e => { subirVarios(Array.from(e.target.files||[])); e.target.value = ""; });
@@ -503,7 +548,7 @@ async function subirVarios(files){
       catch(err){ if(tipo==="archivo" && err.status === 400){ toast(`${f.name} quedó guardado en la nube, pero la tabla todavía no acepta este tipo de archivo: corra el SQL de EG Agro Web v1 en Supabase`); continue; } throw err; }
       D.planillas.unshift(fila[0]); ok++; }
     catch(err){ toast(`${f.name}: no se pudo subir (${String(err.message||err).slice(0,80)})`); } }
-  renderArchivos(); if(ok) toast(ok===1 ? "Archivo subido: el motor lo lee en la corrida nocturna" : `${ok} archivos subidos: el motor los lee en la corrida nocturna`);
+  renderArchivos(); if(ok) toast(ok===1 ? "Archivo subido: el motor lo lee en unos minutos (las planillas de visita, esa noche)" : `${ok} archivos subidos: el motor los lee en unos minutos (las planillas de visita, esa noche)`);
 }
 let hrevId = null;
 document.addEventListener("click", async e => { const b = e.target.closest("[data-hrev]"); if(!b) return; const p = D.planillas.find(x => x.id === b.dataset.hrev); if(!p) return; hrevId = p.id; const pr = p.propuesta || {}; const box = $("#ar-revisar"); box.hidden = false;
@@ -574,7 +619,204 @@ document.addEventListener("click", async e => {
 });
 
 /* ============================== Cuenta ============================== */
-function renderCuenta(){ if(!sesion) return; $("#cu-kv").innerHTML = [["Correo", sesion.user.email], ["Nombre", (perfil && perfil.nombre) || "—"], ["Rol", (perfil && perfil.rol) || "productor"], ["Lotes", String(LOTES.length)], ["Versión", "EG Agro Web 2 · 17 nov 2026"], ["Nube", NUBE.url.replace(/^https?:\/\//,"")], ["Motor", D.rig ? `latido ${fmtDT(D.rig.latido || D.rig.actualizado_en || D.rig.ultimo)}` : "sin estado"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join("");
+/* ============================== Tablero de control (v3 · solo administradores) ============================== */
+// Lee lo que las reglas de la nube ya le dejan ver a un administrador (toda la red) y lo junta en una pantalla. No guarda nada propio.
+const TB_MIN = 60000, TB_HORA = 3600000, TB_DIA = 86400000;
+let TB = null, tbTimer = null, tbCorriendo = false, tbUltimo = 0, tbCompleto = 0, tbFallo = "", tbPulsos = 0, tbFiltro = {persona:"", clase:""}, tbConocidos = null, tbAltosVistos = null;
+const tbMs = iso => { const t = new Date(iso).getTime(); return isNaN(t) ? 0 : t; };
+const tbEdadMin = iso => iso ? (Date.now() - tbMs(iso)) / TB_MIN : Infinity;
+const tbHace = iso => { if(!iso) return "nunca"; const ms = Date.now() - tbMs(iso); if(ms < 90000) return "hace un momento"; if(ms < TB_HORA) return `hace ${Math.round(ms/TB_MIN)} min`; if(ms < 36*TB_HORA) return `hace ${Math.round(ms/TB_HORA)} h`; return `hace ${Math.round(ms/TB_DIA)} días`; };
+const tbDura = iso => tbHace(iso).replace(/^hace /, "");
+const tbHHMM = iso => { const d = new Date(iso); return isNaN(d) ? "" : `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; };
+const tbFecha = iso => iso ? fmtD(localISO(new Date(iso))) : "";       // la fecha en hora local (no la del meridiano cero)
+const tbDia = iso => { const k = localISO(new Date(iso)); return k === localISO(new Date()) ? "Hoy" : k === localISO(new Date(Date.now()-TB_DIA)) ? "Ayer" : fmtD(k); };
+const TB_CLASES = {registro:"Registros", archivo:"Archivos", foto:"Fotos", voz:"Notas de voz", recorrido:"Recorridos", whatsapp:"WhatsApp", lote:"Lotes nuevos", ingreso:"Ingresos", problema:"Problemas avisados"};
+
+async function tbCargar(completo){
+  if(!esEquipo() || tbCorriendo || !sesion) return; tbCorriendo = true; const falta = {};
+  const G = (t, p) => db("GET", t, p).catch(e => { falta[t] = e.status || 0; return null; });
+  try{
+    const selP = "id,lote_id,usuario,nombre,tipo,estado,filas_ok,filas_error,informe,creado_en,procesada_en";
+    const lentas = completo || !TB ? Promise.all([
+      db("POST", "rpc/usuarios_admin", null, {}).catch(e => { falta.usuarios_admin = e.status || 0; return null; }),
+      G("perfiles", {select:"id,nombre,rol,telefono,creado_en"}),
+      G("lotes", {select:"id,propietario,codigo,nombre,cultivo,lat,poligono,fecha_siembra,activo,creado_en", order:"creado_en.asc"}),
+      G("productos_alias", {select:"*", order:"producto.asc"})]) : Promise.resolve(null);
+    const [problemas, registros, planillas0, trans, recon, monit, polin, libreta, wa, rig, lentasR] = await Promise.all([
+      G("problemas", {select:"*", order:"ultima_vez.desc", limit:"300"}),
+      G("registros", {select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,creado_en", order:"creado_en.desc", limit:"200"}),
+      G("planillas", {select: selP + ",subido_por,confirmado_en", order:"creado_en.desc", limit:"200"}),
+      G("transcripciones", {select:"id,lote_id,usuario,duracion_s,texto,estado,error,creado_en", order:"creado_en.desc", limit:"120"}),
+      G("reconocimientos", {select:"id,lote_id,usuario,plaga,estadio,confianza,calidad_foto,estado,creado_en", order:"creado_en.desc", limit:"120"}),
+      G("monitoreos", {select:"id,lote_id,usuario,plaga,nivel_final,punto_id,creado_en", order:"creado_en.desc", limit:"120"}),
+      G("polinizacion", {select:"id,lote_id,usuario,sector,pct_marca,flores_revisadas,creado_en", order:"creado_en.desc", limit:"80"}),
+      G("lecturas_libreta", {select:"id,lote_id,usuario,creado_en", order:"creado_en.desc", limit:"80"}),
+      G("whatsapp_mensajes", {select:"id,de,usuario,lote_id,tipo,recibido_en,estado,texto,error", order:"recibido_en.desc", limit:"120"}),
+      G("estado_rig", {select:"*"}), lentas]);
+    let planillas = planillas0;
+    if(!planillas && falta.planillas === 400){ delete falta.planillas; falta.subido_por = 400; planillas = await G("planillas", {select: selP, order:"creado_en.desc", limit:"200"}); }   // sin el esquema v24 no existe «subido_por»
+    if(!registros && !planillas && !rig) throw new Error("la nube no respondió");
+    const antes = TB || {};
+    const [usuarios, perfiles, lotes, alias] = lentasR || [antes.usuarios, antes.perfiles, antes.lotes, antes.alias];
+    TB = {usuarios: usuarios || null, perfiles: perfiles || antes.perfiles || [], lotes: lotes || antes.lotes || [], alias: alias || null, problemas: problemas || null, registros: registros || [], planillas: planillas || [], trans: trans || [],
+          recon: recon || [], monit: monit || [], polin: polin || [], libreta: libreta || [], wa: wa || [], rig: (rig || [])[0] || null, falta: Object.assign({}, lentasR ? {} : (antes.faltaLenta || {}), falta)};
+    if(lentasR){ TB.faltaLenta = {}; ["usuarios_admin","perfiles","lotes","productos_alias"].forEach(k => { if(k in falta) TB.faltaLenta[k] = falta[k]; }); tbCompleto = Date.now(); }
+    else TB.faltaLenta = antes.faltaLenta || {};
+    if(alias){ D.alias = alias; }
+    tbUltimo = Date.now(); tbFallo = "";
+  }catch(e){ tbFallo = String(e.message || e).slice(0, 80); }
+  tbCorriendo = false; renderTablero();
+}
+function tbPersona(uid){ const p = ((TB && TB.perfiles) || []).find(x => x.id === uid) || {}; const u = ((TB && TB.usuarios) || []).find(x => x.id === uid) || {};
+  return {id: uid, nombre: p.nombre || "", correo: u.correo || "", rol: p.rol || "productor", telefono: p.telefono || "", alta: u.creado_en || p.creado_en || null, ingreso: u.ultimo_ingreso || null}; }
+function tbNombre(uid){ if(!uid) return "el motor"; const p = tbPersona(uid); return p.nombre || p.correo || `sin nombre (${String(uid).slice(0,4)})`; }
+function tbLote(id){ const l = ((TB && TB.lotes) || []).find(x => x.id === id); return l ? l.nombre : ""; }
+
+function tbActividad(){
+  const a = []; const pon = (t, usuario, lote_id, clase, q, texto, malo, id, quien) => { if(t) a.push({t, ms: tbMs(t), usuario: usuario || null, lote_id: lote_id || null, clase, q, texto: String(texto || ""), malo: !!malo, id: clase + ":" + id, quien: quien || ""}); };
+  TB.registros.forEach(r => pon(r.creado_en, r.usuario, r.lote_id, r.archivo && /\.(jpe?g|png|webp|heic)$/i.test(r.archivo) ? "foto" : "registro", `Registró ${TIPO_TXT[r.tipo] || r.tipo || "algo"}${r.fuente && !["app","web"].includes(r.fuente) ? ` (${r.fuente})` : ""}`, r.texto, false, r.id));
+  TB.planillas.forEach(p => { const est = ESTADOS[p.estado] || [p.estado || "", ""]; const por = p.subido_por && p.subido_por !== p.usuario; const que = p.tipo === "historial" ? "un historial" : p.tipo === "visitas" ? "una planilla de visita" : p.tipo === "referencia" ? "material de referencia" : "un archivo";
+    pon(p.creado_en, p.usuario, p.lote_id, "archivo", por ? `${tbNombre(p.subido_por)} subió ${que} a su nombre` : `Subió ${que}`, `${p.nombre || ""} · ${est[0]}`, ["error","con_errores"].includes(p.estado), p.id); });
+  TB.trans.forEach(t => pon(t.creado_en, t.usuario, t.lote_id, "voz", `Nota de voz${t.duracion_s ? ` de ${Math.round(t.duracion_s)} s` : ""}`, t.estado === "error" ? `no se pudo transcribir: ${t.error || ""}` : (t.texto || "").slice(0, 180), t.estado === "error", t.id));
+  TB.recon.forEach(r => pon(r.creado_en, r.usuario, r.lote_id, "foto", "Foto mirada por el motor", `${r.plaga || "sin plaga clara"}${r.estadio ? " · " + r.estadio : ""}${r.confianza != null ? ` · confianza ${Math.round(r.confianza*100)} %` : ""}${r.calidad_foto ? " · foto " + r.calidad_foto : ""} · ${r.estado || ""}`, r.estado === "error", r.id));
+  TB.monit.forEach(m => pon(m.creado_en, m.usuario, m.lote_id, "recorrido", "Recorrido de plagas", `${m.plaga || ""}${m.punto_id ? " · punto " + m.punto_id : ""}${m.nivel_final != null ? " · nivel " + (NIVEL_TXT[m.nivel_final] || m.nivel_final) : ""}`, false, m.id));
+  TB.polin.forEach(m => pon(m.creado_en, m.usuario, m.lote_id, "recorrido", "Polinización", `${m.sector ? m.sector + " · " : ""}${m.pct_marca != null ? m.pct_marca + " % con marca" : ""}${m.flores_revisadas ? ` (${m.flores_revisadas} flores)` : ""}`, false, m.id));
+  TB.libreta.forEach(m => pon(m.creado_en, m.usuario, m.lote_id, "foto", "Foto de libreta", "", false, m.id));
+  TB.wa.forEach(m => { const WA = {sin_perfil:"de un número sin cuenta", sin_lote:"sin lote al que anotarlo", no_soportado:"de un tipo que no se lee", error:"no se pudo procesar"}; pon(m.recibido_en, m.usuario, m.lote_id, "whatsapp", `WhatsApp: ${m.tipo || "mensaje"}`, `${(m.texto || "").slice(0, 150)}${WA[m.estado] ? " · " + WA[m.estado] : ""}${m.error ? " · " + String(m.error).slice(0, 90) : ""}`, !!WA[m.estado], m.id, m.usuario ? "" : `número …${String(m.de || "").slice(-4)}`); });
+  TB.lotes.forEach(l => pon(l.creado_en, l.propietario, l.id, "lote", "Creó un lote", `${l.nombre || ""} · ${CULTIVO[l.cultivo] || l.cultivo || ""}`, false, l.id));
+  (TB.problemas || []).filter(p => p.origen !== "rig").forEach(p => pon(p.creado_en, p.usuario, p.lote_id, "problema", p.tipo === "reporte" ? "Avisó un problema" : "La app registró un error", p.texto, true, p.id));
+  (TB.usuarios || []).forEach(u => pon(u.ultimo_ingreso, u.id, null, "ingreso", "Entró", "", false, u.id + ":" + u.ultimo_ingreso));
+  return a.sort((x, y) => y.ms - x.ms);
+}
+
+function tbTrabas(verResueltos){
+  const out = []; const pon = (gr, clase, titulo, det, t, extra) => out.push(Object.assign({gr, clase, titulo, det: det || "", ms: tbMs(t) || Date.now()}, extra || {}));
+  const rig = TB.rig;
+  if(!rig) pon("alto", "Motor", "El motor no ha publicado su estado", "La tabla del latido está vacía o no se pudo leer.", null);
+  else {
+    if(!("latido" in rig)) pon("medio", "Motor", "Todavía no hay latido de cada 10 minutos", "Falta correr schema_v24.sql en Supabase y, después, el instalador del RIG de esta entrega. Hasta entonces solo se sabe cuándo corrió la noche.", null);
+    else if(!rig.latido) pon("medio", "Motor", "El motor todavía no mandó su primer latido", "Falta el instalador del RIG de esta entrega (o todavía no pasaron 10 minutos desde que se corrió).", null);
+    else if(tbEdadMin(rig.latido) > 30) pon("alto", "Motor", `El motor no late desde ${tbHace(rig.latido)}`, "Debería hacerlo cada 10 minutos. Puede estar apagado, sin internet o con la tarea «Engram 4 voz» detenida. En el RIG: abrir Ubuntu y escribir engram.", rig.latido, {peso: -2});
+    if(rig.ultima_corrida && tbEdadMin(rig.ultima_corrida) > 30*60) pon("alto", "Motor", `La corrida de la noche no termina desde ${tbHace(rig.ultima_corrida)}`, "Sale a las 03:30 y publica reportes, alertas y verdor. En el RIG: abrir Ubuntu, escribir engram y mirar la línea «de noche».", rig.ultima_corrida, {peso: -1});
+  }
+  TB.planillas.forEach(p => { const m = tbEdadMin(p.creado_en), quien = tbNombre(p.usuario), x = {persona: p.usuario};
+    if(p.estado === "en_cola" && m > 40) pon(m > 180 ? "alto" : "medio", "Archivo", `«${p.nombre}» lleva ${tbDura(p.creado_en)} en cola sin leerse`, `De ${quien}. El lector de documentos pasa cada 10 minutos; si el motor late y esto sigue aquí, el archivo es de un tipo que todavía no se lee (foto, hoja escaneada) o falló la lectura.`, p.creado_en, x);
+    else if(p.estado === "subida" && m > (p.tipo === "visitas" ? 26*60 : 40)) pon("medio", "Archivo", `«${p.nombre}» lleva ${tbDura(p.creado_en)} subido y sin leerse`, `De ${quien}.`, p.creado_en, x);
+    else if(p.estado === "confirmada" && tbEdadMin(p.confirmado_en || p.creado_en) > 40) pon("alto", "Archivo", `«${p.nombre}» está confirmado y no termina de cargarse`, `De ${quien}. Debería entrar a la memoria del campo en 10 minutos.`, p.confirmado_en || p.creado_en, x);
+    else if(["error","con_errores"].includes(p.estado) && m < 21*1440) pon("medio", "Archivo", `«${p.nombre}»: ${(ESTADOS[p.estado] || [p.estado])[0]}`, `De ${quien} · ${fmtDT(p.creado_en)}${p.informe && p.informe.length ? " · " + String(p.informe[p.informe.length-1]).slice(0, 220) : ""}`, p.procesada_en || p.creado_en, x);
+    else if(p.estado === "por_confirmar" && m > 2*1440) pon("bajo", "Espera", `«${p.nombre}» espera la confirmación de ${quien} desde ${tbHace(p.creado_en)}`, "Está ordenado y listo: falta que la persona lo revise y confirme en la web o en la app.", p.creado_en, x); });
+  TB.trans.filter(t => t.estado === "error" && tbEdadMin(t.creado_en) < 14*1440).forEach(t => pon("medio", "Voz", `Una nota de voz de ${tbNombre(t.usuario)} no se pudo transcribir`, `${fmtDT(t.creado_en)}${tbLote(t.lote_id) ? " · " + tbLote(t.lote_id) : ""}${t.error ? " · " + String(t.error).slice(0, 200) : ""}`, t.creado_en, {persona: t.usuario}));
+  TB.recon.filter(r => r.estado === "error" && tbEdadMin(r.creado_en) < 14*1440).forEach(r => pon("medio", "Foto", `Una foto de ${tbNombre(r.usuario)} no se pudo mirar`, `${fmtDT(r.creado_en)}${tbLote(r.lote_id) ? " · " + tbLote(r.lote_id) : ""}`, r.creado_en, {persona: r.usuario}));
+  const wa = {}; TB.wa.filter(m => ["sin_perfil","sin_lote","no_soportado","error"].includes(m.estado) && tbEdadMin(m.recibido_en) < 14*1440).forEach(m => { const k = m.estado + "|" + (m.usuario || m.de || ""); (wa[k] = wa[k] || []).push(m); });
+  Object.values(wa).forEach(ms => { const m = ms[0], n = ms.length, quien = m.usuario ? tbNombre(m.usuario) : `un número sin cuenta (…${String(m.de || "").slice(-4)})`;
+    const T = {sin_perfil:[`${n === 1 ? "Un mensaje" : n + " mensajes"} de WhatsApp de ${quien}`, "Ese teléfono no está vinculado a ninguna cuenta: lo que manda no se guarda. Se vincula desde la app, en Ajustes → WhatsApp."], sin_lote:[`${quien} escribe por WhatsApp y no tiene lote donde anotarlo`, "Sus mensajes llegan pero no hay lote: hay que crearle uno o que lo cree desde la app."],
+      no_soportado:[`${quien} mandó por WhatsApp algo que todavía no se lee`, `Tipo: ${m.tipo || "?"}.`], error:[`${n === 1 ? "Un mensaje" : n + " mensajes"} de WhatsApp de ${quien} no se ${n === 1 ? "pudo" : "pudieron"} procesar`, String(m.error || "").slice(0, 200)]}[m.estado];
+    pon(m.estado === "error" ? "medio" : "bajo", "WhatsApp", T[0], T[1], m.recibido_en, {persona: m.usuario || ""}); });
+  if(TB.usuarios) TB.usuarios.forEach(u => { const p = tbPersona(u.id); if(p.rol === "admin") return; const lotes = TB.lotes.filter(l => l.propietario === u.id && l.activo !== false);
+    if(!u.ultimo_ingreso){ if(tbEdadMin(u.creado_en) > 3*1440) pon("bajo", "Persona", `${p.nombre || p.correo} fue invitado y nunca entró`, `Cuenta creada el ${tbFecha(u.creado_en)}.`, u.creado_en, {persona: u.id}); return; }
+    if(!lotes.length && tbEdadMin(u.creado_en) > 1440) pon("bajo", "Persona", `${p.nombre || p.correo} entró y todavía no tiene ningún lote`, `Último ingreso ${tbHace(u.ultimo_ingreso)}. Sin lote no puede registrar nada ni recibir reporte.`, u.ultimo_ingreso, {persona: u.id});
+    const faltas = lotes.map(l => { const f = []; if(l.lat == null) f.push("sin ubicación"); else if(!l.poligono) f.push("sin el borde marcado"); if(!l.fecha_siembra) f.push("sin fecha de siembra"); return f.length ? `«${l.nombre}» ${f.join(" y ")}` : ""; }).filter(Boolean);
+    if(faltas.length) pon("bajo", "Lote", `${p.nombre || p.correo}: ${faltas.slice(0, 3).join("; ")}${faltas.length > 3 ? ` y ${faltas.length - 3} más` : ""}`, "Sin ubicación el motor no calcula clima ni riesgo; sin borde no hay verdor por satélite; sin fecha de siembra no hay etapa del cultivo.", lotes[0].creado_en, {persona: u.id}); });
+  (TB.problemas || []).forEach(p => { if(p.resuelto_en && !verResueltos) return; const rig2 = p.origen === "rig";
+    const gr = p.resuelto_en ? "bajo" : rig2 || p.tipo === "reporte" ? "alto" : "medio";
+    const tit = rig2 ? p.texto : p.tipo === "reporte" ? `${tbNombre(p.usuario)} avisa: ${p.texto}` : `A ${tbNombre(p.usuario)} le falló la ${p.origen === "web" ? "web" : "app"}: ${p.texto}`;
+    const det = `${p.veces > 1 ? `${p.veces} veces · la última ` : ""}${tbHace(p.ultima_vez || p.creado_en)}${p.version ? " · versión " + p.version : ""}${tbLote(p.lote_id) ? " · lote " + tbLote(p.lote_id) : ""}${p.resuelto_en ? ` · ${p.nota === "ignorar" ? "silenciado (no se vuelve a avisar)" : "resuelto"} ${tbHace(p.resuelto_en)} por ${tbNombre(p.resuelto_por)}` : ""}`;
+    pon(gr, rig2 ? "Motor" : p.tipo === "reporte" ? "Avisó" : p.origen === "web" ? "Web" : "App", tit.slice(0, 260), det, p.ultima_vez || p.creado_en, {id: p.id, hecho: !!p.resuelto_en, rig: rig2, persona: p.usuario || "", crudo: p.detalle && Object.keys(p.detalle).length ? p.detalle : null}); });
+  const orden = {alto: 0, medio: 1, bajo: 2}; return out.sort((a, b) => (a.hecho ? 1 : 0) - (b.hecho ? 1 : 0) || orden[a.gr] - orden[b.gr] || (a.peso || 0) - (b.peso || 0) || b.ms - a.ms);       // primero si el motor está parado; después lo más reciente
+}
+
+function renderTablero(){
+  const nav = $("#nav-tablero"); if(!nav) return; nav.hidden = !esEquipo(); if(!esEquipo()) return;
+  if(!TB){ $("#tb-vivo").className = "vivo" + (tbFallo ? " mal" : " pausa"); $("#tb-vivo-txt").textContent = tbFallo ? `sin respuesta de la nube (${tbFallo}); se vuelve a intentar` : "cargando…"; return; }
+  const vivo = $("#tb-vivo"); const oculto = document.visibilityState === "hidden"; vivo.className = "vivo" + (tbFallo ? " mal" : oculto ? " pausa" : "");
+  $("#tb-vivo-txt").textContent = tbFallo ? `sin respuesta de la nube (${tbFallo}); se vuelve a intentar` : `en vivo · actualizado ${new Date(tbUltimo).toLocaleTimeString("es-MX", {hour12:false})}`;
+  const falta = TB.falta || {}; const faltaV24 = ["problemas","productos_alias","usuarios_admin"].filter(k => falta[k] === 404 || falta[k] === 400).length || falta.subido_por;
+  const av = $("#tb-falta"); av.hidden = !faltaV24; if(faltaV24) av.textContent = "Falta correr schema_v24.sql en Supabase. Hasta entonces no hay lista de cuentas con su correo, ni problemas avisados, ni nombres equivalentes, ni «Subir por un cliente». Lo demás del tablero ya funciona.";
+  const act = tbActividad(), trabas = tbTrabas($("#tb-resueltos").checked), abiertas = trabas.filter(t => !t.hecho);
+  // --- cuatro números
+  const rig = TB.rig, lat = rig && rig.latido, mLat = tbEdadMin(lat), hoy0 = new Date(); hoy0.setHours(0,0,0,0);
+  const deHoy = act.filter(a => a.ms >= hoy0.getTime() && a.clase !== "ingreso"), gente = k => new Set(act.filter(a => a.ms >= Date.now() - k*TB_DIA && a.usuario).map(a => a.usuario)).size;
+  const cola = TB.planillas.filter(p => ["en_cola","subida","confirmada"].includes(p.estado)).length, porConf = TB.planillas.filter(p => p.estado === "por_confirmar").length, conErr = TB.planillas.filter(p => ["error","con_errores"].includes(p.estado) && tbEdadMin(p.creado_en) < 21*1440).length;
+  const altos = abiertas.filter(t => t.gr === "alto").length, medios = abiertas.filter(t => t.gr === "medio").length, bajos = abiertas.length - altos - medios;
+  const K = [
+    [lat ? (mLat > 30 ? "var(--bad)" : "var(--ok)") : "var(--warn)", "El motor", lat ? (mLat > 30 ? "parado" : "late") : "sin latido", lat ? `último latido ${tbHace(lat)}${rig.ultima_corrida ? " · noche: " + tbHace(rig.ultima_corrida) : ""}` : (rig && rig.ultima_corrida ? `corrida de la noche: ${tbHace(rig.ultima_corrida)}` : "sin datos del motor")],
+    [altos ? "var(--bad)" : medios ? "var(--warn)" : "var(--ok)", "Problemas y trabas", String(altos + medios), altos + medios ? `${altos} urgente${altos === 1 ? "" : "s"} · ${medios} para mirar${bajos ? ` · ${bajos} esperando a una persona` : ""}` : (bajos ? `nada urgente · ${bajos} esperando a una persona` : "nada pendiente")],
+    ["var(--accent)", "Hoy", String(deHoy.length), `${deHoy.length === 1 ? "cosa registrada o subida" : "cosas registradas o subidas"} · ${gente(1)} persona${gente(1) === 1 ? "" : "s"} hoy · ${gente(7)} en 7 días${TB.usuarios ? ` (de ${TB.usuarios.length} cuentas)` : ""}`],
+    [cola ? "var(--warn)" : "var(--ok)", "Archivos en camino", String(cola), `esperando al motor · ${porConf} esperando la confirmación de la persona${conErr ? ` · ${conErr} con error` : ""}`]];
+  $("#tb-kpis").innerHTML = K.map(([c, t, n, q]) => `<div class="card kpi" style="--acento:${c}"><span class="eyebrow">${esc(t)}</span><div class="n">${esc(n)}</div><div class="q">${esc(q)}</div></div>`).join("");
+  const nb = $("#nav-trabas"); nb.hidden = !(altos + medios); nb.textContent = altos + medios;
+  // --- problemas y trabas
+  $("#tb-trabas").innerHTML = trabas.length ? trabas.slice(0, 80).map(t => `<div class="tb-traba${t.hecho ? " hecho" : ""}"><span class="gr ${esc(t.gr)}">${esc(t.clase)}</span><div><b>${esc(t.titulo)}</b><div class="det">${esc(t.det)}</div>${t.crudo ? `<details><summary>datos técnicos</summary><pre>${esc(JSON.stringify(t.crudo, null, 1).slice(0, 2400))}</pre></details>` : ""}</div><div class="acc">${t.persona ? `<button class="link small" data-tb-persona="${esc(t.persona)}">ver su actividad</button>` : ""}${t.id ? (t.hecho ? `<button class="btn sec sm" data-tb-reabrir="${esc(t.id)}">Reabrir</button>` : `${t.rig ? `<button class="btn sec sm" data-tb-callar="${esc(t.id)}" title="No es un problema: que el motor no lo vuelva a avisar">No avisar más</button>` : ""}<button class="btn sm" data-tb-resolver="${esc(t.id)}">Resuelto</button>`) : ""}</div></div>`).join("") : `<p class="vacio">Nada trabado. El motor late y no hay avisos pendientes.</p>`;
+  const altosAhora = new Set(abiertas.filter(t => t.gr === "alto").map(t => t.titulo)); if(tbAltosVistos){ const nuevo = [...altosAhora].find(x => !tbAltosVistos.has(x)); if(nuevo) toast("Nuevo en el tablero: " + nuevo.slice(0, 110)); } tbAltosVistos = altosAhora;
+  // --- actividad
+  const sp = $("#tb-f-persona"), sc = $("#tb-f-clase"); const personas = [...new Set(act.map(a => a.usuario).filter(Boolean))].map(id => [id, tbNombre(id)]).sort((a, b) => a[1].localeCompare(b[1]));
+  sp.innerHTML = `<option value="">Todas las personas</option>` + personas.map(([id, n]) => `<option value="${esc(id)}">${esc(n)}</option>`).join(""); sp.value = personas.some(([id]) => id === tbFiltro.persona) ? tbFiltro.persona : ""; tbFiltro.persona = sp.value;
+  sc.innerHTML = `<option value="">Todo</option>` + Object.entries(TB_CLASES).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join(""); sc.value = tbFiltro.clase;
+  const lista = act.filter(a => (!tbFiltro.persona || a.usuario === tbFiltro.persona) && (!tbFiltro.clase || a.clase === tbFiltro.clase)).slice(0, 160); let dia = "";
+  $("#tb-feed").innerHTML = lista.length ? lista.map(a => { const d = tbDia(a.t); const cab = d !== dia ? `<div class="tb-dia">${esc(d)}</div>` : ""; dia = d; const lote = tbLote(a.lote_id);
+    return `${cab}<div class="tb-it${a.malo ? " malo" : ""}${tbConocidos && !tbConocidos.has(a.id) ? " nuevo" : ""}"><span class="h">${esc(tbHHMM(a.t))}</span><div><span class="q">${esc(a.usuario ? tbNombre(a.usuario) : (a.quien || "—"))}</span> · ${esc(a.q)}${lote && a.clase !== "lote" ? ` <span class="cl">${esc(lote)}</span>` : ""}${a.malo && a.clase !== "problema" ? ` <span class="estado bad">con problema</span>` : ""}${a.texto ? `<div class="t">${esc(a.texto.slice(0, 240))}</div>` : ""}</div></div>`; }).join("") : `<p class="vacio">Sin actividad para mostrar con ese filtro.</p>`;
+  tbConocidos = new Set(act.map(a => a.id));
+  // --- personas
+  const base = TB.usuarios ? TB.usuarios.map(u => u.id) : TB.perfiles.map(p => p.id); const hace7 = Date.now() - 7*TB_DIA;
+  const filas = base.map(id => { const p = tbPersona(id), suyos = act.filter(a => a.usuario === id && a.clase !== "ingreso" && a.clase !== "lote"); return {p, lotes: TB.lotes.filter(l => l.propietario === id && l.activo !== false).length, ultima: suyos[0] ? suyos[0].t : null, n7: suyos.filter(a => a.ms >= hace7).length, trabas: abiertas.filter(t => t.persona === id).length}; })
+    .sort((a, b) => tbMs(b.ultima || b.p.ingreso) - tbMs(a.ultima || a.p.ingreso));
+  $("#tb-personas-meta").textContent = `${filas.length} cuenta${filas.length === 1 ? "" : "s"}${TB.usuarios ? "" : " (sin correos: falta schema_v24.sql)"}`;
+  $("#tb-personas tbody").innerHTML = filas.map(f => `<tr data-persona="${esc(f.p.id)}"${tbFiltro.persona === f.p.id ? ' class="sel"' : ""}><td><b>${esc(f.p.nombre || f.p.correo || "sin nombre")}</b>${f.p.rol !== "productor" ? ` <span class="estado">${esc(f.p.rol)}</span>` : ""}${f.trabas ? ` <span class="estado warn">${f.trabas} traba${f.trabas === 1 ? "" : "s"}</span>` : ""}<span class="cor">${esc(f.p.nombre && f.p.correo ? f.p.correo : "")}</span></td><td>${f.lotes}</td><td class="small">${esc(TB.usuarios ? tbHace(f.p.ingreso) : "—")}</td><td class="small">${esc(f.ultima ? tbHace(f.ultima) : "nunca")}</td><td>${f.n7}</td></tr>`).join("") || `<tr><td colspan="5" class="vacio">Sin cuentas para mostrar.</td></tr>`;
+  // --- subir por un cliente
+  const up = $("#tb-up-persona"), antes = up.value; up.innerHTML = `<option value="">elija la persona</option>` + filas.filter(f => f.p.rol !== "admin").map(f => `<option value="${esc(f.p.id)}">${esc(f.p.nombre || f.p.correo || "sin nombre")}${f.p.nombre && f.p.correo ? " · " + esc(f.p.correo) : ""}</option>`).join(""); up.value = filas.some(f => f.p.id === antes) ? antes : ""; tbLotesDe();
+  $("#tb-subir-card").style.opacity = falta.subido_por ? ".55" : "";
+  // --- nombres equivalentes
+  const al = TB.alias || []; $("#tb-alias tbody").innerHTML = al.length ? al.map(a => `<tr><td>${esc(a.alias)}</td><td><b>${esc(a.producto)}</b></td><td>${esc(a.tipo || "")}</td><td class="small muted">${esc(a.confirmado_nombre || "")}${a.confirmado_en ? " · " + esc(tbFecha(a.confirmado_en)) : ""}</td><td>${llano(a.producto) === a.alias ? "" : `<button class="link small" data-tb-alias-quitar="${esc(a.alias)}">quitar</button>`}</td></tr>`).join("") : `<tr><td colspan="5" class="vacio">${TB.alias ? "Sin equivalencias todavía." : "Falta schema_v24.sql."}</td></tr>`;
+  const par = tbParecidos(); $("#tb-parecidos").innerHTML = par.length ? `<span class="eyebrow">Se parecen: ¿son el mismo producto?</span>` + par.map(([a, b, na, nb2]) => `<div class="tb-par"><span>«${esc(a)}» (${na} ${na === 1 ? "vez" : "veces"}) y «${esc(b)}» (${nb2})</span><button class="btn sec sm" data-tb-unir="${esc(b)}" data-tb-como="${esc(a)}">Sí: mostrar como ${esc(a)}</button><button class="btn sec sm" data-tb-unir="${esc(a)}" data-tb-como="${esc(b)}">Sí: mostrar como ${esc(b)}</button></div>`).join("") + `<p class="note">Solo sugerencias por parecido de escritura, sacadas de los trabajos cargados. Si no son el mismo producto, no toque nada.</p>` : "";
+}
+function tbLotesDe(){ const uid = $("#tb-up-persona").value, s = $("#tb-up-lote"), ref = $("#tb-up-destino").value === "referencia"; const ls = TB ? TB.lotes.filter(l => l.propietario === uid && l.activo !== false) : [];
+  s.innerHTML = `<option value="">ninguno en particular</option>` + ls.map(l => `<option value="${esc(l.id)}">${esc(l.nombre)}${l.codigo ? " (" + esc(l.codigo) + ")" : ""}</option>`).join(""); s.disabled = ref; $("#tb-up-persona").disabled = ref;
+  $("#tb-drop-txt").textContent = ref ? "Se guarda aparte, a su nombre: no se lee ni se usa para nada." : uid ? `Va a la lista de Archivos de ${tbNombre(uid)}.` : "Primero elija de quién es."; }
+function tbDist(a, b){ if(Math.abs(a.length - b.length) > 2) return 9; let ant = Array.from({length: b.length + 1}, (_, i) => i); for(let i = 1; i <= a.length; i++){ const fila = [i]; for(let j = 1; j <= b.length; j++) fila[j] = Math.min(ant[j] + 1, fila[j-1] + 1, ant[j-1] + (a[i-1] === b[j-1] ? 0 : 1)); ant = fila; } return ant[b.length]; }
+function tbParecidos(){ const cuenta = {}; (D.trabajos || []).forEach(e => { const p = e.detalle && e.detalle.producto; if(!p || !["aplicacion","fertilizacion"].includes(e.tipo)) return; const k = llano(p); cuenta[k] = cuenta[k] || {n: 0, nombre: p}; cuenta[k].n++; });
+  const ks = Object.keys(cuenta), out = []; for(let i = 0; i < ks.length; i++) for(let j = i + 1; j < ks.length; j++){ const a = ks[i], b = ks[j]; if(Math.min(a.length, b.length) < 5 || a.replace(/\D/g, "") !== b.replace(/\D/g, "")) continue; if(llano(canon(cuenta[a].nombre)) === llano(canon(cuenta[b].nombre))) continue;
+    if(tbDist(a, b) <= (Math.min(a.length, b.length) >= 7 ? 2 : 1)){ const [x, y] = cuenta[a].n >= cuenta[b].n ? [a, b] : [b, a]; out.push([cuenta[x].nombre, cuenta[y].nombre, cuenta[x].n, cuenta[y].n]); } }
+  return out.slice(0, 8); }
+async function tbAliasGuardar(escrito, mostrar, tipo){ const alias = llano(escrito), nombre = String(mostrar || "").trim().replace(/\s+/g, " "); if(!alias || !nombre){ toast("Escriba los dos nombres"); return false; }
+  const ya = (D.alias || []).find(a => a.alias === llano(nombre)); const destino = ya ? ya.producto : nombre; const quien = {confirmado_por: sesion.user.id, confirmado_nombre: (perfil && perfil.nombre) || sesion.user.email, confirmado_en: new Date().toISOString()};
+  const filas = [{alias, producto: destino, tipo: tipo || (ya && ya.tipo) || null, nota: null, ...quien}]; if(llano(destino) !== alias && !ya) filas.push({alias: llano(destino), producto: destino, tipo: tipo || null, nota: "Nombre con el que se muestra.", ...quien});
+  try{ await db("POST", "productos_alias", {on_conflict:"alias"}, filas, "resolution=merge-duplicates,return=minimal");
+    for(const a of (D.alias || []).filter(x => llano(x.producto) === alias && x.alias !== alias)) await db("PATCH", "productos_alias", {alias: "eq." + a.alias}, {producto: destino}, "return=minimal");     // lo que apuntaba al nombre viejo pasa al nuevo
+    toast(`«${escrito}» se muestra desde ahora como «${destino}»`); await tbAliasRecargar(); return true; }
+  catch(e){ toast("No se pudo guardar: " + String(e.message || e).slice(0, 90)); return false; } }
+async function tbAliasRecargar(){ const a = await db("GET", "productos_alias", {select:"*", order:"producto.asc"}).catch(() => null); if(a){ D.alias = a; if(TB) TB.alias = a; } renderMemoria(); renderTablero(); }
+async function tbSubir(files){
+  if(!files.length) return; if(TB && TB.falta && TB.falta.subido_por){ toast("Primero corra schema_v24.sql en Supabase"); return; }
+  const ref = $("#tb-up-destino").value === "referencia", uid = $("#tb-up-persona").value, loteId = $("#tb-up-lote").value || null; if(!ref && !uid){ toast("Elija de quién es el archivo"); return; } let ok = 0;
+  for(const f of files){ if(f.size > 50*1024*1024){ toast(`${f.name}: más de 50 MB, no se sube`); continue; } const nombre = f.name.replace(/[^A-Za-z0-9._-]/g, "_"), ts = Date.now(); let ruta, fila;
+    if(ref){ ruta = `referencia/${sesion.user.id}/${ts}_${nombre}`; fila = {lote_id: null, usuario: sesion.user.id, archivo: `planillas/${ruta}`, nombre: f.name, tipo: "referencia", estado: "guardado", subido_por: sesion.user.id, informe: ["Material de referencia: guardado aparte. No pasa por ningún lector ni entra a ningún entrenamiento."]}; }
+    else { const tipo = tipoDe(f.name); if(tipo === "visitas" && !loteId){ toast(`${f.name}: elija el lote de la planilla de visitas`); continue; }
+      ruta = tipo === "historial" ? `historial/${uid}/${ts}_${nombre}` : tipo === "visitas" ? `${loteId}/${ts}_${nombre}` : `archivos/${uid}/${ts}_${nombre}`;
+      fila = {lote_id: tipo === "historial" ? null : loteId, usuario: uid, archivo: `planillas/${ruta}`, nombre: f.name, tipo, estado: tipo === "archivo" ? "en_cola" : "subida", subido_por: sesion.user.id}; }
+    try{ await subirArchivo("planillas", ruta, f); const r = await db("POST", "planillas", null, fila, "return=representation"); if(r && r[0]) D.planillas.unshift(r[0]); ok++; }
+    catch(err){ toast(`${f.name}: no se pudo subir (${String(err.message || err).slice(0, 90)})`); } }
+  if(ok){ toast(ref ? `${ok === 1 ? "Guardado" : ok + " guardados"} aparte, como material de referencia` : `${ok === 1 ? "Subido" : ok + " subidos"} a nombre de ${tbNombre(uid)}: el motor lo lee en unos minutos`); renderArchivos(); tbCargar(false); }
+}
+function tbPulso(){ tbPulsos++; if(!esEquipo() || !sesion || document.visibilityState === "hidden") return; const enTablero = $("#sec-tablero").classList.contains("on"); if(!enTablero && tbPulsos % 4) return; tbCargar(Date.now() - tbCompleto > 5*TB_MIN); }   // en el tablero cada 30 s; en otra pantalla, cada 2 minutos (para el número del menú)
+function tbArrancar(){ clearInterval(tbTimer); TB = null; tbConocidos = null; tbAltosVistos = null; tbFallo = ""; if(!esEquipo()) return; tbTimer = setInterval(tbPulso, 30000); tbCargar(true); }
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && TB && Date.now() - tbUltimo > 25000) tbCargar(false); else if(TB) renderTablero(); });
+$("#tb-ahora").addEventListener("click", () => tbCargar(true)); $("#tb-resueltos").addEventListener("change", renderTablero);
+$("#tb-f-persona").addEventListener("change", e => { tbFiltro.persona = e.target.value; renderTablero(); }); $("#tb-f-clase").addEventListener("change", e => { tbFiltro.clase = e.target.value; renderTablero(); });
+$("#tb-up-persona").addEventListener("change", tbLotesDe); $("#tb-up-destino").addEventListener("change", tbLotesDe);
+{ const dz = $("#tb-drop"); ["dragenter","dragover"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("over"); })); ["dragleave","drop"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("over"); }));
+  dz.addEventListener("drop", e => tbSubir(Array.from(e.dataTransfer.files || []))); $("#tb-drop-input").addEventListener("change", e => { tbSubir(Array.from(e.target.files || [])); e.target.value = ""; }); }
+$("#tb-al-guardar").addEventListener("click", async () => { if(await tbAliasGuardar($("#tb-al-alias").value, $("#tb-al-producto").value, $("#tb-al-tipo").value)){ $("#tb-al-alias").value = ""; $("#tb-al-producto").value = ""; } });
+document.addEventListener("click", async e => {
+  const per = e.target.closest("[data-tb-persona], #tb-personas tr[data-persona]"); if(per){ const id = per.dataset.tbPersona || per.dataset.persona; tbFiltro.persona = tbFiltro.persona === id && per.dataset.persona ? "" : id; renderTablero(); if(per.dataset.tbPersona) $("#tb-feed").scrollIntoView({behavior:"smooth", block:"center"}); return; }
+  const res = e.target.closest("[data-tb-resolver], [data-tb-reabrir], [data-tb-callar]"); if(res){ const id = res.dataset.tbResolver || res.dataset.tbReabrir || res.dataset.tbCallar, cerrar = !res.dataset.tbReabrir; res.disabled = true;
+    const cambio = cerrar ? {resuelto_en: new Date().toISOString(), resuelto_por: sesion.user.id, nota: res.dataset.tbCallar ? "ignorar" : null} : {resuelto_en: null, resuelto_por: null, nota: null};       // «No avisar más»: el motor sigue contando las veces, pero no lo reabre
+    try{ await db("PATCH", "problemas", {id: "eq." + id}, cambio, "return=minimal"); const p = (TB.problemas || []).find(x => x.id === id); if(p) Object.assign(p, cambio); renderTablero(); }
+    catch(err){ toast("No se pudo guardar: " + String(err.message || err).slice(0, 80)); res.disabled = false; } return; }
+  const un = e.target.closest("[data-tb-unir]"); if(un){ un.disabled = true; await tbAliasGuardar(un.dataset.tbUnir, un.dataset.tbComo, ""); return; }
+  const qt = e.target.closest("[data-tb-alias-quitar]"); if(qt){ qt.disabled = true; try{ await db("DELETE", "productos_alias", {alias: "eq." + qt.dataset.tbAliasQuitar}, null, "return=minimal"); toast("Equivalencia quitada"); await tbAliasRecargar(); }catch(err){ toast("No se pudo quitar: " + String(err.message || err).slice(0, 80)); qt.disabled = false; } }
+});
+
+function renderCuenta(){ if(!sesion) return; $("#cu-kv").innerHTML = [["Correo", sesion.user.email], ["Nombre", (perfil && perfil.nombre) || "—"], ["Rol", (perfil && perfil.rol) || "productor"], ["Lotes", String(LOTES.length)], ["Versión", "EG Agro Web 3 · 17 nov 2026"], ["Nube", NUBE.url.replace(/^https?:\/\//,"")], ["Motor", D.rig ? `${D.rig.ultima_corrida ? "noche " + fmtDT(D.rig.ultima_corrida) : "sin corrida"}${D.rig.latido ? " · latido " + fmtDT(D.rig.latido) : ""}` : "sin estado"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join("");
   const p = perfil || {}; $("#cu-wa").innerHTML = [["WhatsApp", p.whatsapp || p.telefono_whatsapp ? "configurado en la app" : "no configurado (Ajustes → WhatsApp en la app)"], ["Avisos al teléfono", "se activan desde la app, en Ajustes → Avisos"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join(""); }
 
 /* ============================== arranque ============================== */
