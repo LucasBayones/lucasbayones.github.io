@@ -8,7 +8,7 @@
 <link rel="icon" href="icon.svg">
 <link rel="stylesheet" href="leaflet.css">
 <style>
-/* EG Agro Web v1 (9 nov 2026) · la misma paleta de la app: verde profundo para la marca y la acción, ocre para lo del suelo y el lote, semáforo aparte.
+/* EG Agro Web v2 (17 nov 2026; v1: 9 nov 2026) · la misma paleta de la app: verde profundo para la marca y la acción, ocre para lo del suelo y el lote, semáforo aparte.
    Escritorio primero (barra lateral + contenido ancho); en pantallas angostas la barra pasa arriba. Tipografía del sistema: sin descargas. */
 :root{
   --bg:#F2F5F1; --surface:#FFFFFF; --surface-2:#EBF0EC; --ink:#14241C; --fg:#182A20; --muted:#5E7066; --line:#DDE5DF;
@@ -40,7 +40,25 @@ a{color:var(--blue)} h1,h2,h3{margin:0;letter-spacing:-.01em;color:var(--ink)} h
 .side button.on{background:var(--accent-bg);color:var(--accent)} .side button.on svg{color:var(--accent)} .side button small{margin-left:auto;background:var(--bad);color:#fff;font-size:11px;border-radius:9px;padding:1px 7px}
 .side .grupo{font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:700;padding:14px 12px 6px}
 main{padding:22px 26px 60px;max-width:1240px;width:100%;min-width:0}
-.vista{display:none;flex-direction:column;gap:16px} .vista.on{display:flex}
+.vista{display:none;flex-direction:column;gap:16px}
+.trab details{border-top:1px solid var(--line);padding:10px 0} .trab details:first-child{border-top:0;padding-top:0}
+.trab summary{cursor:pointer;font-weight:600;list-style:none;position:relative;padding-left:20px} .trab summary::-webkit-details-marker{display:none}
+.trab summary::before{content:"▸";color:var(--muted);position:absolute;left:0;top:0} .trab details[open] > summary::before{content:"▾"} .trab summary span{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px;white-space:nowrap}
+.trab table{margin-top:6px;table-layout:fixed} .trab th:nth-child(1){width:10%} .trab th:nth-child(2){width:24%} .trab th:nth-child(3){width:22%} .trab th:nth-child(4){width:13%} .trab td.dosis{font-weight:600;white-space:nowrap} .trab tr.grupo td{padding-top:14px} .trab tr:not(.grupo) td{border-top:0} .trab tbody td{border-bottom:0;padding-bottom:4px} .trab tbody tr.grupo td{border-top:1px solid var(--line)} .trab tbody tr.grupo:first-child td{border-top:0}
+.trab td .comun{font-weight:400;margin-top:2px}
+#mm-aplicado td{white-space:nowrap} #mm-aplicado td:first-child{font-weight:600}
+@media (max-width:760px){
+  .trab .tw{overflow:visible} .trab table,.trab tbody{display:block} .trab thead{display:none}
+  .trab tbody tr{display:grid;grid-template-columns:auto 1fr auto;column-gap:8px}
+  .trab tbody tr td{display:block;padding:2px 0;border:0} .trab tbody tr td:empty{display:none}
+  .trab tbody tr.grupo{border-top:1px solid var(--line);margin-top:10px;padding-top:10px} .trab tbody tr.grupo:first-child{border-top:0;margin-top:2px;padding-top:0}
+  .trab tbody tr.grupo td{padding-top:2px;border-top:0}
+  .trab tbody td.f{grid-column:1;grid-row:1;font-weight:600} .trab tbody td.t{grid-column:2/4;grid-row:1;font-weight:600}
+  .trab tbody td.p{grid-column:1/3;grid-row:2;padding-top:6px} .trab tbody td.dosis{grid-column:3;grid-row:2;text-align:right;padding-top:6px}
+  .trab tbody td.n{grid-column:1/4;grid-row:3;padding-top:0}
+  #mm-aplicado{table-layout:fixed;font-size:12.5px} #mm-aplicado th,#mm-aplicado td{padding:8px 4px;white-space:normal;overflow-wrap:anywhere}
+  #mm-aplicado th:first-child,#mm-aplicado td:first-child{width:116px;position:sticky;left:0;background:var(--surface)}
+} .vista.on{display:flex}
 .cab-sec{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap} .cab-sec p{margin:4px 0 0;color:var(--muted);max-width:760px}
 .card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;min-width:0} .card.borde{box-shadow:none;border:1px solid var(--line)}
 .grid{display:grid;gap:14px} .g2{grid-template-columns:repeat(2,minmax(0,1fr))} .g3{grid-template-columns:repeat(3,minmax(0,1fr))} .g4{grid-template-columns:repeat(4,minmax(0,1fr))} .g23{grid-template-columns:2fr 1fr}
@@ -159,6 +177,8 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
       <div class="grid g23"><div class="card"><div class="row between"><h2>Rendimiento por campaña</h2><span class="small muted" id="mm-meta"></span></div><div class="barras" id="mm-barras" style="margin:28px 0 24px"></div><p class="note" id="mm-nota"></p></div>
         <div class="card"><h2>Cómo termina la temporada</h2><div id="mm-termina" class="small" style="margin-top:8px"></div></div></div>
       <div class="card"><div class="tw"><table id="mm-tabla"><thead><tr><th>Campaña</th><th>Lote</th><th>Cultivo</th><th>Siembra</th><th>Cosecha</th><th>Rend. (t/ha)</th><th>Pérdida</th><th>Anterior</th><th>Notas</th></tr></thead><tbody></tbody></table></div></div>
+      <div class="card" id="mm-trab-card" hidden><div class="row between"><h2>Trabajos por campaña</h2><span class="small muted" id="mm-trab-meta"></span></div><div class="trab" id="mm-trabajos" style="margin-top:12px"></div></div>
+      <div class="card" id="mm-apl-card" hidden><h2>Lo aplicado, por campaña</h2><div class="tw" style="margin-top:8px"><table id="mm-aplicado"><thead></thead><tbody></tbody></table></div><p class="note">Dosis por hectárea, tal como figuran en el historial cargado. Es el registro de lo que se aplicó: no es una recomendación.</p></div>
     </section>
 
     <section class="vista" id="sec-archivos">
@@ -246,7 +266,7 @@ async function abrirArchivo(ruta){ try{ const u = await urlFirmada(ruta); window
 
 /* ============================== datos ============================== */
 let D = {}; let LOTES = []; let loteSel = null; let hoyISO = localISO();
-const esEquipo = () => !!(perfil && ["agronomo","socio","admin"].includes(perfil.rol));
+const esEquipo = () => !!(perfil && perfil.rol === "admin");   // v2 (accesos v1): solo los administradores ven toda la red
 const idLote = l => l.id;
 async function cargar(){
   const d30 = localISO(new Date(Date.now()-30*86400000)), d90 = localISO(new Date(Date.now()-90*86400000)), d180 = localISO(new Date(Date.now()-180*86400000));
@@ -261,6 +281,9 @@ async function cargar(){
   ]);
   perfil = (perf||[])[0] || {id: sesion.user.id, rol:"productor"};
   D = {lotes:lotes||[], rep:rep||[], alertas:alertas||[], registros:registros||[], temporadas:temporadas||[], planillas:planillas||[], pdfs:pdfs||[], ventanas:ventanas||[], sensores:sensores||[], lecturas:lecturas||[], polin:polin||[], plEstado:plEstado||[], monit:monit||[], recetas:recetas||[], revisiones:revisiones||[], parcelas:parcelas||[], rig:(rig||[])[0]||null, perfiles:perfiles||[], recon:null};
+  D.trabajos = [];                                                    // v2: los trabajos de cada campaña. La nube entrega como mucho 1000 filas por pedido: de a páginas, lo más nuevo primero (hasta 6000)
+  for(let i=0; i<6; i++){ const r = await G("temporada_eventos", {select:"id,temporada_id,lote_id,fecha,tipo,texto,detalle", order:"fecha.desc,id.asc", limit:"1000", offset:String(i*1000)}); if(!r) break;
+    const vistos = new Set(D.trabajos.map(x => x.id)); const nuevos = r.filter(x => !vistos.has(x.id)); D.trabajos = D.trabajos.concat(nuevos); if(r.length < 1000 || !nuevos.length) break; }
   if(esEquipo()){ D.recon = await G("reconocimientos", {select:"*", order:"creado_en.desc", limit:"300"}) || []; }
   const porLote = {}; D.rep.forEach(r => { porLote[r.lote_id] = r; });
   LOTES = D.lotes.map(f => armarLote(f, porLote[f.id]));
@@ -425,13 +448,44 @@ function renderMemoria(){
   const pf = l && l.perfilRep; const mem = l && l.memoria;
   $("#mm-termina").innerHTML = (pf ? `<p style="margin:0 0 6px"><b>Lo que la zona rinde y pierde · ${esc(CULTIVO[pf.cultivo]||pf.cultivo||"")}</b></p>${pf.rendimiento_medio!=null ? `<p style="margin:0 0 6px">Rendimiento medio de la zona: <b>${num(pf.rendimiento_medio,1)} t/ha</b>${pf.rendimiento_rango ? ` (rango ${esc(pf.rendimiento_rango)})` : ""}.</p>` : ""}${pf.perdidas ? `<p style="margin:0 0 6px">Pérdidas típicas: ${esc(Array.isArray(pf.perdidas) ? pf.perdidas.join("; ") : pf.perdidas)}.</p>` : ""}${pf.anios_parecidos ? `<p class="muted" style="margin:0 0 6px">Años parecidos: ${esc(Array.isArray(pf.anios_parecidos) ? pf.anios_parecidos.join(", ") : pf.anios_parecidos)}.</p>` : ""}` : "") + (mem && mem.lote && mem.lote.lectura ? `<p>${esc(mem.lote.lectura.join(" "))}</p>` : `<p class="muted">${mias.length >= 5 ? "Con cinco campañas el pronóstico de cosecha pasa a ser del lote." : mias.length >= 3 ? "Con tres campañas el reporte deja de hablar de la zona y empieza a hablar de este lote." : "El pronóstico de cosecha del lote necesita seis semanas observadas y tres campañas; mientras tanto, la referencia es la memoria pública de la zona."}</p>`) + `<p class="note">Error medido de la tendencia de cosecha: 8,2 % (2015–2024). PRELIMINAR.</p>`;
   $("#mm-tabla tbody").innerHTML = lista.length ? lista.slice().reverse().map(t => `<tr><td>${esc(t.campana||t.anio_cosecha||"")}</td><td>${esc((loteDe(t.lote_id)||{}).nombre||"")}</td><td>${esc(CULTIVO[t.cultivo]||t.cultivo||"")}</td><td>${esc(fmtD(t.fecha_siembra))}</td><td>${esc(fmtD(t.fecha_cosecha))}</td><td><b>${num(t.rendimiento_t_ha ?? t.rendimiento, 2)}</b></td><td>${t.perdida_pct!=null ? num(t.perdida_pct,0) + " %" + (t.causa_perdida ? " · " + esc(t.causa_perdida) : "") : ""}</td><td>${esc(t.cultivo_anterior||"")}</td><td class="small muted">${esc(t.notas||"")}${t.fuente ? ` <em class="small">(${esc(t.fuente)})</em>` : ""}</td></tr>`).join("") : `<tr><td colspan="9" class="vacio">Sin campañas cargadas todavía.</td></tr>`;
+  renderTrabajos(l, mias);
+}
+// v2 · trabajos de cada campaña (tabla temporada_eventos: lo que entra con el historial del campo) y lo aplicado por campaña
+const TIPO_TRABAJO = {siembra:"Siembra", aplicacion:"Aplicación", fertilizacion:"Fertilización", riego:"Riego", cosecha:"Cosecha", observacion:"Nota", labor:"Labor", otro:"Otro"};
+const llano = x => String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const dosisTxt = dt => { if(!dt || dt.dosis==null || dt.dosis==="") return ""; const n = Number(dt.dosis); return (isFinite(n) ? String(Math.round(n*1000)/1000).replace(".",",") : String(dt.dosis)) + (dt.unidad ? " " + dt.unidad : ""); };
+function renderTrabajos(l, mias){
+  const todos = D.trabajos || []; const porFecha = (a,b) => String(a.fecha||"").localeCompare(String(b.fecha||"")); const de = id => todos.filter(x => x.temporada_id === id).sort(porFecha);
+  const camps = (l ? mias : []).filter(t => de(t.id).length).sort((a,b) => String(b.anio_cosecha||b.campana||"").localeCompare(String(a.anio_cosecha||a.campana||"")));   // la campaña más nueva, arriba
+  const sueltos = l ? todos.filter(x => x.lote_id === l.id && !x.temporada_id).sort(porFecha) : [];
+  $("#mm-trab-card").hidden = !(camps.length || sueltos.length); $("#mm-apl-card").hidden = true; if(!camps.length && !sueltos.length) return;
+  const total = camps.reduce((n,t) => n + de(t.id).length, 0) + sueltos.length; $("#mm-trab-meta").textContent = `${total} trabajo${total===1?"":"s"} cargado${total===1?"":"s"} con el historial`;
+  const tabla = evs => { const grupos = [];                                   // un grupo = misma fecha, mismo trabajo y mismo rótulo (el primer tramo de las notas)
+    evs.forEach(e => { const dt = e.detalle||{}; const partes = String(dt.notas||"").split(" · ").map(x => x.trim()).filter(Boolean); const k = `${e.fecha}|${e.tipo}|${llano(partes[0])}`;
+      let g = grupos.find(x => x.k === k); if(!g){ g = {k, fecha: e.fecha, tipo: TIPO_TRABAJO[e.tipo]||e.tipo||"", rot: partes[0]||"", filas: []}; grupos.push(g); }
+      g.filas.push({dt, resto: partes.slice(1)}); });
+    return `<div class="tw"><table><thead><tr><th>Fecha</th><th>Trabajo</th><th>Producto</th><th>Dosis</th><th>Notas</th></tr></thead><tbody>${grupos.map(g => {
+      const comunes = g.filas.length > 1 ? g.filas[0].resto.filter(x => g.filas.every(f => f.resto.includes(x))) : [];      // lo que se repite en todas las filas del grupo se dice una vez
+      const tit = !g.rot || llano(g.rot) === llano(g.tipo) ? g.tipo : (llano(g.rot).startsWith(llano(g.tipo)) ? g.rot : g.tipo + " · " + g.rot);
+      return g.filas.map((f,i) => { const prod = f.dt.producto && llano(f.dt.producto) !== llano(g.rot) ? f.dt.producto : ""; const propias = f.resto.filter(x => !comunes.includes(x));
+        const cab = i ? "" : `<td class="f" rowspan="${g.filas.length}">${esc(fmtD(g.fecha))}</td><td class="t" rowspan="${g.filas.length}">${esc(tit)}${comunes.length ? `<div class="small muted comun">${esc(comunes.join(" · "))}</div>` : ""}</td>`;      // fecha y trabajo abarcan las filas del grupo
+        return `<tr${i ? "" : ' class="grupo"'}>${cab}<td class="p">${esc(prod)}</td><td class="dosis">${esc(dosisTxt(f.dt))}</td><td class="n small muted">${esc(propias.join(" · "))}</td></tr>`; }).join(""); }).join("")}</tbody></table></div>`; };
+  $("#mm-trabajos").innerHTML = camps.map((t,i) => `<details${i===0 ? " open" : ""}><summary>${esc(t.campana||t.anio_cosecha||"")} · ${esc(CULTIVO[t.cultivo]||t.cultivo||"")}${t.variedad ? " · " + esc(t.variedad) : ""} <span>${de(t.id).length} trabajo${de(t.id).length===1?"":"s"}</span></summary>${tabla(de(t.id))}</details>`).join("")
+    + (sueltos.length ? `<details><summary>Sin campaña asignada <span>${sueltos.length} trabajo${sueltos.length===1?"":"s"}</span></summary>${tabla(sueltos)}</details>` : "");
+  const cols = camps.slice(0, 8).reverse(); const filas = {};
+  cols.forEach(t => de(t.id).forEach(e => { const dt = e.detalle||{}; if(!["aplicacion","fertilizacion"].includes(e.tipo) || !dt.producto) return; const k = llano(dt.producto); filas[k] = filas[k] || {nombre: dt.producto, por:{}}; (filas[k].por[t.id] = filas[k].por[t.id] || []).push(dosisTxt(dt) || "sin dosis"); }));
+  const ks = Object.keys(filas).sort(); $("#mm-apl-card").hidden = !ks.length; if(!ks.length) return;
+  const celda = a => !a ? `<span class="muted">—</span>` : [...new Set(a)].map(x => { const n = a.filter(y => y === x).length; return esc(x) + (n > 1 ? ` ×${n}` : ""); }).join("<br>");
+  $("#mm-aplicado thead").innerHTML = `<tr><th>Producto</th>${cols.map(t => `<th>${esc(t.campana||t.anio_cosecha||"")}<div class="small muted" style="font-weight:400;letter-spacing:0">${esc(CULTIVO[t.cultivo]||t.cultivo||"")}</div></th>`).join("")}</tr>`;
+  $("#mm-aplicado").style.minWidth = cols.length > 4 ? (130 + 84*cols.length) + "px" : "";
+  $("#mm-aplicado tbody").innerHTML = ks.map(k => `<tr><td>${esc(filas[k].nombre)}</td>${cols.map(t => `<td>${celda(filas[k].por[t.id])}</td>`).join("")}</tr>`).join("");
 }
 
 /* ============================== Archivos ============================== */
 const EXT = f => (f.split(".").pop()||"").toLowerCase();
 const CLS_EXT = e => ["xlsx","xls","csv"].includes(e) ? "xlsx" : e==="pdf" ? "pdf" : ["jpg","jpeg","png","heic","webp"].includes(e) ? "img" : ["docx","doc","txt","md"].includes(e) ? "doc" : "";
 function tipoDe(nombre){ const e = EXT(nombre); if(["xlsx","xls","csv"].includes(e)) return /visita|plantilla/i.test(nombre) && e !== "csv" ? "visitas" : "historial"; return "archivo"; }
-const ESTADOS = {subida:["subido: el motor lo lee esa noche","warn"], por_confirmar:["el motor lo entendió: falta su confirmación","warn"], confirmada:["confirmado: se carga en minutos","ok"], rechazada:["rechazado","bad"], ingerida:["cargado: todo entró","ok"], con_errores:["cargado: entró parte","warn"], error:["no se pudo leer","bad"], en_cola:["en cola para el lector de documentos","warn"]};
+const ESTADOS = {subida:["subido: el motor lo lee esa noche","warn"], por_confirmar:["el motor lo entendió: falta su confirmación","warn"], confirmada:["confirmado: se carga en minutos","ok"], rechazada:["rechazado","bad"], ingerida:["cargado: todo entró","ok"], con_errores:["cargado: entró parte","warn"], error:["no se pudo leer","bad"], en_cola:["en cola para el lector de documentos","warn"], leido:["leído: quedó ordenado en esta lista","ok"], incluida:["ya incluido: sus trabajos ya estaban en el historial","ok"]};
 function renderArchivos(){
   const sl = $("#ar-lote"); const antes = sl.value; sl.innerHTML = LOTES.map(l => `<option value="${esc(l.id)}">${esc(l.nombre)}</option>`).join("") + `<option value="">ninguno en particular</option>`; sl.value = LOTES.some(l => l.id === antes) ? antes : (loteSel ? loteSel.id : "");
   const lista = D.planillas.slice(0, 80);
@@ -520,7 +574,7 @@ document.addEventListener("click", async e => {
 });
 
 /* ============================== Cuenta ============================== */
-function renderCuenta(){ if(!sesion) return; $("#cu-kv").innerHTML = [["Correo", sesion.user.email], ["Nombre", (perfil && perfil.nombre) || "—"], ["Rol", (perfil && perfil.rol) || "productor"], ["Lotes", String(LOTES.length)], ["Nube", NUBE.url.replace(/^https?:\/\//,"")], ["Motor", D.rig ? `latido ${fmtDT(D.rig.latido || D.rig.actualizado_en || D.rig.ultimo)}` : "sin estado"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join("");
+function renderCuenta(){ if(!sesion) return; $("#cu-kv").innerHTML = [["Correo", sesion.user.email], ["Nombre", (perfil && perfil.nombre) || "—"], ["Rol", (perfil && perfil.rol) || "productor"], ["Lotes", String(LOTES.length)], ["Versión", "EG Agro Web 2 · 17 nov 2026"], ["Nube", NUBE.url.replace(/^https?:\/\//,"")], ["Motor", D.rig ? `latido ${fmtDT(D.rig.latido || D.rig.actualizado_en || D.rig.ultimo)}` : "sin estado"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join("");
   const p = perfil || {}; $("#cu-wa").innerHTML = [["WhatsApp", p.whatsapp || p.telefono_whatsapp ? "configurado en la app" : "no configurado (Ajustes → WhatsApp en la app)"], ["Avisos al teléfono", "se activan desde la app, en Ajustes → Avisos"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join(""); }
 
 /* ============================== arranque ============================== */
