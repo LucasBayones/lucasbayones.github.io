@@ -108,6 +108,8 @@ th{font-weight:600;color:var(--muted);font-size:12px}
 td:first-child,th:first-child{text-align:left;color:var(--muted);white-space:nowrap}
 td.hot{color:var(--bad);font-weight:600} td.warm{color:var(--warn);font-weight:600}
 .note{font-size:13px;color:var(--muted);line-height:1.4}
+.wa-qr{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:10px 0 4px} .wa-qr svg{flex:none;width:124px;height:124px;border-radius:10px;border:1px solid var(--line);background:#fff} .wa-qr p{margin:0;flex:1 1 140px;min-width:0} .wa-qr[hidden]{display:none}
+.wa-aviso{background:var(--accent-bg)} .wa-aviso p{margin:6px 0 12px} a.btn{display:inline-block;text-decoration:none;text-align:center}
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px} .grid2>*{min-width:0}
 /* Azulejos grandes (Registrar): ícono de línea verde arriba, título, una línea de ayuda */
 .bigbtn{display:grid;gap:4px;text-align:left;padding:14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);min-height:118px;align-content:start}
@@ -433,6 +435,11 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
     <button class="kpi ok" id="kpi-ventana" data-hoja="ventana"><span class="e">Para aplicar</span><div class="n txt">—</div><span class="q"></span></button>
     <button class="kpi ocre" id="kpi-3" data-hoja="suelo"><span class="e">Suelo</span><div class="n">—</div><span class="q"></span></button>
     <button class="kpi" id="kpi-4" data-hoja="polin"><span class="e">Polinización</span><div class="n">—</div><span class="q"></span></button>
+  </div>
+  <div class="card wa-aviso" id="hoy-wa" hidden>
+    <div class="row between"><span class="eyebrow">WhatsApp</span><button class="inline-link" id="hoy-wa-visto">Ya lo vi</button></div>
+    <p class="small">EG Agro ya tiene su número propio de WhatsApp: <b id="hoy-wa-num"></b>. Si le escribía al número anterior, desde ahora escríbale a este: sus notas de voz, fotos y documentos quedan en la bitácora de su lote.</p>
+    <a class="btn acc" id="hoy-wa-abrir" target="_blank" rel="noopener">Abrir el chat</a>
   </div>
   <div class="card" data-hoja="semaforo" style="cursor:pointer">
     <div class="row between"><span class="eyebrow">Semáforo del lote</span><span class="lvl bajo" id="hoy-nivel">Riesgo bajo</span></div>
@@ -795,13 +802,17 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
     <h2>EG Agro en su chat</h2>
     <p class="small">Escríbale al número de EG Agro como a cualquier contacto: notas de voz, fotos, videos, texto o la planilla Excel llena quedan en la bitácora de su lote y en minutos le contesta qué entendió. Escriba <b>reporte</b> para recibir el PDF, <b>alertas</b> para las vigentes, <b>lote</b> para elegir a cuál van sus mensajes.</p>
     <p class="small" id="wa-numero"></p>
+    <div class="wa-qr" id="wa-qr" hidden>
+      <svg viewBox="-4 -4 37 37" role="img" aria-label="Código QR que abre el chat de EG Agro en WhatsApp" shape-rendering="crispEdges"><rect x="-4" y="-4" width="37" height="37" fill="#fff"/><path fill="#000" d="M0 0h7v1h-7zM8 0h1v1h-1zM10 0h1v1h-1zM16 0h1v1h-1zM19 0h1v1h-1zM22 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h2v1h-2zM12 1h1v1h-1zM14 1h1v1h-1zM17 1h1v1h-1zM22 1h1v1h-1zM28 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM9 2h2v1h-2zM12 2h3v1h-3zM20 2h1v1h-1zM22 2h1v1h-1zM24 2h3v1h-3zM28 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h1v1h-1zM11 3h2v1h-2zM17 3h2v1h-2zM20 3h1v1h-1zM22 3h1v1h-1zM24 3h3v1h-3zM28 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h2v1h-2zM12 4h9v1h-9zM22 4h1v1h-1zM24 4h3v1h-3zM28 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM9 5h3v1h-3zM14 5h1v1h-1zM19 5h1v1h-1zM22 5h1v1h-1zM28 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h7v1h-7zM8 7h1v1h-1zM10 7h8v1h-8zM19 7h1v1h-1zM0 8h1v1h-1zM2 8h2v1h-2zM5 8h3v1h-3zM9 8h1v1h-1zM11 8h1v1h-1zM13 8h5v1h-5zM19 8h2v1h-2zM22 8h1v1h-1zM25 8h1v1h-1zM27 8h2v1h-2zM2 9h2v1h-2zM7 9h2v1h-2zM10 9h1v1h-1zM16 9h1v1h-1zM19 9h1v1h-1zM21 9h4v1h-4zM28 9h1v1h-1zM0 10h3v1h-3zM6 10h1v1h-1zM14 10h1v1h-1zM20 10h2v1h-2zM26 10h2v1h-2zM0 11h1v1h-1zM2 11h1v1h-1zM4 11h1v1h-1zM7 11h4v1h-4zM13 11h2v1h-2zM16 11h1v1h-1zM18 11h1v1h-1zM21 11h4v1h-4zM28 11h1v1h-1zM0 12h3v1h-3zM4 12h3v1h-3zM10 12h1v1h-1zM12 12h1v1h-1zM17 12h2v1h-2zM20 12h2v1h-2zM25 12h2v1h-2zM0 13h4v1h-4zM5 13h1v1h-1zM7 13h1v1h-1zM10 13h1v1h-1zM13 13h1v1h-1zM15 13h6v1h-6zM22 13h1v1h-1zM26 13h3v1h-3zM4 14h4v1h-4zM11 14h1v1h-1zM14 14h1v1h-1zM19 14h3v1h-3zM24 14h1v1h-1zM26 14h3v1h-3zM0 15h1v1h-1zM4 15h1v1h-1zM7 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM15 15h2v1h-2zM18 15h1v1h-1zM20 15h1v1h-1zM22 15h2v1h-2zM27 15h1v1h-1zM0 16h1v1h-1zM3 16h2v1h-2zM6 16h1v1h-1zM8 16h2v1h-2zM12 16h1v1h-1zM15 16h2v1h-2zM23 16h3v1h-3zM27 16h1v1h-1zM1 17h1v1h-1zM4 17h1v1h-1zM8 17h1v1h-1zM10 17h1v1h-1zM12 17h2v1h-2zM15 17h2v1h-2zM18 17h1v1h-1zM21 17h1v1h-1zM25 17h3v1h-3zM0 18h1v1h-1zM3 18h1v1h-1zM6 18h2v1h-2zM12 18h1v1h-1zM15 18h1v1h-1zM17 18h1v1h-1zM20 18h1v1h-1zM23 18h2v1h-2zM26 18h1v1h-1zM7 19h3v1h-3zM11 19h1v1h-1zM16 19h3v1h-3zM21 19h1v1h-1zM23 19h1v1h-1zM26 19h1v1h-1zM1 20h1v1h-1zM4 20h3v1h-3zM8 20h6v1h-6zM17 20h1v1h-1zM19 20h8v1h-8zM8 21h4v1h-4zM13 21h2v1h-2zM16 21h2v1h-2zM19 21h2v1h-2zM24 21h5v1h-5zM0 22h7v1h-7zM8 22h3v1h-3zM13 22h1v1h-1zM18 22h3v1h-3zM22 22h1v1h-1zM24 22h2v1h-2zM27 22h1v1h-1zM0 23h1v1h-1zM6 23h1v1h-1zM8 23h1v1h-1zM11 23h1v1h-1zM16 23h1v1h-1zM18 23h3v1h-3zM24 23h2v1h-2zM27 23h2v1h-2zM0 24h1v1h-1zM2 24h3v1h-3zM6 24h1v1h-1zM10 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM16 24h2v1h-2zM20 24h5v1h-5zM26 24h1v1h-1zM0 25h1v1h-1zM2 25h3v1h-3zM6 25h1v1h-1zM8 25h1v1h-1zM10 25h11v1h-11zM23 25h3v1h-3zM28 25h1v1h-1zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM8 26h3v1h-3zM12 26h1v1h-1zM18 26h2v1h-2zM21 26h1v1h-1zM23 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM0 27h1v1h-1zM6 27h1v1h-1zM9 27h8v1h-8zM18 27h4v1h-4zM23 27h1v1h-1zM25 27h1v1h-1zM27 27h1v1h-1zM0 28h7v1h-7zM8 28h2v1h-2zM13 28h1v1h-1zM18 28h1v1h-1zM20 28h1v1h-1zM22 28h1v1h-1zM25 28h1v1h-1zM27 28h1v1h-1z"/></svg>
+      <p class="small">Para pasárselo a otra persona: que apunte la cámara a este código y envíe el «hola» que ya viene escrito. EG Agro le contesta si su número está cargado en su propia cuenta (Ajustes → WhatsApp).</p>
+    </div>
     <div class="field" style="margin-top:8px"><label for="wa-tel">Mi número de WhatsApp</label><input id="wa-tel" inputmode="tel" placeholder="52 1 55 1234 5678" autocomplete="tel"></div>
     <p class="note">Con código de país, tal como aparece en WhatsApp (México: 52 y luego el número de 10 dígitos). Así el motor sabe que los mensajes son suyos.</p>
     <div class="field"><label for="wa-lote">Mis mensajes van al lote</label><select id="wa-lote"></select></div>
     <label class="small" style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;cursor:pointer"><input type="checkbox" id="wa-ok" style="margin-top:3px;flex:none"><span>Quiero recibir por WhatsApp las alertas de mis lotes y el reporte en PDF</span></label>
     <div class="field"><label for="wa-rep">El reporte en PDF me llega</label><select id="wa-rep"><option value="semanal">cada lunes</option><option value="diario">todos los días</option><option value="nunca">solo cuando lo pida (escribiendo "reporte")</option></select></div>
     <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn acc" id="wa-guardar">Guardar</button><span class="small muted" id="wa-estado"></span></div>
-    <p class="note">Privacidad: lo que mande por WhatsApp pasa por los servidores de WhatsApp (Meta) y del proveedor de mensajería (Twilio) antes de llegar al motor; de ahí en adelante vive solo en la nube de Engram (como lo que registra en la app). Si prefiere que algo no pase por WhatsApp, regístrelo aquí en la app.</p>
+    <p class="note">Privacidad: lo que mande por WhatsApp pasa por los servidores de WhatsApp (Meta) antes de llegar al motor de EG Agro. El audio de sus notas de voz se transcribe en el servidor de EG Agro y no se le envía a nadie más. Para entender lo que dijo o escribió, el texto (con el nombre, el cultivo y la zona del lote) y las fotos o documentos que hay que leer pasan por el servicio de inteligencia artificial que usa EG Agro (Anthropic), igual que lo que registra en la app. No usamos sus mensajes para entrenar modelos sin su autorización. El detalle está en el <a href="https://www.engram-analitica.com/privacidad.html" target="_blank" rel="noopener">aviso de privacidad</a>. Si prefiere que algo no pase por WhatsApp, regístrelo aquí en la app.</p>
     <span class="eyebrow">Últimos mensajes recibidos</span>
     <div id="wa-list"></div>
   </div>
@@ -867,7 +878,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
       <div class="row"><button class="btn sec" id="lector-save">Guardar en este teléfono</button><span class="small muted" id="lector-estado"></span></div>
       <p class="note">Sin dirección, el escáner muestra una transcripción de ejemplo y la interpretación se hace en el teléfono. Con la dirección, la foto se lee de verdad.</p>
     </details>
-    <p class="small muted">Engram Technologies (antes Engram Analítica) · consultas@engram-analitica.com · uso interno, no distribuir.</p>
+    <p class="small muted">Engram Technologies (antes Engram Analítica) · consultas@engram-analitica.com · <a href="https://www.engram-analitica.com/privacidad.html" target="_blank" rel="noopener">aviso de privacidad</a> · uso interno, no distribuir.</p>
   </div>
 </section>
 </main>
@@ -1392,6 +1403,7 @@ function renderLotSel(){
     + (MODO==="nube" ? `<button class="lot-chip add" data-flow="nuevolote">+ Nuevo lote<small>crear otro</small></button>` : "");
 }
 function renderHoy(){
+  try{ waAviso(); }catch(e){}
   const l = LOTES[lotIdx];
   $("#hoy-nivel").textContent = l.nivel==="sin" ? "Sin reporte" : "Riesgo " + l.nivel; $("#hoy-nivel").className = "lvl " + l.nivel;
   $("#hoy-etapa").textContent = l.etapaTxt;
@@ -2133,9 +2145,18 @@ async function abrirPdf(ruta){ try{ const u = await urlFirmada(ruta); window.ope
 $("#pdf-abrir").addEventListener("click", ()=>{ const u = pdfDe(LOTES[lotIdx])[0]; if(u) abrirPdf(u.archivo); });
 // --- WhatsApp: el teléfono, el lote y el consentimiento viven en perfiles; los mensajes recibidos (whatsapp_mensajes) los escribe el RIG
 function waNumeroTxt(n){ const d = String(n||"").replace(/\D/g,""); if(!d) return ""; if(d.startsWith("52") && d.length>=12) return `+52 ${d.slice(-10,-8)} ${d.slice(-8,-4)} ${d.slice(-4)}`; if(d.startsWith("1") && d.length===11) return `+1 ${d.slice(1,4)} ${d.slice(4,7)} ${d.slice(7)}`; return "+" + d; }
+// v56 · aviso único en Inicio: el número propio de EG Agro. Lo que ya se vio se guarda en este teléfono.
+const WA_VISTO_KEY = "engram-campo-wa-visto";
+function waAviso(){ const c = $("#hoy-wa"); if(!c) return; let visto = ""; try{ visto = localStorage.getItem(WA_VISTO_KEY) || ""; }catch(e){}
+  const wa = estadoRig && estadoRig.detalle && estadoRig.detalle.whatsapp; const d = String((wa && wa.numero) || "").replace(/\D/g,"");
+  const mostrar = MODO==="nube" && !!sesion && !!d && !(wa && wa.inicio) && visto !== d;
+  c.hidden = !mostrar; if(!mostrar) return;
+  $("#hoy-wa-num").textContent = waNumeroTxt(d); $("#hoy-wa-abrir").href = "https://wa.me/" + d + "?text=hola"; c.dataset.n = d; }
+document.addEventListener("click", ev => { if(!ev.target.closest("#hoy-wa-visto, #hoy-wa-abrir")) return; const c = $("#hoy-wa"); try{ localStorage.setItem(WA_VISTO_KEY, c.dataset.n || ""); }catch(e){} setTimeout(() => { c.hidden = true; }, 60); });
 function renderWhatsapp(){
   const wa = estadoRig && estadoRig.detalle && estadoRig.detalle.whatsapp; const num = wa && wa.numero; const inicio = (wa && wa.inicio) || "";
   $("#wa-numero").innerHTML = MODO!=="nube" ? "Con sesión se configura el WhatsApp." : num ? `Número de EG Agro: <b>${esc(waNumeroTxt(num))}</b> · <a href="https://wa.me/${esc(String(num).replace(/\D/g,""))}?text=${encodeURIComponent(inicio || "hola")}" target="_blank" rel="noopener">abrir el chat</a>${inicio ? `<br><span class="small muted">Para empezar, mande exactamente el mensaje <b>${esc(inicio)}</b> (es la llave de entrada de este número; el enlace ya lo trae escrito). Después escriba o mande lo que quiera.</span>` : ""}` : (wa && wa.activo ? "El motor todavía no publicó el número (llega con la próxima corrida)." : "El canal de WhatsApp todavía no está activo en el motor; cuando lo esté, aquí aparece el número.");
+  const qr = $("#wa-qr"); if(qr) qr.hidden = !(MODO==="nube" && String(num||"").replace(/\D/g,"") === "5215526700307" && !inicio);      // v56: el código es de ese número; con otro, queda el enlace
   const p = perfil || {};
   $("#wa-tel").value = p.telefono || ""; $("#wa-ok").checked = !!p.whatsapp_ok; $("#wa-rep").value = p.whatsapp_reporte || "semanal";
   const sel = $("#wa-lote"); const lotes = LOTES.filter(l=>!l.sin && l.nube);
@@ -2531,7 +2552,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "55 · 17 nov 2026";
+const APP_VERSION = "56 · 20 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
