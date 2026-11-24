@@ -8,7 +8,7 @@
 <link rel="icon" href="icon.svg">
 <link rel="stylesheet" href="leaflet.css">
 <style>
-/* EG Agro Web v3 (17 nov 2026: tablero de control; v2: trabajos por campaña; v1: 9 nov 2026) · la misma paleta de la app: verde profundo para la marca y la acción, ocre para lo del suelo y el lote, semáforo aparte.
+/* EG Agro Web v4 (24 nov 2026: la gente de afuera en el tablero; v3: 17 nov 2026, tablero de control; v2: trabajos por campaña; v1: 9 nov 2026) · la misma paleta de la app: verde profundo para la marca y la acción, ocre para lo del suelo y el lote, semáforo aparte.
    Escritorio primero (barra lateral + contenido ancho); en pantallas angostas la barra pasa arriba. Tipografía del sistema: sin descargas. */
 :root{
   --bg:#F2F5F1; --surface:#FFFFFF; --surface-2:#EBF0EC; --ink:#14241C; --fg:#182A20; --muted:#5E7066; --line:#DDE5DF;
@@ -632,17 +632,19 @@ const tbFecha = iso => iso ? fmtD(localISO(new Date(iso))) : "";       // la fec
 const tbDia = iso => { const k = localISO(new Date(iso)); return k === localISO(new Date()) ? "Hoy" : k === localISO(new Date(Date.now()-TB_DIA)) ? "Ayer" : fmtD(k); };
 const TB_CLASES = {registro:"Registros", archivo:"Archivos", foto:"Fotos", voz:"Notas de voz", recorrido:"Recorridos", whatsapp:"WhatsApp", lote:"Lotes nuevos", ingreso:"Ingresos", problema:"Problemas avisados"};
 
+let tbSinNombreWa = false;      // v4: la nube todavía no tiene whatsapp_mensajes.nombre_wa (falta el SQL del 24 nov): se pide sin ella y se reintenta en la carga completa
 async function tbCargar(completo){
   if(!esEquipo() || tbCorriendo || !sesion) return; tbCorriendo = true; const falta = {};
   const G = (t, p) => db("GET", t, p).catch(e => { falta[t] = e.status || 0; return null; });
   try{
     const selP = "id,lote_id,usuario,nombre,tipo,estado,filas_ok,filas_error,informe,creado_en,procesada_en";
+    const selW = "id,de,usuario,lote_id,tipo,recibido_en,estado,texto,error", conNombre = !!completo || !TB || !tbSinNombreWa;
     const lentas = completo || !TB ? Promise.all([
       db("POST", "rpc/usuarios_admin", null, {}).catch(e => { falta.usuarios_admin = e.status || 0; return null; }),
       G("perfiles", {select:"id,nombre,rol,telefono,creado_en"}),
       G("lotes", {select:"id,propietario,codigo,nombre,cultivo,lat,poligono,fecha_siembra,activo,creado_en", order:"creado_en.asc"}),
       G("productos_alias", {select:"*", order:"producto.asc"})]) : Promise.resolve(null);
-    const [problemas, registros, planillas0, trans, recon, monit, polin, libreta, wa, rig, lentasR] = await Promise.all([
+    const [problemas, registros, planillas0, trans, recon, monit, polin, libreta, wa0, rig, lentasR] = await Promise.all([
       G("problemas", {select:"*", order:"ultima_vez.desc", limit:"300"}),
       G("registros", {select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,creado_en", order:"creado_en.desc", limit:"200"}),
       G("planillas", {select: selP + ",subido_por,confirmado_en", order:"creado_en.desc", limit:"200"}),
@@ -651,9 +653,12 @@ async function tbCargar(completo){
       G("monitoreos", {select:"id,lote_id,usuario,plaga,nivel_final,punto_id,creado_en", order:"creado_en.desc", limit:"120"}),
       G("polinizacion", {select:"id,lote_id,usuario,sector,pct_marca,flores_revisadas,creado_en", order:"creado_en.desc", limit:"80"}),
       G("lecturas_libreta", {select:"id,lote_id,usuario,creado_en", order:"creado_en.desc", limit:"80"}),
-      G("whatsapp_mensajes", {select:"id,de,usuario,lote_id,tipo,recibido_en,estado,texto,error", order:"recibido_en.desc", limit:"120"}),
+      G("whatsapp_mensajes", {select: selW + (conNombre ? ",nombre_wa" : ""), order:"recibido_en.desc", limit:"120"}),
       G("estado_rig", {select:"*"}), lentas]);
     let planillas = planillas0;
+    let wa = wa0;
+    if(!wa && conNombre && falta.whatsapp_mensajes === 400){ delete falta.whatsapp_mensajes; tbSinNombreWa = true; wa = await G("whatsapp_mensajes", {select: selW, order:"recibido_en.desc", limit:"120"}); }   // sin el SQL del 24 nov no existe «nombre_wa»
+    else if(wa && conNombre) tbSinNombreWa = false;
     if(!planillas && falta.planillas === 400){ delete falta.planillas; falta.subido_por = 400; planillas = await G("planillas", {select: selP, order:"creado_en.desc", limit:"200"}); }   // sin el esquema v24 no existe «subido_por»
     if(!registros && !planillas && !rig) throw new Error("la nube no respondió");
     const antes = TB || {};
@@ -672,6 +677,11 @@ function tbPersona(uid){ const p = ((TB && TB.perfiles) || []).find(x => x.id ==
 function tbNombre(uid){ if(!uid) return "el motor"; const p = tbPersona(uid); return p.nombre || p.correo || `sin nombre (${String(uid).slice(0,4)})`; }
 function tbLote(id){ const l = ((TB && TB.lotes) || []).find(x => x.id === id); return l ? l.nombre : ""; }
 
+// v4 · gente de afuera: el nombre que un número sin cuenta tiene puesto en WhatsApp. Lo escribe esa persona: aquí es solo texto (se dibuja siempre con esc()).
+const tbNombreWa = de => { const m = ((TB && TB.wa) || []).find(x => x.de === de && x.nombre_wa); return m ? String(m.nombre_wa).replace(/\s+/g, " ").trim().slice(0, 60) : ""; };
+const tbAfuera = de => { const n = tbNombreWa(de); return `…${String(de || "").slice(-4)}${n ? ` · «${n}»` : ""}`; };
+const tbConLotes = uid => !!uid && (tbPersona(uid).rol === "admin" || ((TB && TB.lotes) || []).some(l => l.propietario === uid && l.activo !== false));
+const tbEsHoy = t => { const d = new Date(t); return !isNaN(d) && d.toDateString() === new Date().toDateString(); };
 function tbActividad(){
   const a = []; const pon = (t, usuario, lote_id, clase, q, texto, malo, id, quien) => { if(t) a.push({t, ms: tbMs(t), usuario: usuario || null, lote_id: lote_id || null, clase, q, texto: String(texto || ""), malo: !!malo, id: clase + ":" + id, quien: quien || ""}); };
   TB.registros.forEach(r => pon(r.creado_en, r.usuario, r.lote_id, r.archivo && /\.(jpe?g|png|webp|heic)$/i.test(r.archivo) ? "foto" : "registro", `Registró ${TIPO_TXT[r.tipo] || r.tipo || "algo"}${r.fuente && !["app","web"].includes(r.fuente) ? ` (${r.fuente})` : ""}`, r.texto, false, r.id));
@@ -682,7 +692,7 @@ function tbActividad(){
   TB.monit.forEach(m => pon(m.creado_en, m.usuario, m.lote_id, "recorrido", "Recorrido de plagas", `${m.plaga || ""}${m.punto_id ? " · punto " + m.punto_id : ""}${m.nivel_final != null ? " · nivel " + (NIVEL_TXT[m.nivel_final] || m.nivel_final) : ""}`, false, m.id));
   TB.polin.forEach(m => pon(m.creado_en, m.usuario, m.lote_id, "recorrido", "Polinización", `${m.sector ? m.sector + " · " : ""}${m.pct_marca != null ? m.pct_marca + " % con marca" : ""}${m.flores_revisadas ? ` (${m.flores_revisadas} flores)` : ""}`, false, m.id));
   TB.libreta.forEach(m => pon(m.creado_en, m.usuario, m.lote_id, "foto", "Foto de libreta", "", false, m.id));
-  TB.wa.forEach(m => { const WA = {sin_perfil:"de un número sin cuenta", sin_lote:"sin lote al que anotarlo", no_soportado:"de un tipo que no se lee", error:"no se pudo procesar"}; pon(m.recibido_en, m.usuario, m.lote_id, "whatsapp", `WhatsApp: ${m.tipo || "mensaje"}`, `${(m.texto || "").slice(0, 150)}${WA[m.estado] ? " · " + WA[m.estado] : ""}${m.error ? " · " + String(m.error).slice(0, 90) : ""}`, !!WA[m.estado], m.id, m.usuario ? "" : `número …${String(m.de || "").slice(-4)}`); });
+  TB.wa.forEach(m => { const WA = {sin_perfil:"de un número sin cuenta", sin_lote: tbConLotes(m.usuario) ? "espera que diga de qué lote es" : "sin lote al que anotarlo", no_soportado:"de un tipo que no se lee", error:"no se pudo procesar"}; pon(m.recibido_en, m.usuario, m.lote_id, "whatsapp", `WhatsApp: ${m.tipo || "mensaje"}`, `${(m.texto || "").slice(0, 150)}${WA[m.estado] ? " · " + WA[m.estado] : ""}${m.error ? " · " + String(m.error).slice(0, 90) : ""}`, !!WA[m.estado], m.id, m.usuario ? "" : `número ${tbAfuera(m.de)}`); });
   TB.lotes.forEach(l => pon(l.creado_en, l.propietario, l.id, "lote", "Creó un lote", `${l.nombre || ""} · ${CULTIVO[l.cultivo] || l.cultivo || ""}`, false, l.id));
   (TB.problemas || []).filter(p => p.origen !== "rig").forEach(p => pon(p.creado_en, p.usuario, p.lote_id, "problema", p.tipo === "reporte" ? "Avisó un problema" : "La app registró un error", p.texto, true, p.id));
   (TB.usuarios || []).forEach(u => pon(u.ultimo_ingreso, u.id, null, "ingreso", "Entró", "", false, u.id + ":" + u.ultimo_ingreso));
@@ -708,10 +718,12 @@ function tbTrabas(verResueltos){
   TB.trans.filter(t => t.estado === "error" && tbEdadMin(t.creado_en) < 14*1440).forEach(t => pon("medio", "Voz", `Una nota de voz de ${tbNombre(t.usuario)} no se pudo transcribir`, `${fmtDT(t.creado_en)}${tbLote(t.lote_id) ? " · " + tbLote(t.lote_id) : ""}${t.error ? " · " + String(t.error).slice(0, 200) : ""}`, t.creado_en, {persona: t.usuario}));
   TB.recon.filter(r => r.estado === "error" && tbEdadMin(r.creado_en) < 14*1440).forEach(r => pon("medio", "Foto", `Una foto de ${tbNombre(r.usuario)} no se pudo mirar`, `${fmtDT(r.creado_en)}${tbLote(r.lote_id) ? " · " + tbLote(r.lote_id) : ""}`, r.creado_en, {persona: r.usuario}));
   const wa = {}; TB.wa.filter(m => ["sin_perfil","sin_lote","no_soportado","error"].includes(m.estado) && tbEdadMin(m.recibido_en) < 14*1440).forEach(m => { const k = m.estado + "|" + (m.usuario || m.de || ""); (wa[k] = wa[k] || []).push(m); });
-  Object.values(wa).forEach(ms => { const m = ms[0], n = ms.length, quien = m.usuario ? tbNombre(m.usuario) : `un número sin cuenta (…${String(m.de || "").slice(-4)})`;
-    const T = {sin_perfil:[`${n === 1 ? "Un mensaje" : n + " mensajes"} de WhatsApp de ${quien}`, "Ese teléfono no está vinculado a ninguna cuenta: lo que manda no se guarda. Se vincula desde la app, en Ajustes → WhatsApp."], sin_lote:[`${quien} escribe por WhatsApp y no tiene lote donde anotarlo`, "Sus mensajes llegan pero no hay lote: hay que crearle uno o que lo cree desde la app."],
+  Object.values(wa).forEach(ms => { const m = ms[0], n = ms.length, quien = m.usuario ? tbNombre(m.usuario) : `un número sin cuenta (${tbAfuera(m.de)})`, hoyN = m.estado === "sin_perfil" ? ms.filter(x => tbEsHoy(x.recibido_en)).length : 0, insiste = hoyN >= 10;
+    const T = {sin_perfil:[`${n === 1 ? "Un mensaje" : n + " mensajes"} de WhatsApp de ${quien}${insiste ? ` · ${hoyN} hoy` : ""}`, `Ese teléfono no está vinculado a ninguna cuenta: lo que manda no se guarda ni se lee.${tbNombreWa(m.de) ? " El nombre es el que esa persona tiene puesto en WhatsApp." : ""} Si es de alguien de la red, se vincula desde la app, en Ajustes → WhatsApp.${insiste ? " Si no es de nadie de la red, se lo puede dejar de recibir desde el RIG: --bloquear y sus últimos dígitos." : ""}`],
+      sin_lote: tbConLotes(m.usuario) ? [`${quien} tiene ${n === 1 ? "un mensaje" : n + " mensajes"} de WhatsApp esperando que diga de qué lote ${n === 1 ? "es" : "son"}`, "Se le preguntó por WhatsApp: en cuanto conteste con el número del lote, se guardan. Lo que lleva más de 48 horas esperando ya no se guarda, y se le avisa."]
+        : [`${quien} escribe por WhatsApp y no tiene lote donde anotarlo`, "Sus mensajes llegan pero no hay lote: hay que crearle uno o que lo cree desde la app."],
       no_soportado:[`${quien} mandó por WhatsApp algo que todavía no se lee`, `Tipo: ${m.tipo || "?"}.`], error:[`${n === 1 ? "Un mensaje" : n + " mensajes"} de WhatsApp de ${quien} no se ${n === 1 ? "pudo" : "pudieron"} procesar`, String(m.error || "").slice(0, 200)]}[m.estado];
-    pon(m.estado === "error" ? "medio" : "bajo", "WhatsApp", T[0], T[1], m.recibido_en, {persona: m.usuario || ""}); });
+    pon(m.estado === "error" || insiste ? "medio" : "bajo", "WhatsApp", T[0], T[1], m.recibido_en, {persona: m.usuario || ""}); });
   if(TB.usuarios) TB.usuarios.forEach(u => { const p = tbPersona(u.id); if(p.rol === "admin") return; const lotes = TB.lotes.filter(l => l.propietario === u.id && l.activo !== false);
     if(!u.ultimo_ingreso){ if(tbEdadMin(u.creado_en) > 3*1440) pon("bajo", "Persona", `${p.nombre || p.correo} fue invitado y nunca entró`, `Cuenta creada el ${tbFecha(u.creado_en)}.`, u.creado_en, {persona: u.id}); return; }
     if(!lotes.length && tbEdadMin(u.creado_en) > 1440) pon("bajo", "Persona", `${p.nombre || p.correo} entró y todavía no tiene ningún lote`, `Último ingreso ${tbHace(u.ultimo_ingreso)}. Sin lote no puede registrar nada ni recibir reporte.`, u.ultimo_ingreso, {persona: u.id});
@@ -816,7 +828,7 @@ document.addEventListener("click", async e => {
   const qt = e.target.closest("[data-tb-alias-quitar]"); if(qt){ qt.disabled = true; try{ await db("DELETE", "productos_alias", {alias: "eq." + qt.dataset.tbAliasQuitar}, null, "return=minimal"); toast("Equivalencia quitada"); await tbAliasRecargar(); }catch(err){ toast("No se pudo quitar: " + String(err.message || err).slice(0, 80)); qt.disabled = false; } }
 });
 
-function renderCuenta(){ if(!sesion) return; $("#cu-kv").innerHTML = [["Correo", sesion.user.email], ["Nombre", (perfil && perfil.nombre) || "—"], ["Rol", (perfil && perfil.rol) || "productor"], ["Lotes", String(LOTES.length)], ["Versión", "EG Agro Web 3 · 17 nov 2026"], ["Nube", NUBE.url.replace(/^https?:\/\//,"")], ["Motor", D.rig ? `${D.rig.ultima_corrida ? "noche " + fmtDT(D.rig.ultima_corrida) : "sin corrida"}${D.rig.latido ? " · latido " + fmtDT(D.rig.latido) : ""}` : "sin estado"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join("");
+function renderCuenta(){ if(!sesion) return; $("#cu-kv").innerHTML = [["Correo", sesion.user.email], ["Nombre", (perfil && perfil.nombre) || "—"], ["Rol", (perfil && perfil.rol) || "productor"], ["Lotes", String(LOTES.length)], ["Versión", "EG Agro Web 4 · 24 nov 2026"], ["Nube", NUBE.url.replace(/^https?:\/\//,"")], ["Motor", D.rig ? `${D.rig.ultima_corrida ? "noche " + fmtDT(D.rig.ultima_corrida) : "sin corrida"}${D.rig.latido ? " · latido " + fmtDT(D.rig.latido) : ""}` : "sin estado"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join("");
   const p = perfil || {}; $("#cu-wa").innerHTML = [["WhatsApp", p.whatsapp || p.telefono_whatsapp ? "configurado en la app" : "no configurado (Ajustes → WhatsApp en la app)"], ["Avisos al teléfono", "se activan desde la app, en Ajustes → Avisos"]].map(([k,v]) => `<span>${esc(k)}</span><b>${esc(v)}</b>`).join(""); }
 
 /* ============================== arranque ============================== */
