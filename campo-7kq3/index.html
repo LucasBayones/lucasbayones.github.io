@@ -247,6 +247,20 @@ body.noscroll{overflow:hidden}
 .cobtn b{font-size:42px;line-height:1;font-variant-numeric:tabular-nums} .cobtn span{font-size:14px;color:var(--muted)} .cobtn:active{transform:scale(.98);border-color:var(--accent)} .cobtn:disabled{opacity:.55}
 .copt{min-width:30px;height:20px;padding:0 5px;border-radius:6px;background:#F0B848;color:#0F1E2E;border:2px solid #0F1E2E;display:grid;place-items:center;font-size:10.5px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.4);white-space:nowrap} .copt.cerrada{background:#AEB7BD}
 .chip.co-cerrada{opacity:.65}
+#po-clima{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.pc-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0 6px}
+.pc-dia{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 1px;border-radius:10px;background:var(--surface-2);border:1px solid transparent;min-width:0}
+.pc-dia small{font-size:10px;color:var(--muted);white-space:nowrap} .pc-dia b{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap} .pc-dia i{font-style:normal;font-size:9.5px;white-space:nowrap;color:var(--muted)}
+.pc-dia.hoy{border-color:var(--fg)}
+.pc-dia.n-bueno{background:var(--ok-bg)} .pc-dia.n-bueno i{color:var(--ok)}
+.pc-dia.n-regular{background:var(--warn-bg)} .pc-dia.n-regular i{color:var(--warn)}
+.pc-dia.n-calor{background:var(--bad-bg)} .pc-dia.n-calor i{color:var(--bad)}
+.pc-dia.n-frio{border:1px dashed var(--muted)}
+.pc-prop{font-size:13.5px;line-height:1.38;border-left:3px solid var(--line);padding:5px 0 5px 10px;margin:7px 0;cursor:pointer;overflow-wrap:anywhere}
+.pc-prop.u1{border-left-color:var(--bad)} .pc-prop.u2{border-left-color:var(--warn)}
+.pc-prop b{font-weight:600}
+.pc-mas{margin-top:5px;font-size:13px} .pc-mas p{margin:0 0 4px} .pc-mas ul{margin:4px 0 0 16px;padding:0;color:var(--muted);font-size:12.5px}
+.pc-prop:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
 /* Otras formas de contar: filas de opción (libreta, voz, video) */
 .optrow{display:grid;grid-template-columns:42px 1fr 18px;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:transform .08s} .optrow:active{transform:scale(.99)}
 .optrow .oi{width:42px;height:42px;border-radius:12px;background:var(--accent-bg);display:grid;place-items:center;color:var(--accent)} .optrow .oi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -1229,6 +1243,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <div class="row between"><span class="eyebrow">Colmenas</span><span class="small muted" id="po-col-n"></span></div>
             <div class="chips" id="po-colmenas"></div>
             <p class="note ay">Una ficha por colmena: dónde está, desde cuándo, hacia dónde mira la entrada (piquera) y cuánta actividad tiene. PRELIMINAR.</p>
+            <div id="po-clima" hidden></div>
           </div>
         </div>
         <div id="po-punto" hidden>
@@ -1267,11 +1282,13 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
                 <div class="field"><label for="co-altura">Altura (cm)</label><input id="co-altura" inputmode="numeric" placeholder="40"></div>
                 <div class="field"><label>Lugar</label><p class="small" id="co-lugar" style="margin:10px 0 0"></p></div>
               </div>
+              <p class="small muted" id="co-sugerida" hidden style="margin:10px 0 0"></p>
               <p class="note ay">La piquera es la entrada de la colmena: marque hacia dónde mira. El lugar se toma del GPS del teléfono, parado junto a la colmena.</p>
             </div>
             <div class="flow" id="co-ficha" hidden>
               <div class="kv" id="co-datos"></div>
               <div class="row" id="co-acciones" style="gap:8px;flex-wrap:wrap"><button class="btn sec sm" type="button" data-coa="cerrar"></button><button class="btn sec sm" type="button" data-coa="mover">Mover aquí</button><button class="btn sec sm" type="button" data-coa="recambio">Recambio</button><button class="btn sec sm" type="button" data-coa="retirar">Retirar</button></div>
+              <div id="co-propuestas"></div>
               <div id="co-conteos"></div>
               <p class="note ay">«Sol de frente» es un cálculo con la fecha y el lugar: a qué horas el sol queda del lado de la piquera (no cuenta sombras de la estructura ni cortinas). «Mover aquí» toma el GPS de este momento. PRELIMINAR.</p>
             </div>
@@ -2016,7 +2033,7 @@ async function cargarLotes(){
   try{ const cb = await db("GET","cerebro",{select:"version,contenido,generado", id:"eq.1"}); if(cb && cb[0] && cb[0].contenido){ CEREBRO = cb[0].contenido; CEREBRO._bajado = new Date().toISOString(); } }catch(e){}   // v34: lo que el RIG aprendió, para usar sin señal
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
-  ultimoCache = {filas, reps, parcs}; cacheGuardar(); cargarTrabajos(); cargarAlias(); problemasEnviar(); cargarColmenas();
+  ultimoCache = {filas, reps, parcs}; cacheGuardar(); cargarTrabajos(); cargarAlias(); problemasEnviar(); cargarColmenas(); cargarPolClima();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
 function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; RECONOCIMIENTOS = c.recos || []; SENSORES = c.sens || []; LECTURAS = c.lects || []; POLINIZACION = c.polin || []; VENTANAS = c.vents || []; RECETAS = c.recs || []; PRODUCTOS = c.prods || []; AVISOS_VOZ = c.avz || []; CEREBRO = c.cerebro || null; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
@@ -2612,7 +2629,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "58 · 25 nov 2026";
+const APP_VERSION = "59 · 25 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3798,7 +3815,7 @@ function coSolDeFrente(c, l, dia){ const lat = c.lat ?? l.lat, lon = c.lon ?? l.
   const hm = t=>`${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}`; return tramos.map(([a,b])=>`${hm(a)}–${hm(b)}`); }
 function coDias(c){ return Math.max(0, Math.round((Date.parse(hoyISO) - Date.parse(c.colocada_el)) / 86400000)); }
 function coChips(){ const box = $("#po-colmenas"); if(!box) return; const cs = colDe(LOTES[lotIdx]); $("#po-col-n").textContent = cs.length ? String(cs.length) : "";
-  box.innerHTML = cs.map(c=>`<button class="chip${c.estado==="cerrada" ? " co-cerrada" : ""}" data-col="${esc(c.id)}">${esc(c.codigo)} · ${coDias(c)} d${c.estado==="cerrada" ? " · cerrada" : ""}</button>`).join("") + `<button class="chip" data-col-nueva style="border-style:dashed">+ colmena</button>`; }
+  box.innerHTML = cs.map(c=>`<button class="chip${c.estado==="cerrada" ? " co-cerrada" : ""}" data-col="${esc(c.id)}">${esc(c.codigo)} · ${coDias(c)} d${c.estado==="cerrada" ? " · cerrada" : ""}</button>`).join("") + `<button class="chip" data-col-nueva style="border-style:dashed">+ colmena</button>`; pcRender(); }
 function coMarcas(){ if(!poMap) return; colDe(LOTES[lotIdx]).forEach(c=>{ if(c.lat==null || c.lon==null) return; const m = L.marker([c.lat, c.lon], {icon: L.divIcon({className:"", html:`<div class="copt${c.estado==="cerrada" ? " cerrada" : ""}">${esc(c.codigo)}</div>`, iconSize:[30,20], iconAnchor:[15,10]})}).addTo(poMap); m.on("click", ()=>coAbrir(c.id)); poCapas.push(m); }); }
 function coParar(){ clearInterval(coTic); coTic = null; if(coConf){ clearTimeout(coConf.t); coConf = null; } }
 function coAbrir(id){ if(!po) return; po.col = id ? (COLMENAS.find(c=>c.id===id) || null) : null; po.colModo = po.col ? "ficha" : "alta"; po.colN = null; po.colDe = null; poPaso("colmena"); }
@@ -3809,11 +3826,16 @@ function coRender(){ const l = LOTES[lotIdx]; const c = po.col, modo = po.colMod
   if(modo==="alta"){ const base = po.colDe; $("#co-h").textContent = base ? `Recambio de ${base.codigo}` : "Colmena nueva"; const n = COLMENAS.filter(x=>x.lote_id===(l.uuid||l.id)).length;
     $("#co-codigo").value = "C" + (n + 1); $("#co-fecha").value = hoyISO; $("#co-altura").value = base && base.altura_cm!=null ? base.altura_cm : ""; coUno("#co-rumbo", base ? base.rumbo_piquera : null); coUno("#co-sombra", base ? base.sombra : null);
     const lugar = ()=>{ const pos = coPos(); $("#co-lugar").textContent = pos ? `GPS ±${pos.precision_m ?? "?"} m` : (base && base.lat!=null ? "el de la colmena anterior" : "sin GPS todavía"); }; lugar(); coTic = setInterval(lugar, 1500);
+    const sug = pcDe(l), co = sug && sug.resumen && sug.resumen.colocacion; $("#co-sugerida").hidden = !co;
+    if(co) $("#co-sugerida").textContent = "Sugerido esta semana (preliminar): " + [co.rumbo!=null && isFinite(+co.rumbo) ? "piquera al " + RUMBO_TXT[Math.round(+co.rumbo / 45) % 8] : null, co.altura ? String(co.altura) : null, co.sombra==="total" ? "con sombra propia" : null, co.mejor_dia && co.mejor_dia.fecha ? "mejor día: " + fmtD(String(co.mejor_dia.fecha)) : null].filter(Boolean).join(" · ") + ".";
     b.textContent = "Guardar la colmena"; }
-  if(modo==="ficha" && c){ const dias = coDias(c); $("#co-h").textContent = `${c.codigo}${c.estado==="cerrada" ? " · cerrada" : ""}`; const sol = coSolDeFrente(c, l); const u = COL_CONTEOS.filter(n=>n.colmena_id===c.id)[0];
+  if(modo==="ficha" && c){ const dias = coDias(c); $("#co-h").textContent = `${c.codigo}${c.estado==="cerrada" ? " · cerrada" : ""}`; const sol = coSolDeFrente(c, l); const u = COL_CONTEOS.filter(n=>n.colmena_id===c.id)[0]; const pf = pcDe(l), rf = pf && (pf.colmenas||[]).find(x=>x && x.id===c.id), solHoy = rf && (rf.sol_frente_calor_dias||[]).find(x=>x.fecha===hoyISO);
     const mira = [c.rumbo_piquera!=null ? "al " + RUMBO_TXT[Math.round(c.rumbo_piquera / 45) % 8] : null, c.altura_cm!=null ? c.altura_cm + " cm" : null, c.sombra ? (c.sombra==="sin" ? "sin sombra" : "sombra " + c.sombra) : null].filter(Boolean).join(" · ");
     const porMin = n=>({s: (60 * n.salen / n.segundos).toFixed(1).replace(".", ","), v: (60 * n.vuelven / n.segundos).toFixed(1).replace(".", ",")}); const cuando = n=>{ const t = new Date(n.hora); return (localISO(t)===hoyISO ? "hoy" : fmtD(localISO(t))) + ` ${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}`; };
-    $("#co-datos").innerHTML = `<span>Colocada</span><b>${esc(fmtD(c.colocada_el))} · ${dias} día${dias===1?"":"s"}</b>` + (mira ? `<span>Piquera</span><b>${esc(mira)}</b>` : "") + (sol ? `<span>Sol de frente</span><b>${sol.length ? esc(sol.join(" y ")) : "no le da"}</b>` : "") + `<span>Lugar</span><b>${c.lat!=null ? (c.sector ? esc(c.sector) + " · " : "") + `±${c.precision_m ?? "?"} m` : "sin ubicar"}</b>` + (u ? `<span>Último conteo</span><b>${esc(cuando(u))} · salen ${porMin(u).s} · vuelven ${porMin(u).v} por min</b>` : "");
+    $("#co-datos").innerHTML = `<span>Colocada</span><b>${esc(fmtD(c.colocada_el))} · ${dias} día${dias===1?"":"s"}</b>` + (mira ? `<span>Piquera</span><b>${esc(mira)}</b>` : "") + (sol ? `<span>Sol de frente</span><b>${sol.length ? esc(sol.join(" y ")) : "no le da"}</b>` : "") + `<span>Lugar</span><b>${c.lat!=null ? (c.sector ? esc(c.sector) + " · " : "") + `±${c.precision_m ?? "?"} m` : "sin ubicar"}</b>` + (u ? `<span>Último conteo</span><b>${esc(cuando(u))} · salen ${porMin(u).s} · vuelven ${porMin(u).v} por min</b>` : "")
+      + (rf && {planear:1, recambio:1, vencida:1}[rf.vida] ? `<span>Recambio</span><b>${esc(rf.vida==="planear" ? "pedirlo antes del " + fmtD(String(rf.cumple_recambio||hoyISO)) : rf.vida==="recambio" ? "en edad (semana " + (Math.floor(+rf.semanas||0) + 1) + ")" : "pasó la duración general")}</b>` : "")
+      + (rf && rf.sol_frente_calor_h!=null ? `<span>Sol de frente con calor</span><b>${+rf.sol_frente_calor_h ? esc(rf.sol_frente_calor_h) + " h en 7 días" + (solHoy ? " · hoy " + esc(solHoy.horas) : "") : "no esta semana"}</b>` : "");
+    $("#co-propuestas").innerHTML = pf ? (pf.propuestas||[]).filter(x=>Array.isArray(x.colmena_ids) && x.colmena_ids.includes(c.id)).map(pcProp).join("") : "";
     $('#co-acciones [data-coa="cerrar"]').textContent = c.estado==="cerrada" ? "Abrir" : "Cerrar"; $('#co-acciones [data-coa="recambio"]').textContent = "Recambio"; $('#co-acciones [data-coa="retirar"]').textContent = "Retirar";
     const ns = COL_CONTEOS.filter(n=>n.colmena_id===c.id).slice(1, 4); $("#co-conteos").innerHTML = ns.map(n=>`<div class="log-item"><span class="d">${esc(cuando(n))}</span><span>salen ${porMin(n).s} · vuelven ${porMin(n).v} por min${n._local ? `<em class="tag">por subir</em>` : ""}</span></div>`).join("");
     b.textContent = "Contar entradas y salidas"; b.disabled = c.estado==="cerrada"; }
@@ -3848,6 +3870,39 @@ $("#co-acciones").addEventListener("click", e=>{ const b = e.target.closest("[da
   if(a==="recambio") coConfirmar(b, "¿Recambio? Toque otra vez", ()=>{ po.colDe = c; po.col = null; po.colModo = "alta"; coRender(); });
   if(a==="retirar") coConfirmar(b, "¿Retirar? Toque otra vez", ()=>{ colEvento(c, "retirada", {motivo: "retiro"}); coParar(); poPaso("ruta"); cuentaDecir(`${c.codigo} retirada`); }); });
 colLeer();
+// ---------------------------------------------------------------- v59: clima para las colmenas. Lo calcula el RIG cada noche con el pronóstico de la zona (tabla polinizacion_clima, esquema v26):
+// horas de vuelo, de calor y de frío ADENTRO de la estructura (estimadas), y propuestas de colocación, sombra, giro y recambio para decidir con el técnico. PRELIMINAR.
+// La app solo lo muestra. Los textos vienen de la nube: siempre pasan por esc().
+const PC_KEY = "engram-campo-polclima-v1", PC_NIVEL = {bueno:"bien", regular:"regular", calor:"calor", frio:"frío", sin_dato:"sin dato"}, PC_DIA = ["dom","lun","mar","mié","jue","vie","sáb"];
+let POLCLIMA = {}, pcTodas = false; const pcAbiertas = new Set();
+function pcLeer(){ try{ POLCLIMA = JSON.parse(localStorage.getItem(PC_KEY)) || {}; }catch(e){ POLCLIMA = {}; } }
+async function cargarPolClima(){ if(MODO!=="nube" || !sesion) return; let fs;
+  try{ fs = await db("GET","polinizacion_clima",{select:"*", emitida:"gte."+localISO(new Date(Date.now()-3*86400000)), order:"emitida.desc", limit:"300"}); }
+  catch(e){ return; }                                                    // sin señal, o la nube todavía no tiene la tabla (falta el esquema v26): vale lo último que quedó en el teléfono
+  const m = {}; (Array.isArray(fs) ? fs : []).forEach(f=>{ if(f && f.lote_id && !m[f.lote_id]) m[f.lote_id] = f; }); POLCLIMA = m; try{ localStorage.setItem(PC_KEY, JSON.stringify(m)); }catch(e){}
+  if(po && sheetOpen==="polin"){ if(po.paso==="ruta") pcRender(); else if(po.paso==="colmena" && po.colModo==="ficha") coRender(); } }
+function pcDe(l){ const f = l && POLCLIMA[l.uuid || l.id]; if(!f || !f.emitida || !Array.isArray(f.dias)) return null; const hace = Math.round((Date.parse(hoyISO) - Date.parse(f.emitida)) / 86400000); return hace >= 0 && hace <= 3 ? f : null; }   // lo de hace más de tres días ya no se muestra
+function pcProp(p){ const u = [1,2,3].includes(+p.urgencia) ? +p.urgencia : 3; const pq = (Array.isArray(p.por_que) ? p.por_que : []).map(x=>`<li>${esc(x)}</li>`).join("");
+  const k = String(p.tipo||"") + "|" + (Array.isArray(p.colmena_ids) ? p.colmena_ids.join(",") : "") + "|" + String(p.texto||"").length, ab = pcAbiertas.has(k);      // se recuerda cuál quedó abierta: el GPS vuelve a pintar la ruta cada tanto
+  const tit = p.titulo ? String(p.titulo) : "";                           // a la vista, el título corto; al tocar, el texto completo y su porqué
+  return `<div class="pc-prop u${u}" role="button" tabindex="0" aria-expanded="${ab}" data-k="${esc(k)}">${u===1 ? `<span aria-hidden="true">⚠ </span>` : ""}<b>${esc(tit || p.texto)}</b>${tit || pq ? `<div class="pc-mas"${ab ? "" : " hidden"}>${tit ? `<p>${esc(p.texto)}</p>` : ""}${pq ? `<ul>${pq}</ul>` : ""}</div>` : ""}</div>`; }
+function pcRender(){ const box = $("#po-clima"); if(!box) return; const f = pcDe(LOTES[lotIdx]); if(!f){ box.hidden = true; box.innerHTML = ""; box.__html = ""; return; }
+  const est = (f.resumen && f.resumen.estructura) || {}, dias = f.dias.filter(d=>d && String(d.fecha) >= hoyISO).slice(0, 7), ps = Array.isArray(f.propuestas) ? f.propuestas : [];   // de hoy en adelante (si la fila es de ayer, su primer día ya pasó)
+  if(!dias.length){ box.hidden = true; box.innerHTML = ""; box.__html = ""; return; }
+  const celdas = dias.map(d=>{ const t = new Date(String(d.fecha) + "T12:00:00"), sd = d.nivel==="sin_dato" || d.h_vuelo==null, n = PC_NIVEL[d.nivel] ? d.nivel : "sin_dato";
+    return `<div class="pc-dia n-${n}${d.fecha===hoyISO ? " hoy" : ""}" title="${esc((d.motivos||[]).join(" · "))}"><small>${d.fecha===hoyISO ? "hoy" : PC_DIA[t.getDay()] + " " + t.getDate()}</small><b>${sd ? "–" : esc(d.h_vuelo) + " h"}</b><i>${PC_NIVEL[n]}</i></div>`; }).join("");
+  const h = dias.find(d=>d.fecha===hoyISO && d.h_vuelo!=null);
+  const linea = h ? `Hoy: ${esc(h.h_vuelo)} h de vuelo${h.buenas ? " (" + esc(h.buenas) + ")" : ""}${h.h_calor ? " · " + esc(h.h_calor) + " h de calor" : ""}${h.h_frio >= 2 ? " · " + esc(h.h_frio) + " h de frío" : ""}.` : "";
+  const calib = String(est.origen||"").startsWith("ajustado") ? "con termómetro" : "sin calibrar";
+  const lista = (pcTodas ? ps : ps.slice(0, 3)).map(pcProp).join("");
+  const html = `<div class="row between"><span class="eyebrow">Horas de vuelo</span><em class="tag">preliminar · ${calib}</em></div><div class="pc-dias">${celdas}</div>`
+    + (linea ? `<p class="small" style="margin:0 0 4px">${linea}</p>` : "")
+    + (ps.length ? `<div style="margin-top:10px"><span class="eyebrow">Propuestas${f.emitida===hoyISO ? "" : " del " + esc(fmtD(String(f.emitida)))} · para decidir con el técnico</span></div>${lista}${ps.length > 3 ? `<button class="inline-link" type="button" data-pc-todas>${pcTodas ? "ver menos" : "ver las " + ps.length}</button>` : ""}` : "")
+    + `<p class="note ay">«Horas de vuelo»: horas con luz y entre 10 y 28 °C adentro de la estructura, estimadas con el pronóstico de la zona (${esc(f.emitida===hoyISO ? "de hoy" : "del " + fmtD(f.emitida))}). Sin termómetro adentro es un estimado sin calibrar. Entre 28 y 32 °C vuelan menos; desde 32 °C se detienen. Toque una propuesta para ver por qué. PRELIMINAR.</p>`;
+  box.hidden = false; if(box.__html !== html){ box.__html = html; box.innerHTML = html; } }
+function pcToque(e){ const t = e.target.closest("[data-pc-todas]"); if(t){ pcTodas = !pcTodas; pcRender(); return; } const pr = e.target.closest(".pc-prop"); if(!pr) return; const ul = pr.querySelector(".pc-mas"); if(!ul) return; const k = pr.dataset.k; if(pcAbiertas.has(k)) pcAbiertas.delete(k); else pcAbiertas.add(k); ul.hidden = !pcAbiertas.has(k); pr.setAttribute("aria-expanded", String(pcAbiertas.has(k))); }
+["#po-clima", "#co-propuestas"].forEach(q=>{ $(q).addEventListener("click", pcToque); $(q).addEventListener("keydown", e=>{ if((e.key==="Enter" || e.key===" ") && e.target.classList && e.target.classList.contains("pc-prop")){ e.preventDefault(); pcToque(e); } }); });
+pcLeer();
 function poPendientes(){ const h = new Set(po.hechos.map(x=>x.punto_id)); let pend = po.puntos.filter(p=>!h.has(p.id)); if(plPos) pend = pend.slice().sort((a,b)=>plDist(plPos,a)-plDist(plPos,b)); return pend; }
 function poPaso(paso){ po.paso = paso; ["ruta","punto","fin","colmena"].forEach(s=>{ $("#po-"+s).hidden = s!==paso; }); const b = $("#po-save"); if(paso!=="colmena") coParar();
   if(paso==="colmena"){ coRender(); cuentaRender(); return; }
