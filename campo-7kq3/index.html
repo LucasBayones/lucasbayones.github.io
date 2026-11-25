@@ -227,14 +227,20 @@ body.noscroll{overflow:hidden}
 .lastreg{font-size:13px;color:var(--muted);line-height:1.4} .lastreg b{color:var(--fg);font-weight:600}
 .log-item.new{animation:flash 1.8s ease-out}
 @keyframes flash{0%{background:var(--warn-bg);box-shadow:0 0 0 2px var(--accent)}100%{background:var(--surface-2);box-shadow:none}}
-/* v57: contarlo con voz, libreta o video desde dentro de cada registro (franja debajo del título) */
-.cuenta{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
-.cuenta .lbl{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--muted);line-height:1.3}
-.cuenta .ci{flex:none;display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 10px 0 8px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2);color:var(--accent);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
-.cuenta .ci svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.cuenta .ci:active{transform:scale(.97)}
-.cuenta.sub{background:var(--accent-bg)} .cuenta.sub .lbl,.cuenta.msg .lbl{color:var(--fg)} .cuenta.msg .lbl{flex-basis:100%}
-@media (max-width:350px){ .cuenta:not(.sub):not(.msg) .lbl{display:none} .cuenta{justify-content:space-between} }
+/* v57.1: una sola barra de iconos en cada registro (nota de voz, foto, galería, libreta, video, «?»); las explicaciones largas, a pedido */
+.cuenta{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.cuenta .lbl{flex:1 1 100%;min-width:0;font-size:12.5px;color:var(--fg);line-height:1.3}
+.cuenta .ci{flex:none;position:relative;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:42px;height:42px;padding:0 10px;border:1px solid var(--line);border-radius:21px;background:var(--surface-2);color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.cuenta .ci svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.cuenta .ci:active{transform:scale(.96)}
+.cuenta .ci .st,.cuenta .ci.on .mi{display:none} .cuenta .ci.on .st{display:block} .cuenta .ci .t:empty{display:none}
+.cuenta .ci.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.cuenta .ci.con::after{content:"";position:absolute;top:4px;right:5px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--surface-2)}
+.cuenta .ci.ayu{margin-left:auto;color:var(--muted)} .cuenta .ci.ayu.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.cuenta.sub{background:var(--accent-bg)}
+.cuenta .ley{flex:1 1 100%;margin:0;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)} .cuenta .ley span{display:inline-flex;align-items:center;gap:4px} .cuenta .ley svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#sheet:not(.ayuda) .ay{display:none !important}
+.sin-caja{position:absolute !important;width:1px !important;height:1px !important;min-height:0 !important;padding:0 !important;margin:0 !important;border:0 !important;overflow:hidden !important;opacity:0 !important;pointer-events:none !important}
 .toast{z-index:40}
 /* Otras formas de contar: filas de opción (libreta, voz, video) */
 .optrow{display:grid;grid-template-columns:42px 1fr 18px;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:transform .08s} .optrow:active{transform:scale(.99)}
@@ -989,18 +995,22 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
       <span class="lot" id="sheet-lot"></span>
     </div>
     <div class="cuenta" id="sheet-cuenta" hidden>
-      <span class="lbl" id="cuenta-lbl">Cuéntelo con</span>
-      <button class="ci" data-flow="voz" aria-label="Nota de voz"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>voz</span></button>
-      <button class="ci" data-flow="libreta" aria-label="Foto de la libreta"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg><span>libreta</span></button>
-      <button class="ci" data-flow="video" aria-label="Video"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg><span>video</span></button>
+      <span class="lbl" id="cuenta-lbl" hidden></span>
+      <button class="ci" data-ci="voz" aria-label="Nota de voz"><svg class="mi" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><svg class="st" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none"/></svg><span class="t" id="ci-voz-t"></span></button>
+      <button class="ci" data-ci="foto" aria-label="Foto"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+      <button class="ci" data-ci="galeria" aria-label="Elegir una foto de la galería"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg></button>
+      <button class="ci" data-flow="libreta" aria-label="Foto de la libreta"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg></button>
+      <button class="ci" data-flow="video" aria-label="Video"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></button>
+      <button class="ci ayu" data-ci="ayuda" aria-label="Mostrar u ocultar las explicaciones" aria-pressed="false">?</button>
+      <p class="ley ay" id="cuenta-ley"><span><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg> nota de voz</span><span><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg> foto</span><span><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5-5-8 8"/></svg> foto de la galería</span><span><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg> foto de la libreta</span><span><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg> video</span></p>
     </div>
     <div class="sheet-body" id="sheet-body">
 
       <div class="flow" id="flow-aplique" hidden>
-        <label class="photo" for="etq-input" id="etq-drop"><b>Foto de la etiqueta, el envase o la factura</b><span class="small muted">Toque para abrir la cámara. El sistema lee producto, dosis y fecha; usted confirma.</span><input class="hiddeninput" id="etq-input" type="file" accept="image/*" capture="environment"></label>
+        <label class="photo sin-caja" for="etq-input" id="etq-drop"><b>Foto de la etiqueta, el envase o la factura</b><span class="small muted">Toque para abrir la cámara. El sistema lee producto, dosis y fecha; usted confirma.</span><input class="hiddeninput" id="etq-input" type="file" accept="image/*" capture="environment"></label>
         <div id="etq-preview" hidden></div>
         <div class="card">
-          <span class="eyebrow">O elegir de los últimos</span>
+          <span class="eyebrow">Últimos</span>
           <div class="chips" id="ult-chips"></div>
         </div>
         <div class="card">
@@ -1015,7 +1025,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <div class="field"><label for="ap-fecha">Fecha</label><input id="ap-fecha" type="date"></div>
           </div>
         </div>
-        <p class="note">Se guarda lo que usted aplicó y cuándo, para la memoria del lote. La app no recomienda productos ni dosis.</p>
+        <p class="note ay">Se guarda lo que usted aplicó y cuándo, para la memoria del lote. La app no recomienda productos ni dosis.</p>
       </div>
 
       <div class="flow" id="flow-regue" hidden>
@@ -1025,7 +1035,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
           <div class="chips" id="rg-met"><button class="chip" aria-pressed="true">aspersión</button><button class="chip" aria-pressed="false">goteo</button><button class="chip" aria-pressed="false">gravedad</button><button class="chip" aria-pressed="false">pivote</button></div>
           <div class="field"><label for="rg-fecha">Fecha</label><input id="rg-fecha" type="date"></div>
         </div>
-        <p class="note">Con las horas y el método, el motor ajusta el agua del suelo de su lote. No hace falta nada más.</p>
+        <p class="note ay">Con las horas y el método, el motor ajusta el agua del suelo de su lote. No hace falta nada más.</p>
       </div>
 
       <div class="flow" id="flow-vi" hidden>
@@ -1037,11 +1047,11 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
           <span class="eyebrow">Severidad (0 nada · 5 pérdida total)</span>
           <div class="seg" id="vi-sev"><button aria-pressed="false">0</button><button aria-pressed="false">1</button><button aria-pressed="true">2</button><button aria-pressed="false">3</button><button aria-pressed="false">4</button><button aria-pressed="false">5</button></div>
         </div>
-        <label class="photo" for="vi-input" style="padding:12px"><b>Foto (opcional)</b><span class="small muted">Con fecha y lugar. Alimenta la detección de daño y la lectura del satélite.</span><input class="hiddeninput" id="vi-input" type="file" accept="image/*" capture="environment"></label>
-        <label class="inline-link" for="vi-gal" style="justify-self:center;cursor:pointer;text-align:center;display:block">o elegir una foto de la galería<input class="hiddeninput" id="vi-gal" type="file" accept="image/*"></label>
+        <label class="photo sin-caja" for="vi-input" style="padding:12px"><b>Foto (opcional)</b><span class="small muted">Con fecha y lugar. Alimenta la detección de daño y la lectura del satélite.</span><input class="hiddeninput" id="vi-input" type="file" accept="image/*" capture="environment"></label>
+        <label class="inline-link sin-caja" for="vi-gal" style="justify-self:center;cursor:pointer;text-align:center;display:block">o elegir una foto de la galería<input class="hiddeninput" id="vi-gal" type="file" accept="image/*"></label>
         <div id="vi-preview" hidden></div>
         <p class="small" id="vi-reco" hidden style="color:var(--blue)"></p>
-        <p class="note" id="vi-nota">Queda como sospecha: un agrónomo la confirma. La app no diagnostica.</p>
+        <p class="note ay" id="vi-nota">Queda como sospecha: un agrónomo la confirma. La app no diagnostica.</p>
         <button class="optrow" data-flow="visita" id="opt-visita"><span class="oi"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Visita técnica</b><span class="s">El formulario completo del cultivo (visitador o agrónomo)</span></span><span class="chev">›</span></button>
       </div>
 
@@ -1119,7 +1129,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <div id="pl-map" class="lmap" style="height:280px" hidden></div>
             <div class="chips" id="pl-puntos"></div>
             <div class="row"><button class="btn sec" id="pl-terminar">Terminar el recorrido</button></div>
-            <p class="note">Toque un punto (en el mapa o en la lista) para contar ahí. Con GPS, la app le dice cuál es el más cercano. No hace falta hacerlos todos: cada punto guardado suma.</p>
+            <p class="note ay">Toque un punto (en el mapa o en la lista) para contar ahí. Con GPS, la app le dice cuál es el más cercano. No hace falta hacerlos todos: cada punto guardado suma.</p>
           </div>
         </div>
         <div id="pl-punto" hidden>
@@ -1134,14 +1144,14 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <div id="pl-motor"></div>
           </div>
           <div class="card" id="pl-nota-card">
-            <span class="eyebrow">Nota del punto (opcional)</span>
-            <p class="small muted" style="margin:4px 0 8px">Lo que vio aquí, con su voz o escrito: queda en este punto y en la bitácora. Sin señal, el teléfono la transcribe si tiene el modelo de voz; si no, el motor la oye después.</p>
-            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sec sm" id="pl-nota-rec" type="button">🎙 Grabar</button><span class="small muted" id="pl-nota-hint"></span></div>
-            <textarea id="pl-nota" rows="2" placeholder="Ej.: la trampa estaba llena de mosquita, el daño es en la orilla este" style="width:100%;margin-top:8px"></textarea>
+            <span class="eyebrow ay">Nota del punto (opcional)</span>
+            <p class="small muted ay" style="margin:4px 0 8px">Lo que vio aquí, con su voz o escrito: queda en este punto y en la bitácora. Sin señal, el teléfono la transcribe si tiene el modelo de voz; si no, el motor la oye después.</p>
+            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sec sm sin-caja" id="pl-nota-rec" type="button" tabindex="-1" aria-hidden="true">🎙 Grabar</button><span class="small muted" id="pl-nota-hint"></span></div>
+            <textarea id="pl-nota" rows="2" placeholder="Nota del punto (opcional)" style="width:100%;margin-top:8px"></textarea>
             <audio id="pl-nota-audio" controls hidden style="width:100%;margin-top:6px"></audio>
           </div>
-          <label class="photo" for="pl-foto-input"><b>Foto (opcional)</b><span class="small muted">De la hoja, la trampa o el daño: el motor la lee con señal y su agrónomo la confirma.</span><input class="hiddeninput" id="pl-foto-input" type="file" accept="image/*" capture="environment"></label>
-          <label class="inline-link" for="pl-foto-gal" style="justify-self:center;cursor:pointer;text-align:center;display:block">o elegir una foto de la galería<input class="hiddeninput" id="pl-foto-gal" type="file" accept="image/*"></label>
+          <label class="photo sin-caja" for="pl-foto-input"><b>Foto (opcional)</b><span class="small muted">De la hoja, la trampa o el daño: el motor la lee con señal y su agrónomo la confirma.</span><input class="hiddeninput" id="pl-foto-input" type="file" accept="image/*" capture="environment"></label>
+          <label class="inline-link sin-caja" for="pl-foto-gal" style="justify-self:center;cursor:pointer;text-align:center;display:block">o elegir una foto de la galería<input class="hiddeninput" id="pl-foto-gal" type="file" accept="image/*"></label>
           <div id="pl-foto-prev" hidden></div>
           <p class="small" id="pl-foto-reco" hidden style="color:var(--blue)"></p>
           <div id="pl-foto-trampa" hidden></div>
@@ -1195,7 +1205,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
           <div class="field"><label for="le-valor">Valor <span id="le-unidad" class="muted"></span></label><input id="le-valor" inputmode="decimal" placeholder="lo que marca el instrumento" style="font-size:22px;font-weight:700;text-align:center"></div>
           <div class="grid2"><div class="field"><label for="le-fecha">Fecha</label><input id="le-fecha" type="date"></div><div class="field"><label for="le-hora">Hora</label><input id="le-hora" type="time"></div></div>
         </div>
-        <label class="photo" for="le-foto-input"><b>Foto del instrumento</b><span class="small muted">Si no quiere teclear el valor: el motor lee la aguja o la pantalla con señal.</span><input class="hiddeninput" id="le-foto-input" type="file" accept="image/*" capture="environment"></label>
+        <label class="photo sin-caja" for="le-foto-input"><b>Foto del instrumento</b><span class="small muted">Si no quiere teclear el valor: el motor lee la aguja o la pantalla con señal.</span><input class="hiddeninput" id="le-foto-input" type="file" accept="image/*" capture="environment"></label>
         <div id="le-foto-prev" hidden></div>
         <div id="le-foto-reco" hidden></div>
       </div>
@@ -1208,7 +1218,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <div id="po-map" class="lmap" style="height:260px" hidden></div>
             <div class="chips" id="po-puntos"></div>
             <div class="row"><button class="btn sec" id="po-terminar">Terminar el recorrido</button></div>
-            <p class="note">Un punto por parcela (si las dibujó en Lote) o repartidos por el lote. En cada uno: 20 flores abiertas, cuántas con marca.</p>
+            <p class="note ay">Un punto por parcela (si las dibujó en Lote) o repartidos por el lote. En cada uno: 20 flores abiertas, cuántas con marca.</p>
           </div>
         </div>
         <div id="po-punto" hidden>
@@ -1221,13 +1231,13 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <div id="po-calc"></div>
           </div>
           <div class="card" id="po-nota-card">
-            <span class="eyebrow">Nota del punto (opcional)</span>
-            <p class="small muted" style="margin:4px 0 8px">Lo que vio aquí, con su voz o escrito: queda en este punto y en la bitácora. Sin señal, el teléfono la transcribe si tiene el modelo de voz; si no, el motor la oye después.</p>
-            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sec sm" id="po-nota-rec" type="button">🎙 Grabar</button><span class="small muted" id="po-nota-hint"></span></div>
-            <textarea id="po-nota" rows="2" placeholder="Ej.: colmena 2 con poca actividad; marcas sobre todo en las flores del borde" style="width:100%;margin-top:8px"></textarea>
+            <span class="eyebrow ay">Nota del punto (opcional)</span>
+            <p class="small muted ay" style="margin:4px 0 8px">Lo que vio aquí, con su voz o escrito: queda en este punto y en la bitácora. Sin señal, el teléfono la transcribe si tiene el modelo de voz; si no, el motor la oye después.</p>
+            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sec sm sin-caja" id="po-nota-rec" type="button" tabindex="-1" aria-hidden="true">🎙 Grabar</button><span class="small muted" id="po-nota-hint"></span></div>
+            <textarea id="po-nota" rows="2" placeholder="Nota del punto (opcional)" style="width:100%;margin-top:8px"></textarea>
             <audio id="po-nota-audio" controls hidden style="width:100%;margin-top:6px"></audio>
           </div>
-          <label class="photo" for="po-foto-input"><b>Foto de las flores (opcional)</b><span class="small muted">De cerca, con las anteras visibles: el motor cuenta las marcas con señal.</span><input class="hiddeninput" id="po-foto-input" type="file" accept="image/*" capture="environment"></label>
+          <label class="photo sin-caja" for="po-foto-input"><b>Foto de las flores (opcional)</b><span class="small muted">De cerca, con las anteras visibles: el motor cuenta las marcas con señal.</span><input class="hiddeninput" id="po-foto-input" type="file" accept="image/*" capture="environment"></label>
           <div id="po-foto-prev" hidden></div>
           <div id="po-foto-reco" hidden></div>
         </div>
@@ -2559,7 +2569,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "57 · 25 nov 2026";
+const APP_VERSION = "57.1 · 25 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2859,17 +2869,38 @@ function contextoDe(base){ const c = {tema: base};       // lo que se le anota a
        if(base==="polin" && po && po.actual){ if(po.actual.id!=null) c.punto_id = String(po.actual.id); if(po.actual.sector) c.sector = String(po.actual.sector); }
        if(base==="lectura"){ const sn = document.querySelector('#le-sensores .chip[aria-pressed="true"][data-les]'); if(sn) c.sensor_id = sn.dataset.les; } }catch(e){}
   return c; }
-function cuentaRender(msg){ const el = $("#sheet-cuenta"); if(!el) return; const base = subDe ? subDe.flow : sheetOpen; const ver = !!(base && TEMA_TXT[base]);
-  el.hidden = !ver; clearTimeout(cuentaT); if(!ver) return; const c = subDe ? subDe.ctx : null;
-  el.classList.toggle("sub", !!subDe); el.classList.toggle("msg", !subDe && !!msg); $$(".ci", el).forEach(b=>{ b.hidden = !!subDe; });
-  $("#cuenta-lbl").innerHTML = subDe ? `Queda anotado en <b>${esc(TEMA_TXT[base])}</b>${c && c.punto_id!=null ? ` · punto ${esc(c.punto_id)}` : ""}` : msg ? `<b>✓</b> ${esc(msg)}` : "Cuéntelo con";
-  if(msg && !subDe) cuentaT = setTimeout(()=>cuentaRender(), 6000); }
+let cuentaMsg = null, cuentaTic = null;
+function cuentaPunto(){ const f = subDe ? null : sheetOpen; return f==="plagas" && pl && pl.paso==="punto" ? "pl" : f==="polin" && po && po.paso==="punto" ? "po" : null; }      // "pl" / "po" con un punto abierto: ahí la nota de voz y la foto son las del punto
+function cuentaFoto(galeria){ const f = subDe ? null : sheetOpen; const pt = cuentaPunto();                                                                                       // qué entrada de foto le toca a la cámara (o a la galería) en esta pantalla
+  if(galeria) return pt==="pl" ? "#pl-foto-gal" : f==="vi" ? "#vi-gal" : null;
+  return pt ? `#${pt}-foto-input` : f==="aplique" ? "#etq-input" : f==="lectura" ? "#le-foto-input" : f==="vi" ? "#vi-input" : null; }
+function cuentaHayFoto(){ const f = subDe ? null : sheetOpen; const pt = cuentaPunto(); const id = pt ? `#${pt}-foto-prev` : f==="aplique" ? "#etq-preview" : f==="lectura" ? "#le-foto-prev" : f==="vi" ? "#vi-preview" : null; const el = id && $(id); return !!el && !el.hidden; }
+function cuentaDecir(msg){ cuentaMsg = msg || null; clearTimeout(cuentaT); if(cuentaMsg) cuentaT = setTimeout(()=>{ cuentaMsg = null; cuentaRender(); }, 6000); cuentaRender(); }
+function cuentaRender(){ const el = $("#sheet-cuenta"); if(!el) return; const base = subDe ? subDe.flow : sheetOpen; const ver = !!(base && TEMA_TXT[base]);
+  el.hidden = !ver; clearInterval(cuentaTic); if(!ver) return; const c = subDe ? subDe.ctx : null; const lbl = $("#cuenta-lbl");
+  const txt = subDe ? `Queda anotado en <b>${esc(TEMA_TXT[base])}</b>${c && c.punto_id!=null ? ` · punto ${esc(c.punto_id)}` : ""}` : cuentaMsg ? `<b>✓</b> ${esc(cuentaMsg)}` : "";
+  lbl.hidden = !txt; lbl.innerHTML = txt; el.classList.toggle("sub", !!subDe);
+  const pt = cuentaPunto(); const rb = pt ? $(`#${pt}-nota-rec`) : null; const grabando = !!(rb && rb.classList.contains("on")); const np = pt ? notaPunto[pt] : null;
+  $$(".ci", el).forEach(b=>{ const k = b.dataset.ci || b.dataset.flow; let fuera = !!subDe || (grabando && k!=="voz");       // mientras graba la nota del punto queda solo el botón de detener
+    if(k==="foto") fuera = fuera || !cuentaFoto(false); if(k==="galeria") fuera = fuera || !cuentaFoto(true); b.hidden = fuera;
+    if(k==="voz"){ b.classList.toggle("on", grabando); b.classList.toggle("con", !grabando && !!(np && np.blob)); b.setAttribute("aria-label", grabando ? "Detener la grabación" : pt ? "Nota de voz de este punto" : "Nota de voz"); }
+    if(k==="foto") b.classList.toggle("con", cuentaHayFoto());
+    if(k==="ayuda"){ const on = $("#sheet").classList.contains("ayuda"); b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); } });
+  const tv = $("#ci-voz-t"); const pinta = ()=>{ tv.textContent = grabando && np && np.t0 ? fmtT(Math.max(0, (Date.now() - np.t0) / 1000)) : ""; }; pinta(); if(grabando) cuentaTic = setInterval(pinta, 500); }
+$("#sheet-cuenta").addEventListener("click", ev=>{ const b = ev.target.closest("[data-ci]"); if(!b) return; const k = b.dataset.ci;
+  if(k==="voz"){ const pt = cuentaPunto(); if(pt) $(`#${pt}-nota-rec`).click(); else openFlow("voz", b); return; }                 // en un punto: la nota del punto, ahí mismo; fuera: la nota de voz del tema
+  if(k==="foto" || k==="galeria"){ const sel = cuentaFoto(k==="galeria"); const inp = sel && $(sel); if(inp) inp.click(); return; }
+  if(k==="ayuda"){ const on = !$("#sheet").classList.contains("ayuda"); $("#sheet").classList.toggle("ayuda", on); try{ localStorage.setItem("engram-campo-ayuda", on ? "1" : "0"); }catch(e){} cuentaRender(); } });
+try{ if(localStorage.getItem("engram-campo-ayuda")==="1") $("#sheet").classList.add("ayuda"); }catch(e){}
+{ const mo = new MutationObserver(()=>cuentaRender());              // la barra se pone al día sola: al entrar o salir de un punto, al tomar una foto, al empezar o terminar de grabar
+  ["#pl-punto","#po-punto","#pl-foto-prev","#po-foto-prev","#etq-preview","#le-foto-prev","#vi-preview"].forEach(q=>{ const e = $(q); if(e) mo.observe(e, {attributes:true, attributeFilter:["hidden"]}); });
+  ["#pl-nota-rec","#po-nota-rec"].forEach(q=>{ const e = $(q); if(e) mo.observe(e, {attributes:true, attributeFilter:["class"]}); }); }
 function volverDeSub(msg){ const dd = subDe; if(!dd) return; subDe = null;                      // al guardar o cancelar la nota: el registro de base vuelve como estaba
   if(msg) msg = String(msg).replace("aparece aquí", "aparece en Recorrer");
   libReset(); vozReset(); vidReset(); { const b = $("#lib-interp"); if(b) b.hidden = true; }
   FLOWS.forEach(f=>{ $("#flow-"+f).hidden = f!==dd.flow; $("#"+SAVE_IDS[f]).hidden = true; });
   const sb = $("#"+SAVE_IDS[dd.flow]); sb.hidden = dd.save.hidden; sb.disabled = dd.save.disabled;
-  $("#sheet-title").textContent = dd.titulo; sheetOpen = dd.flow; cuentaRender(msg); $("#sheet-body").scrollTop = dd.scroll || 0;
+  $("#sheet-title").textContent = dd.titulo; sheetOpen = dd.flow; cuentaDecir(msg); $("#sheet-body").scrollTop = dd.scroll || 0;
   setTimeout(()=>{ try{ if(dd.flow==="plagas" && plMap) plMap.invalidateSize(); if(dd.flow==="polin" && poMap) poMap.invalidateSize(); }catch(e){} }, 80); }
 function openFlow(name, btn){
   if(typeof cerrarHojas==="function") cerrarHojas();
@@ -2897,7 +2928,7 @@ function openFlow(name, btn){
 }
 function closeSheet(fromPop){
   const sh = $("#sheet"); if(sh.hidden) return;
-  sh.classList.remove("open"); document.body.classList.remove("noscroll"); sheetOpen = null; subDe = null; cuentaRender();
+  sh.classList.remove("open"); document.body.classList.remove("noscroll"); sheetOpen = null; subDe = null; cuentaDecir(null);
   clearTimeout(sheetTimer); sheetTimer = setTimeout(()=>{ sh.hidden = true; resetFlows(); }, 320);
   if(!fromPop){ try{ if(history.state && history.state.sheet){ ignorePop = true; history.back(); } else { history.replaceState(null,"","#registrar"); } }catch(e){} }
 }
@@ -3475,7 +3506,7 @@ function plMotorRender(){
   const l = LOTES[lotIdx]; const cfg = plCfg(l, pl.plaga); if(!cfg) return; const c = plConteos(); const conteos = Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith("_")));
   const idx = plIndice(cfg, conteos, {dias_desde_siembra: plDiasSiembra(l), etapa: plEtapa(l), ajuste_lote: cerebroAjuste(l, pl.plaga)}); const np = plNivelProductor(); const g = plCompuerta(np, idx);
   pl.idx = idx; pl.gate = g; const hay = Object.keys(conteos).length;
-  $("#pl-motor").innerHTML = hay ? `<div class="row between"><span class="eyebrow">El motor ve</span><span class="lvl ${NIVEL_CLS[idx.nivel]}">${NIVEL_TXT[idx.nivel]}</span></div><div class="small">${esc(idx.razones.join(" · ") || "sin conteos que comparar")}</div>${idx.informativas.length ? `<div class="small muted">${esc(idx.informativas.join(" · "))}</div>` : ""}${idx.agravantes.length ? `<div class="small" style="color:var(--warn)">Agravante: ${esc(idx.agravantes.join("; "))}</div>` : ""}<div class="small ${g.acuerdo ? "muted" : ""}" style="${g.acuerdo ? "" : "color:var(--warn);font-weight:600"}">${esc(g.mensaje)}</div>` : `<p class="note">Anote los conteos: el motor calcula su nivel con los umbrales del catálogo (PRELIMINAR) y lo compara con el suyo.</p>`;
+  $("#pl-motor").innerHTML = hay ? `<div class="row between"><span class="eyebrow">El motor ve · preliminar</span><span class="lvl ${NIVEL_CLS[idx.nivel]}">${NIVEL_TXT[idx.nivel]}</span></div><div class="small">${esc(idx.razones.join(" · ") || "sin conteos que comparar")}</div>${idx.informativas.length ? `<div class="small muted">${esc(idx.informativas.join(" · "))}</div>` : ""}${idx.agravantes.length ? `<div class="small" style="color:var(--warn)">Agravante: ${esc(idx.agravantes.join("; "))}</div>` : ""}<div class="small ${g.acuerdo ? "muted" : ""}" style="${g.acuerdo ? "" : "color:var(--warn);font-weight:600"}">${esc(g.mensaje)}</div>` : `<p class="note ay">Anote los conteos: el motor calcula su nivel con los umbrales del catálogo (PRELIMINAR) y lo compara con el suyo.</p>`;
 }
 $("#pl-medidas").addEventListener("input", plMotorRender);
 $("#pl-medidas").addEventListener("click", e=>{ const b = e.target.closest("[data-plm]"); if(!b) return; const inp = $(`#pl-medidas input[data-plk="${b.dataset.plm}"]`); const v = +(String(inp.value||"0").replace(",",".")) || 0; inp.value = Math.max(0, v + (+b.dataset.d)); plMotorRender(); });
@@ -3509,7 +3540,7 @@ async function npGrabar(pref){ const n = notaPunto[pref] || (notaPunto[pref] = {
     b.textContent = "🎙 Grabar otra"; b.classList.remove("on"); const au = $(`#${pref}-nota-audio`); if(au){ au.src = URL.createObjectURL(n.blob); au.hidden = false; }
     if(typeof vozlDisponible==="function" && vozlDisponible()){ b.disabled = true; try{ const r = await vozlTranscribir(n.blob, avisar); const ta = $(`#${pref}-nota`); if(r && r.texto){ ta.value = (ta.value ? ta.value.trim() + " " : "") + r.texto; n.transcrito = true; } avisar(r && r.texto ? `Oído en el teléfono (${r.segundos} s): corrija lo que haga falta.` : "No se oyó nada claro: el audio se guarda y el motor lo oye con señal."); }
       catch(e){ avisar("No se pudo transcribir aquí (" + String(e && e.message || e).slice(0, 60) + "): el audio se guarda y el motor lo oye con señal."); } b.disabled = false; }
-    else avisar(`Audio de ${n.dur} s guardado: el motor lo transcribe con señal (para oírlo aquí mismo: Ajustes → Sin señal → modelo de voz).`); };
+    else avisar(`Audio de ${n.dur} s guardado.`); };
   n.rec.start(250); b.textContent = "■ Detener"; b.classList.add("on"); avisar("Grabando… toque para detener."); }
 function npTomar(pref){ const n = notaPunto[pref] || {}; const ta = $(`#${pref}-nota`); const texto = (ta && ta.value || "").trim(); return (texto || n.blob) ? {texto, audio: n.blob || null, dur: n.dur || 0, transcrito: !!n.transcrito} : null; }
 function npRegistrar(h, tabla, extraTxt, enlace){   // la nota del punto va a la bitácora como registro enlazado al punto; el audio sube como nota de voz (el motor lo oye con señal)
@@ -3685,7 +3716,7 @@ function poDibujar(poly){ if(!poMap){ poMap = L.map("po-map", {zoomControl:true,
   if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
   poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ poMap.invalidateSize(); poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380); }
 function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; poTel = null; npReset("po"); { const b = $("#po-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
-function poCalc(){ const fl = +$("#po-flores").value || 0, cm = +$("#po-marca").value; const cfg = poCfg(LOTES[lotIdx]); const box = $("#po-calc"); if(!fl || isNaN(cm) || $("#po-marca").value===""){ box.innerHTML = `<p class="note">Revise ${fl || 20} flores abiertas de 2 a 3 días y cuente las que tienen la marca (moretón café en el cono de anteras). Si prefiere, tome la foto y el motor cuenta con señal.</p>`; return; } const pct = Math.round(1000*Math.min(cm, fl)/fl)/10; const n = poNivel(pct, cfg); box.innerHTML = `<div class="row between"><span class="big" style="font-size:32px">${pct} %<small> con marca</small></span><span class="lvl ${PO_CLS[n]}">${n}</span></div><p class="note">${esc(cfg ? cfg.txt : "")}</p>`; }
+function poCalc(){ const fl = +$("#po-flores").value || 0, cm = +$("#po-marca").value; const cfg = poCfg(LOTES[lotIdx]); const box = $("#po-calc"); if(!fl || isNaN(cm) || $("#po-marca").value===""){ box.innerHTML = `<p class="note ay">Revise ${fl || 20} flores abiertas de 2 a 3 días y cuente las que tienen la marca (moretón café en el cono de anteras). Si prefiere, tome la foto y el motor cuenta con señal.</p>`; return; } const pct = Math.round(1000*Math.min(cm, fl)/fl)/10; const n = poNivel(pct, cfg); box.innerHTML = `<div class="row between"><span class="big" style="font-size:32px">${pct} %<small> con marca · preliminar</small></span><span class="lvl ${PO_CLS[n]}">${n}</span></div><p class="note ay">${esc(cfg ? cfg.txt : "")}</p>`; }
 $("#po-flores").addEventListener("input", poCalc); $("#po-marca").addEventListener("input", poCalc);
 $("#po-medidas").addEventListener("click", e=>{ const b = e.target.closest("[data-pom]"); if(!b) return; const inp = $("#po-"+b.dataset.pom); inp.value = Math.max(0, (+inp.value||0) + (+b.dataset.d)); poCalc(); });
 $("#po-puntos").addEventListener("click", e=>{ const b = e.target.closest("[data-popt]"); if(!b) return; po.actual = po.puntos.find(p=>p.id===b.dataset.popt); poPaso("punto"); });
