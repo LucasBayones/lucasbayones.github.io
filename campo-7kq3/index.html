@@ -227,6 +227,15 @@ body.noscroll{overflow:hidden}
 .lastreg{font-size:13px;color:var(--muted);line-height:1.4} .lastreg b{color:var(--fg);font-weight:600}
 .log-item.new{animation:flash 1.8s ease-out}
 @keyframes flash{0%{background:var(--warn-bg);box-shadow:0 0 0 2px var(--accent)}100%{background:var(--surface-2);box-shadow:none}}
+/* v57: contarlo con voz, libreta o video desde dentro de cada registro (franja debajo del título) */
+.cuenta{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.cuenta .lbl{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--muted);line-height:1.3}
+.cuenta .ci{flex:none;display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 10px 0 8px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2);color:var(--accent);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.cuenta .ci svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.cuenta .ci:active{transform:scale(.97)}
+.cuenta.sub{background:var(--accent-bg)} .cuenta.sub .lbl,.cuenta.msg .lbl{color:var(--fg)} .cuenta.msg .lbl{flex-basis:100%}
+@media (max-width:350px){ .cuenta:not(.sub):not(.msg) .lbl{display:none} .cuenta{justify-content:space-between} }
+.toast{z-index:40}
 /* Otras formas de contar: filas de opción (libreta, voz, video) */
 .optrow{display:grid;grid-template-columns:42px 1fr 18px;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:transform .08s} .optrow:active{transform:scale(.99)}
 .optrow .oi{width:42px;height:42px;border-radius:12px;background:var(--accent-bg);display:grid;place-items:center;color:var(--accent)} .optrow .oi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -503,8 +512,6 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
       <button class="tile" data-flow="aplique"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 3h8v4l3 3v11H5V10l3-3z"/><path d="M9 14h6"/></svg></span><b>Aplicación</b><small>foto de la etiqueta</small></button>
       <button class="tile ocre" data-flow="lectura"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 12l4-3M12 4v2M20 12h-2M4 12h2"/></svg></span><b>Sensores</b><small>tensiómetro · trampa · sonda</small></button>
       <button class="tile" data-flow="vi"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 22V12M12 12C7 12 4 9 4 4c5 0 8 3 8 8zM12 12c5 0 8-3 8-8-5 0-8 3-8 8z"/></svg></span><b>Cultivo</b><small>enfermedad · daño · etapa</small></button>
-      <button class="tile azul" data-hoja="contar"><span class="ic"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><b>Contar</b><small>voz · libreta · video</small></button>
-      <button class="tile" data-flow="nada"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></span><b>Todo en orden</b><small>y eso también cuenta</small></button>
     </div>
     <div class="lastreg" id="lastreg" style="margin-top:4px"></div>
   </div>
@@ -957,13 +964,6 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
     <div class="log" id="hj-hoy-list"></div>
     <button class="inline-link" data-nav-go="registrar" style="justify-self:start">Bitácora del lote ›</button>
   </div>
-  <div class="card" id="hj-contar" hidden>
-    <span class="eyebrow">Contar lo que pasó</span>
-    <button class="optrow" data-flow="voz"><span class="oi"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></span><span><b>Nota de voz</b><span class="s">Lo que hizo y lo que vio; el teléfono lo entiende sin señal</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="libreta"><span class="oi"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg></span><span><b>Foto de la libreta</b><span class="s">Una página → registros que usted revisa y confirma</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="video"><span class="oi"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></span><span><b>Video</b><span class="s">Recorra la planta y diga lo que ve</span></span><span class="chev">›</span></button>
-    <button class="optrow" data-flow="visita" id="opt-visita"><span class="oi"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Visita técnica</b><span class="s">El formulario completo del cultivo (visitador o agrónomo)</span></span><span class="chev">›</span></button>
-  </div>
   <div class="card" id="hj-web" hidden>
     <span class="eyebrow">EG Agro Web</span>
     <p class="small">La misma cuenta, en la computadora: bitácora completa, memoria del campo, archivos (Excel, PDF, fotos) que el motor ordena, tendencias, mapas grandes y el panel del agrónomo.</p>
@@ -987,6 +987,12 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
       <button class="back" data-cancel aria-label="Volver sin guardar"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Volver</button>
       <span class="ttl" id="sheet-title">Apliqué algo</span>
       <span class="lot" id="sheet-lot"></span>
+    </div>
+    <div class="cuenta" id="sheet-cuenta" hidden>
+      <span class="lbl" id="cuenta-lbl">Cuéntelo con</span>
+      <button class="ci" data-flow="voz" aria-label="Nota de voz"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>voz</span></button>
+      <button class="ci" data-flow="libreta" aria-label="Foto de la libreta"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M7 9h10M7 12h10M7 15h6"/></svg><span>libreta</span></button>
+      <button class="ci" data-flow="video" aria-label="Video"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg><span>video</span></button>
     </div>
     <div class="sheet-body" id="sheet-body">
 
@@ -1036,6 +1042,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
         <div id="vi-preview" hidden></div>
         <p class="small" id="vi-reco" hidden style="color:var(--blue)"></p>
         <p class="note" id="vi-nota">Queda como sospecha: un agrónomo la confirma. La app no diagnostica.</p>
+        <button class="optrow" data-flow="visita" id="opt-visita"><span class="oi"><svg viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg></span><span><b>Visita técnica</b><span class="s">El formulario completo del cultivo (visitador o agrónomo)</span></span><span class="chev">›</span></button>
       </div>
 
       <div class="flow" id="flow-libreta" hidden>
@@ -1471,7 +1478,7 @@ let flashNew = [];   // los registros recién guardados, para resaltarlos una ve
 function renderLog(){
   const l = LOTES[lotIdx]; const items = log.filter(x=>x.lote===l.id).reverse().sort((a,b)=>b.f.localeCompare(a.f));   // más reciente primero; a igual fecha, el último guardado
   $("#log-count").textContent = items.length ? `${items.length} registro${items.length===1?"":"s"}` : "sin registros todavía";
-  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}${revTag(x.id)}${recoTag(x)}${avisoVozTag(x)}${x.id && MODO==="nube" ? `<button class="inline-link par-btn" data-par="${esc(x.id)}">parecidas</button><div class="par" data-par-de="${esc(x.id)}" hidden></div>` : ""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
+  $("#log").innerHTML = items.length ? items.map(x=>`<div class="log-item"${flashNew.includes(x)?" data-new":""}><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.tema && TEMA_TXT[x.tema] ? `<em class="tag">${esc(TEMA_TXT[x.tema].toLowerCase())}</em>` : ""}${x.t==="nada" ? `<em class="tag">declarado</em>` : ""}${x.pendiente?`<em class="tag">por subir</em>`:""}${revTag(x.id)}${recoTag(x)}${avisoVozTag(x)}${x.id && MODO==="nube" ? `<button class="inline-link par-btn" data-par="${esc(x.id)}">parecidas</button><div class="par" data-par-de="${esc(x.id)}" hidden></div>` : ""}</span></div>`).join("") : `<p class="note">Aquí aparecerá lo que registre: fecha, aplicación, riego, observación, cosecha.</p>`;
   const last = items[0];
   $("#lastreg").innerHTML = last ? `Último registro: <b>${fmtD(last.f)}</b> · ${esc(last.txt)}` : "Todavía no hay registros de este lote.";
 }
@@ -1963,9 +1970,9 @@ function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACH
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
 async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
-  const nube = (filas||[]).map(r=>({id:r.id, lote:r.lote_id, u:r.usuario, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id, d:r.datos||{}, arch:r.archivo||null}));
+  const nube = (filas||[]).map(r=>({id:r.id, lote:r.lote_id, u:r.usuario, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id, d:r.datos||{}, arch:r.archivo||null, tema: (r.datos && r.datos.contexto && r.datos.contexto.tema) || undefined}));
   const cids = new Set(nube.map(x=>x.cid).filter(Boolean));
-  const pend = colaCargar().filter(q=>!cids.has(q.cliente_id)).map(q=>({lote:q.lote_id, f:q.fecha, t:q.tipo, txt:q.texto, src: q.fuente && q.fuente!=="app" ? q.fuente : undefined, cid:q.cliente_id, pendiente:true}));
+  const pend = colaCargar().filter(q=>!cids.has(q.cliente_id)).map(q=>({lote:q.lote_id, f:q.fecha, t:q.tipo, txt:q.texto, src: q.fuente && q.fuente!=="app" ? q.fuente : undefined, cid:q.cliente_id, pendiente:true, tema: (q.datos && q.datos.contexto && q.datos.contexto.tema) || undefined}));
   log = nube.concat(pend); save();
 }
 async function crearLote(d){
@@ -2552,7 +2559,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "56 · 20 nov 2026";
+const APP_VERSION = "57 · 25 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2696,7 +2703,7 @@ document.addEventListener("click", ev => {
   const mr = ev.target.closest("[data-mrev]"); if(mr){ const id = mr.dataset.mrev, n = +mr.dataset.n; const m = (MONITOREOS||[]).find(x=>x.id===id); if(m){ m.nivel_agronomo = n; } if(MODO==="nube" && sesion && !String(id).startsWith("local-")){ db("PATCH","monitoreos",{id:"eq."+id},{nivel_agronomo:n, revisado_por:sesion.user.id, revisado_en:new Date().toISOString()},"return=minimal").then(()=>toast(`Nivel del agrónomo: ${NIVEL_TXT[n]}`)).catch(e=>toast("No se pudo guardar: " + String(e.message||e).slice(0,60))); } renderPanel(); return; }
   const td = ev.target.closest("[data-tdesc]"); if(td){ marcarTranscripcion(td.dataset.tdesc, "descartada"); toast("Nota quitada de la lista"); return; }
   const flow = ev.target.closest("[data-flow]"); if(flow){ openFlow(flow.dataset.flow, flow); return; }
-  const cancel = ev.target.closest("[data-cancel]"); if(cancel){ closeSheet(false); return; }
+  const cancel = ev.target.closest("[data-cancel]"); if(cancel){ if(subDe) volverDeSub(null); else closeSheet(false); return; }
   const rm = ev.target.closest("[data-rm]"); if(rm){ const c = rm.closest(".prop"); if(c){ libProps.splice(+c.dataset.i, 1); renderLibRows(); } return; }
   const pedit = ev.target.closest("[data-pedit]"); if(pedit){ startEdit({type:"parcela", i:+pedit.dataset.pedit}); return; }
   const pdel = ev.target.closest("[data-pdel]"); if(pdel){ const g = G(); const [q] = g.parcelas.splice(+pdel.dataset.pdel,1); if(q && q.uuid){ g.parcelasBorradas = (g.parcelasBorradas||[]).concat(q.uuid); } geoSave(); if(editing && editing.type==="parcela") stopEdit(); else { drawLot(); syncParcelas(); } return; }
@@ -2757,10 +2764,10 @@ function renderInicio(){
   const p = polinKPI(l) || plagasKPI(l) || {cls:"sin", n:"—", q:"sin catálogo de plagas para este cultivo", e:"Plagas"}; kpiSet("kpi-4", p.cls, p.n, p.q, polinKPI(l) ? "polin" : "plagas", p.e);
   const hoy = log.filter(x=>x.lote===l.id && x.f===hoyISO); const n = hoy.length;
   $("#hoy-reg-n").textContent = `${n} ${n===1 ? "cosa" : "cosas"}`; $("#hoy-reg-txt").textContent = n ? hoy.slice(-3).map(x=>x.t==="regue" ? "riego" : x.t==="aplique" ? "aplicación" : x.t==="vi" ? "observación" : x.t==="nada" ? "todo en orden" : x.t).join(" · ") + " ›" : "nada todavía · toque Recorrer";
-  $("#hj-hoy-list").innerHTML = n ? hoy.slice().reverse().map(x=>`<div class="log-item"><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.pendiente?`<em class="tag">por subir</em>`:""}</span></div>`).join("") : `<p class="note">Nada registrado hoy en ${esc(l.nombre)}.</p>`;
+  $("#hj-hoy-list").innerHTML = n ? hoy.slice().reverse().map(x=>`<div class="log-item"><span class="d">${fmtD(x.f)}</span><span>${esc(x.txt)}${x.src?`<em class="tag">${esc(x.src)}</em>`:""}${x.tema && TEMA_TXT[x.tema] ? `<em class="tag">${esc(TEMA_TXT[x.tema].toLowerCase())}</em>` : ""}${x.t==="nada" ? `<em class="tag">declarado</em>` : ""}${x.pendiente?`<em class="tag">por subir</em>`:""}</span></div>`).join("") : `<p class="note">Nada registrado hoy en ${esc(l.nombre)}.</p>`;
 }
 // --- hojas: una sola capa; se abre la tarjeta pedida
-const HOJAS_IDS = ["riesgo","suelo","polin","hoy","contar","web","ubicacion","semaforo","acciones"];
+const HOJAS_IDS = ["riesgo","suelo","polin","hoy","web","ubicacion","semaforo","acciones"];
 function abrirHoja(k){
   if(k==="ventana"){ go("semana"); return; }
   if(k==="plagas") k = "polin";                                   // la misma hoja trae polinización y plagas: se ve la que tenga datos
@@ -2844,17 +2851,33 @@ const TITULOS = {aplique:"Apliqué algo", regue:"Regué", vi:"Vi algo", libreta:
 const SAVE_IDS = {aplique:"ap-save", regue:"rg-save", vi:"vi-save", libreta:"lib-save", voz:"voz-save", video:"vid-save", visita:"vis-save", nuevolote:"nl-save", plagas:"pl-save", sensor:"se-save", lectura:"le-save", polin:"po-save"};
 const FLOWS = Object.keys(TITULOS);
 let sheetOpen = null, ignorePop = false, sheetTimer = null;
+// ---------------------------------------------------------------- v57: voz, libreta y video dentro de cada registro (ya no hay botón «Contar»)
+const SUBS57 = ["voz","libreta","video"]; const TEMA_TXT = {plagas:"Plagas", polin:"Polinización", regue:"Riego", aplique:"Aplicación", lectura:"Sensores", vi:"Cultivo"};
+let subDe = null, cuentaT = null;      // subDe: de qué registro se salió para contar algo y cómo estaba, para volver sin perder nada
+function contextoDe(base){ const c = {tema: base};       // lo que se le anota a la nota: de qué tema es y, si los hay, el punto, la plaga, el sector o el instrumento
+  try{ if(base==="plagas" && pl){ if(pl.plaga) c.plaga = pl.plaga; if(pl.actual && pl.actual.id!=null) c.punto_id = String(pl.actual.id); }
+       if(base==="polin" && po && po.actual){ if(po.actual.id!=null) c.punto_id = String(po.actual.id); if(po.actual.sector) c.sector = String(po.actual.sector); }
+       if(base==="lectura"){ const sn = document.querySelector('#le-sensores .chip[aria-pressed="true"][data-les]'); if(sn) c.sensor_id = sn.dataset.les; } }catch(e){}
+  return c; }
+function cuentaRender(msg){ const el = $("#sheet-cuenta"); if(!el) return; const base = subDe ? subDe.flow : sheetOpen; const ver = !!(base && TEMA_TXT[base]);
+  el.hidden = !ver; clearTimeout(cuentaT); if(!ver) return; const c = subDe ? subDe.ctx : null;
+  el.classList.toggle("sub", !!subDe); el.classList.toggle("msg", !subDe && !!msg); $$(".ci", el).forEach(b=>{ b.hidden = !!subDe; });
+  $("#cuenta-lbl").innerHTML = subDe ? `Queda anotado en <b>${esc(TEMA_TXT[base])}</b>${c && c.punto_id!=null ? ` · punto ${esc(c.punto_id)}` : ""}` : msg ? `<b>✓</b> ${esc(msg)}` : "Cuéntelo con";
+  if(msg && !subDe) cuentaT = setTimeout(()=>cuentaRender(), 6000); }
+function volverDeSub(msg){ const dd = subDe; if(!dd) return; subDe = null;                      // al guardar o cancelar la nota: el registro de base vuelve como estaba
+  if(msg) msg = String(msg).replace("aparece aquí", "aparece en Recorrer");
+  libReset(); vozReset(); vidReset(); { const b = $("#lib-interp"); if(b) b.hidden = true; }
+  FLOWS.forEach(f=>{ $("#flow-"+f).hidden = f!==dd.flow; $("#"+SAVE_IDS[f]).hidden = true; });
+  const sb = $("#"+SAVE_IDS[dd.flow]); sb.hidden = dd.save.hidden; sb.disabled = dd.save.disabled;
+  $("#sheet-title").textContent = dd.titulo; sheetOpen = dd.flow; cuentaRender(msg); $("#sheet-body").scrollTop = dd.scroll || 0;
+  setTimeout(()=>{ try{ if(dd.flow==="plagas" && plMap) plMap.invalidateSize(); if(dd.flow==="polin" && poMap) poMap.invalidateSize(); }catch(e){} }, 80); }
 function openFlow(name, btn){
   if(typeof cerrarHojas==="function") cerrarHojas();
-  if(name==="nada"){                      // acción inmediata: confirmación visible, sin duplicar el mismo día
-    const l = LOTES[lotIdx];
-    if(log.some(x=>x.lote===l.id && x.t==="nada" && x.f===hoyISO)){ toast("Hoy ya quedó registrado: sin novedades"); return; }
-    addLog("nada", "Sin novedades esta semana", hoyISO, undefined, {});
-    if(btn){ btn.classList.add("done"); setTimeout(()=>btn.classList.remove("done"), 1800); }
-    mostrarListo(`${l.nombre}: sin novedades. Eso también cuenta: el motor sabe que miró y no había.`);
-    return;
-  }
   if(!FLOWS.includes(name)) return;
+  // v57: voz, libreta o video abiertos desde dentro de uno de los seis registros: subpantalla. El registro de base queda como estaba y se vuelve a él.
+  if(SUBS57.includes(name) && sheetOpen && (subDe || TEMA_TXT[sheetOpen])){
+    if(!subDe){ const sb = $("#"+SAVE_IDS[sheetOpen]); subDe = {flow: sheetOpen, titulo: $("#sheet-title").textContent, scroll: $("#sheet-body").scrollTop, save: {hidden: sb.hidden, disabled: sb.disabled}, ctx: contextoDe(sheetOpen)}; }
+  } else subDe = null;
   FLOWS.forEach(f=>{ $("#flow-"+f).hidden = f!==name; $("#"+SAVE_IDS[f]).hidden = f!==name; });
   $("#sheet-title").textContent = TITULOS[name]; $("#sheet-lot").textContent = LOTES[lotIdx].nombre;
   if(name==="aplique"){ $("#ult-chips").innerHTML = ULTIMOS.map((u,i)=>`<button class="chip" aria-pressed="false" data-ult="${i}">${esc(u.p)} · ${u.d} ${u.u}</button>`).join(""); $("#ap-fecha").value = hoyISO; }
@@ -2868,17 +2891,18 @@ function openFlow(name, btn){
   if(name==="voz"){ const nn = $("#voz-local-nota"); if(nn) nn.textContent = vozlDisponible() ? "Con el modelo de voz en el teléfono, la nota se entiende aquí mismo, sin señal; el motor la vuelve a oír cuando haya señal. Revise lo que oyó antes de guardar." : (navigator.onLine ? "La nota se transcribe en el motor en minutos y vuelve aquí para que la revise. Para entenderla sin señal: Ajustes → Sin señal → descargar el modelo de voz." : "Sin señal: la nota se guarda en el teléfono y el motor la transcribe cuando vuelva la señal. Para entenderla aquí mismo otra vez: Ajustes → Sin señal → descargar el modelo de voz (con wifi)."); }
   const sh = $("#sheet"); clearTimeout(sheetTimer); sh.hidden = false; $("#sheet-body").scrollTop = 0;
   requestAnimationFrame(()=>requestAnimationFrame(()=>sh.classList.add("open")));
-  document.body.classList.add("noscroll"); sheetOpen = name;
-  try{ history.pushState({sheet:name}, "", "#registrar/"+name); }catch(e){}
+  document.body.classList.add("noscroll"); sheetOpen = name; cuentaRender();
+  if(!subDe){ try{ history.pushState({sheet:name}, "", "#registrar/"+name); }catch(e){} }      // v57: la subpantalla no suma un paso al historial: «atrás» vuelve al registro de base
   if(name==="video"){ $("#vid-input").click(); }                       // abre la cámara de una vez (dentro del mismo toque)
 }
 function closeSheet(fromPop){
   const sh = $("#sheet"); if(sh.hidden) return;
-  sh.classList.remove("open"); document.body.classList.remove("noscroll"); sheetOpen = null;
+  sh.classList.remove("open"); document.body.classList.remove("noscroll"); sheetOpen = null; subDe = null; cuentaRender();
   clearTimeout(sheetTimer); sheetTimer = setTimeout(()=>{ sh.hidden = true; resetFlows(); }, 320);
   if(!fromPop){ try{ if(history.state && history.state.sheet){ ignorePop = true; history.back(); } else { history.replaceState(null,"","#registrar"); } }catch(e){} }
 }
 window.addEventListener("popstate", ()=>{
+  if(sheetOpen && subDe){ const b57 = subDe.flow; volverDeSub(null); try{ history.pushState({sheet:b57}, "", "#registrar/"+b57); }catch(e){} return; }   // v57: «atrás» dentro de voz / libreta / video vuelve al registro de base
   if(sheetOpen){ closeSheet(true); return; }
   if(ignorePop){ ignorePop = false; return; }
   const h = (location.hash||"").replace("#","").split("/")[0]; if(SCREENS.includes(h)) go(h);
@@ -2895,7 +2919,7 @@ function showNewEntry(delay){      // lleva la vista a la bitácora y resalta el
     $$("[data-new]", card).forEach(it=>it.classList.add("new")); flashNew = [];
   }, delay);
 }
-function afterSave(msg){ closeSheet(false); mostrarListo(msg); }
+function afterSave(msg){ if(subDe){ volverDeSub(msg); return; } closeSheet(false); mostrarListo(msg); }
 function onChip(chip){
   if(chip.dataset.ptipo){ const c = chip.closest(".prop"); if(c){ const p = libProps[+c.dataset.i]; p.tipo = chip.dataset.ptipo; p.dudas = []; delete p.nota; withDefaults(p); renderLibRows(); } return; }
   if(chip.dataset.ult!==undefined){ const u = ULTIMOS[parseInt(chip.dataset.ult,10)]; $("#ap-prod").value = u.p; $("#ap-dosis").value = u.d; $("#ap-unidad").value = u.u; $("#ap-tipo").value = u.t; }
@@ -2903,7 +2927,8 @@ function onChip(chip){
 }
 function addLog(t, txt, f, src, datos, archivo){
   const l = LOTES[lotIdx]; if(l.sin){ toast("Primero cree un lote (botón + arriba)"); return; }
-  const cid = uuid(); const item = {lote: l.id, f: f || hoyISO, t, txt, cid}; if(src) item.src = src;
+  if(subDe && subDe.ctx){ datos = Object.assign({}, datos||{}, {contexto: subDe.ctx}); if(t==="voz" || t==="video") txt = String(txt).replace(/^(Nota de voz|Video)/, "$1 (" + TEMA_TXT[subDe.ctx.tema].toLowerCase() + ")"); }   // v57
+  const cid = uuid(); const item = {lote: l.id, f: f || hoyISO, t, txt, cid}; if(src) item.src = src; if(subDe && subDe.ctx) item.tema = subDe.ctx.tema;
   if(MODO==="nube" && l.nube){ item.pendiente = true; encolarRegistro({cliente_id:cid, lote_id:l.uuid, usuario:sesion.user.id, fecha:item.f, tipo:t, texto:txt, datos:datos||{}, fuente:src||"app", archivo:null}, archivo||null); }
   log.push(item); save(); flashNew.push(item); renderLog(); return item;
 }
@@ -4089,7 +4114,7 @@ function renderSinSenal(){
   $("#ss-voz-kv").innerHTML = kv(filas);
   espacioModelos().then(e=>{ if(e && (!window.__espacio || Math.abs(e.usado-window.__espacio.usado) > 1e6)){ window.__espacio = e; renderSinSenal(); } else if(e) window.__espacio = e; }); if(window.__persistido===undefined){ window.__persistido = null; (navigator.storage && navigator.storage.persisted ? navigator.storage.persisted() : Promise.resolve(null)).then(v=>{ window.__persistido = v; }).catch(()=>{}); }
   const pr = $("#ss-voz-prog"); pr.hidden = vozl.estado!=="cargando"; pr.querySelector("i").style.width = vozl.progreso + "%";
-  $("#ss-voz-txt").textContent = vozl.estado==="error" ? "No se pudo cargar: " + vozl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : vozl.estado==="listo" ? "Las notas de voz se entienden en este teléfono. Grabe en Recorrer → Contar → Nota de voz." : c.listo ? "Listo para usarse sin señal." : "Con wifi, descargue el modelo una vez.";
+  $("#ss-voz-txt").textContent = vozl.estado==="error" ? "No se pudo cargar: " + vozl.error + (navigator.onLine ? "" : " (sin señal: el modelo se baja con wifi)") : vozl.estado==="listo" ? "Las notas de voz se entienden en este teléfono. Grabe en Recorrer: dentro de cada registro, el micrófono de arriba." : c.listo ? "Listo para usarse sin señal." : "Con wifi, descargue el modelo una vez.";
   $("#ss-voz-base").disabled = vozl.estado==="cargando"; $("#ss-voz-small").disabled = vozl.estado==="cargando"; $("#ss-voz-quitar").hidden = !c.listo;
   $("#ss-voz-base").textContent = c.listo && (c.modelo||"base")==="base" ? "Volver a cargar el básico" : "Descargar modelo básico (~80 MB)";
   { const fc = fotolConf(); const estF = fotol.estado==="listo" ? "listo" : fotol.estado==="cargando" ? `descargando… ${fotol.progreso} %${fotol.archivo ? " · " + fotol.archivo : ""}` : fotol.estado==="error" ? "error" : fc.listo ? "descargado; se carga al usarlo" : "no descargado";
