@@ -242,6 +242,11 @@ body.noscroll{overflow:hidden}
 #sheet:not(.ayuda) .ay{display:none !important}
 .sin-caja{position:absolute !important;width:1px !important;height:1px !important;min-height:0 !important;padding:0 !important;margin:0 !important;border:0 !important;overflow:hidden !important;opacity:0 !important;pointer-events:none !important}
 .toast{z-index:40}
+/* v58: colmenas */
+.cobtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:124px;border:2px solid var(--line);border-radius:18px;background:var(--surface-2);color:var(--fg);font:inherit;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.cobtn b{font-size:42px;line-height:1;font-variant-numeric:tabular-nums} .cobtn span{font-size:14px;color:var(--muted)} .cobtn:active{transform:scale(.98);border-color:var(--accent)} .cobtn:disabled{opacity:.55}
+.copt{min-width:30px;height:20px;padding:0 5px;border-radius:6px;background:#F0B848;color:#0F1E2E;border:2px solid #0F1E2E;display:grid;place-items:center;font-size:10.5px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.4);white-space:nowrap} .copt.cerrada{background:#AEB7BD}
+.chip.co-cerrada{opacity:.65}
 /* Otras formas de contar: filas de opción (libreta, voz, video) */
 .optrow{display:grid;grid-template-columns:42px 1fr 18px;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:transform .08s} .optrow:active{transform:scale(.99)}
 .optrow .oi{width:42px;height:42px;border-radius:12px;background:var(--accent-bg);display:grid;place-items:center;color:var(--accent)} .optrow .oi svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -1220,6 +1225,11 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
             <div class="row"><button class="btn sec" id="po-terminar">Terminar el recorrido</button></div>
             <p class="note ay">Un punto por parcela (si las dibujó en Lote) o repartidos por el lote. En cada uno: 20 flores abiertas, cuántas con marca.</p>
           </div>
+          <div class="card" id="po-col-card">
+            <div class="row between"><span class="eyebrow">Colmenas</span><span class="small muted" id="po-col-n"></span></div>
+            <div class="chips" id="po-colmenas"></div>
+            <p class="note ay">Una ficha por colmena: dónde está, desde cuándo, hacia dónde mira la entrada (piquera) y cuánta actividad tiene. PRELIMINAR.</p>
+          </div>
         </div>
         <div id="po-punto" hidden>
           <div class="card">
@@ -1240,6 +1250,39 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
           <label class="photo sin-caja" for="po-foto-input"><b>Foto de las flores (opcional)</b><span class="small muted">De cerca, con las anteras visibles: el motor cuenta las marcas con señal.</span><input class="hiddeninput" id="po-foto-input" type="file" accept="image/*" capture="environment"></label>
           <div id="po-foto-prev" hidden></div>
           <div id="po-foto-reco" hidden></div>
+        </div>
+        <div id="po-colmena" hidden>
+          <div class="card">
+            <div class="row between"><h2 id="co-h" style="font-size:18px"></h2><button class="inline-link" id="co-volver" type="button">‹ Ruta</button></div>
+            <div class="flow" id="co-alta" hidden>
+              <div class="grid2">
+                <div class="field"><label for="co-codigo">Código</label><input id="co-codigo" maxlength="24" autocomplete="off"></div>
+                <div class="field"><label for="co-fecha">Colocada el</label><input id="co-fecha" type="date"></div>
+              </div>
+              <span class="eyebrow">La piquera mira al</span>
+              <div class="chips" id="co-rumbo"><button class="chip" aria-pressed="false" data-r="0">N</button><button class="chip" aria-pressed="false" data-r="45">NE</button><button class="chip" aria-pressed="false" data-r="90">E</button><button class="chip" aria-pressed="false" data-r="135">SE</button><button class="chip" aria-pressed="false" data-r="180">S</button><button class="chip" aria-pressed="false" data-r="225">SO</button><button class="chip" aria-pressed="false" data-r="270">O</button><button class="chip" aria-pressed="false" data-r="315">NO</button></div>
+              <span class="eyebrow">Sombra</span>
+              <div class="chips" id="co-sombra"><button class="chip" aria-pressed="false" data-v="sin">sin</button><button class="chip" aria-pressed="false" data-v="parcial">parcial</button><button class="chip" aria-pressed="false" data-v="total">total</button></div>
+              <div class="grid2">
+                <div class="field"><label for="co-altura">Altura (cm)</label><input id="co-altura" inputmode="numeric" placeholder="40"></div>
+                <div class="field"><label>Lugar</label><p class="small" id="co-lugar" style="margin:10px 0 0"></p></div>
+              </div>
+              <p class="note ay">La piquera es la entrada de la colmena: marque hacia dónde mira. El lugar se toma del GPS del teléfono, parado junto a la colmena.</p>
+            </div>
+            <div class="flow" id="co-ficha" hidden>
+              <div class="kv" id="co-datos"></div>
+              <div class="row" id="co-acciones" style="gap:8px;flex-wrap:wrap"><button class="btn sec sm" type="button" data-coa="cerrar"></button><button class="btn sec sm" type="button" data-coa="mover">Mover aquí</button><button class="btn sec sm" type="button" data-coa="recambio">Recambio</button><button class="btn sec sm" type="button" data-coa="retirar">Retirar</button></div>
+              <div id="co-conteos"></div>
+              <p class="note ay">«Sol de frente» es un cálculo con la fecha y el lugar: a qué horas el sol queda del lado de la piquera (no cuenta sombras de la estructura ni cortinas). «Mover aquí» toma el GPS de este momento. PRELIMINAR.</p>
+            </div>
+            <div class="flow" id="co-contar" hidden>
+              <div class="rec-time" id="co-reloj" style="text-align:center">2:00</div>
+              <div class="chips" id="co-dur" style="justify-content:center"><button class="chip" aria-pressed="false" data-s="60">1 min</button><button class="chip" aria-pressed="true" data-s="120">2 min</button><button class="chip" aria-pressed="false" data-s="300">5 min</button></div>
+              <div class="grid2"><button class="cobtn" id="co-sale" type="button"><b id="co-n-sale">0</b><span>salen</span></button><button class="cobtn" id="co-vuelve" type="button"><b id="co-n-vuelve">0</b><span>vuelven</span></button></div>
+              <div class="row between"><button class="inline-link" id="co-deshacer" type="button">deshacer</button><span class="small muted" id="co-res"></span></div>
+              <p class="note ay">Párese donde vea la piquera sin tapar el paso. Toque «salen» por cada abejorro que sale y «vuelven» por cada uno que entra, hasta que termine el tiempo. El reloj arranca con el primer toque.</p>
+            </div>
+          </div>
         </div>
         <div id="po-fin" hidden>
           <div class="card">
@@ -1973,7 +2016,7 @@ async function cargarLotes(){
   try{ const cb = await db("GET","cerebro",{select:"version,contenido,generado", id:"eq.1"}); if(cb && cb[0] && cb[0].contenido){ CEREBRO = cb[0].contenido; CEREBRO._bajado = new Date().toISOString(); } }catch(e){}   // v34: lo que el RIG aprendió, para usar sin señal
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
-  ultimoCache = {filas, reps, parcs}; cacheGuardar(); cargarTrabajos(); cargarAlias(); problemasEnviar();
+  ultimoCache = {filas, reps, parcs}; cacheGuardar(); cargarTrabajos(); cargarAlias(); problemasEnviar(); cargarColmenas();
   armarLotes(filas||[], reps||[], parcs||[]);
 }
 function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; RECONOCIMIENTOS = c.recos || []; SENSORES = c.sens || []; LECTURAS = c.lects || []; POLINIZACION = c.polin || []; VENTANAS = c.vents || []; RECETAS = c.recs || []; PRODUCTOS = c.prods || []; AVISOS_VOZ = c.avz || []; CEREBRO = c.cerebro || null; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
@@ -1982,7 +2025,7 @@ async function cargarRegistros(){
   const filas = await db("GET","registros",{select:"id,lote_id,usuario,fecha,tipo,texto,fuente,archivo,cliente_id,datos", order:"fecha.desc,creado_en.desc", limit:"500"});
   const nube = (filas||[]).map(r=>({id:r.id, lote:r.lote_id, u:r.usuario, f:r.fecha, t:r.tipo, txt:r.texto, src: r.fuente && r.fuente!=="app" ? r.fuente : undefined, cid:r.cliente_id, d:r.datos||{}, arch:r.archivo||null, tema: (r.datos && r.datos.contexto && r.datos.contexto.tema) || undefined}));
   const cids = new Set(nube.map(x=>x.cid).filter(Boolean));
-  const pend = colaCargar().filter(q=>!cids.has(q.cliente_id)).map(q=>({lote:q.lote_id, f:q.fecha, t:q.tipo, txt:q.texto, src: q.fuente && q.fuente!=="app" ? q.fuente : undefined, cid:q.cliente_id, pendiente:true, tema: (q.datos && q.datos.contexto && q.datos.contexto.tema) || undefined}));
+  const pend = colaCargar().filter(q=>(!q._tabla || q._tabla==="registros") && !cids.has(q.cliente_id)).map(q=>({lote:q.lote_id, f:q.fecha, t:q.tipo, txt:q.texto, src: q.fuente && q.fuente!=="app" ? q.fuente : undefined, cid:q.cliente_id, pendiente:true, tema: (q.datos && q.datos.contexto && q.datos.contexto.tema) || undefined}));
   log = nube.concat(pend); save();
 }
 async function crearLote(d){
@@ -2048,7 +2091,7 @@ async function vaciarCola(){
       }
     }
     await vaciarPendLotes(); await vaciarPendAlertas(); await vaciarPendTrans();
-  } finally { vaciando = false; save(); renderLog(); renderSync(); }
+  } finally { vaciando = false; save(); renderLog(); renderSync(); colTrasSubir(); }
 }
 function renderSync(){
   { const chip = $("#net-chip"); if(chip){ const n = MODO==="nube" ? colaCargar().length + Object.keys(pendLotes).length + Object.keys(pendAlertas).length + Object.keys(pendTrans).length : 0; chip.className = "pill-private" + (!navigator.onLine ? " off" : n ? " pend" : ""); chip.textContent = !navigator.onLine ? `Sin señal${n ? " · " + n : ""}` : n ? `${n} por subir` : "Preliminar · socios"; } if(!$("#mas-sinsenal").hidden) renderSinSenal(); }
@@ -2277,7 +2320,7 @@ function renderPanel(){
       return `<div class="rev" data-reco="${esc(r.id)}"><div class="meta">${esc(fmtD(r.fecha||String(r.creado_en||"").slice(0,10)))} · <b>${esc(l ? l.nombre : "lote")}</b> · ${esc(r.cultivo||"")}${r.usuario ? ` · ${esc(nombreUsuario(r.usuario))}` : ""} · ${r.n_imagenes > 1 ? `${r.n_imagenes} cuadros` : "foto"}</div>
         <div class="txt"><b>El motor vio:</b> ${esc(nombre)}${r.estadio ? ` (${esc(r.estadio)})` : ""}${r.conteo!=null ? ` · ${r.conteo} ${esc(r.unidad||"")}` : ""} · ${Math.round((r.confianza||0)*100)} %${esc(tel)}<br><span class="small muted">${esc(r.evidencia||"")}${(r.dudas||[]).length ? " · dudas: " + esc(r.dudas.join("; ")) : ""}${(r.otras_posibles||[]).length ? " · también podría ser: " + esc(r.otras_posibles.map(k=>plNombre(l||{}, k)).join(", ")) : ""}</span>${r.trampa && r.trampa.conteos ? `<br><span class="small">Trampa ${esc(r.trampa.clase||"")}: ${esc(Object.entries(r.trampa.conteos).map(([k,v])=>`${k==="otros" ? "otros" : plNombre(l||{}, k)} ${v}`).join(" · "))}</span>` : ""}</div>
         <button class="inline-link" data-foto="${esc(r.archivo)}">ver ${String(r.archivo||"").startsWith("videos/") ? "video (cuadro no disponible)" : "foto"}</button><div class="foto-box"></div>${hecho}
-        ${r.estado==="propuesto" ? `<div class="field" data-rcorr hidden><label>Qué es</label><select data-rcorr-pl><option value="">elija la plaga…</option>${lista.map(x=>`<option value="${esc(x.clave)}">${esc(x.nombre)}</option>`).join("")}</select><select data-rcorr-est style="margin-top:6px"><option value="">estadio…</option><option>huevo</option><option>ninfa</option><option>larva</option><option>pupa</option><option>adulto</option><option>lesion</option></select></div>
+        ${r.estado==="propuesto" ? `<div class="field" data-rcorr hidden><label>Qué es</label><select data-rcorr-pl><option value="">elija la plaga…</option>${lista.map(x=>`<option value="${esc(x.clave)}">${esc(x.nombre)}</option>`).join("")}<optgroup label="de otros cultivos">${plOtras(l||{}).map(x=>`<option value="${esc(x.clave)}">${esc(x.nombre)}</option>`).join("")}</optgroup><option value="__otra">otra (escribir)…</option></select><input data-rcorr-txt hidden placeholder="¿Qué plaga es?" maxlength="60" style="margin-top:6px"><select data-rcorr-est style="margin-top:6px"><option value="">estadio…</option><option>huevo</option><option>ninfa</option><option>larva</option><option>pupa</option><option>adulto</option><option>lesion</option></select></div>
         <div class="acts" style="margin-top:8px"><button class="btn acc" data-rrev="confirmado" data-i="${esc(r.id)}">Confirmar</button><button class="btn sec" data-rrev="corregido" data-i="${esc(r.id)}">Corregir</button><button class="btn sec" data-rrev="descartado" data-i="${esc(r.id)}">No es plaga</button></div>` : ""}</div>`; }).join("") : "";
     const mons = (MONITOREOS||[]).filter(m=>m.acuerdo===false || (m.nivel_final||0) >= 2).slice(0,60);
     body.innerHTML = recosHTML + (mons.length ? `<span class="eyebrow" style="display:block;margin-top:10px">Puntos de monitoreo con desacuerdo o nivel medio/alto</span>` : "") + (mons.length ? mons.map(m=>{ const l = LOTES.find(x=>(x.uuid||x.id)===m.lote_id); const n = m.nivel_final!=null ? m.nivel_final : (m.nivel_motor||0);
@@ -2569,7 +2612,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "57.1 · 25 nov 2026";
+const APP_VERSION = "58 · 25 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2705,7 +2748,7 @@ document.addEventListener("click", ev => {
   const rr = ev.target.closest("[data-rrev]"); if(rr){ const id = rr.dataset.i, ver = rr.dataset.rrev; const card = rr.closest("[data-reco]"); const r = (RECONOCIMIENTOS||[]).find(x=>x.id===id); if(!r) return;
     const campos = {estado:ver, confirmado_por: sesion && sesion.user ? sesion.user.id : null, confirmado_en: new Date().toISOString()};
     if(ver==="confirmado"){ campos.plaga_confirmada = r.plaga; campos.estadio_confirmado = r.estadio; campos.conteo_confirmado = r.conteo; }
-    if(ver==="corregido"){ const box = card.querySelector("[data-rcorr]"); if(box.hidden){ box.hidden = false; toast("Elija la plaga y el estadio y vuelva a tocar Corregir"); return; } const pl_ = box.querySelector("[data-rcorr-pl]").value, es_ = box.querySelector("[data-rcorr-est]").value; if(!pl_){ toast("Elija la plaga"); return; } campos.plaga_confirmada = pl_; campos.estadio_confirmado = es_ || null; }
+    if(ver==="corregido"){ const box = card.querySelector("[data-rcorr]"); if(box.hidden){ box.hidden = false; toast("Elija la plaga y el estadio y vuelva a tocar Corregir"); return; } let pl_ = box.querySelector("[data-rcorr-pl]").value; const es_ = box.querySelector("[data-rcorr-est]").value; if(pl_==="__otra"){ pl_ = (box.querySelector("[data-rcorr-txt]").value || "").trim().toLowerCase().replace(/\s+/g, " ").slice(0, 60); if(!pl_){ toast("Escriba qué plaga es"); return; } } if(!pl_){ toast("Elija la plaga"); return; } campos.plaga_confirmada = pl_; campos.estadio_confirmado = es_ || null; }
     if(ver==="descartado"){ campos.plaga_confirmada = null; campos.estadio_confirmado = null; }
     Object.assign(r, campos);
     if(MODO==="nube" && sesion){ db("PATCH","reconocimientos",{id:"eq."+id}, campos, "return=minimal").then(()=>toast(ver==="confirmado" ? "Confirmado: entra al conjunto de fotos etiquetadas" : ver==="corregido" ? "Corregido: entra al conjunto con su etiqueta" : "Descartado")).catch(e=>toast("No se pudo guardar: " + String(e.message||e).slice(0,60))); }
@@ -2866,7 +2909,8 @@ const SUBS57 = ["voz","libreta","video"]; const TEMA_TXT = {plagas:"Plagas", pol
 let subDe = null, cuentaT = null;      // subDe: de qué registro se salió para contar algo y cómo estaba, para volver sin perder nada
 function contextoDe(base){ const c = {tema: base};       // lo que se le anota a la nota: de qué tema es y, si los hay, el punto, la plaga, el sector o el instrumento
   try{ if(base==="plagas" && pl){ if(pl.plaga) c.plaga = pl.plaga; if(pl.actual && pl.actual.id!=null) c.punto_id = String(pl.actual.id); }
-       if(base==="polin" && po && po.actual){ if(po.actual.id!=null) c.punto_id = String(po.actual.id); if(po.actual.sector) c.sector = String(po.actual.sector); }
+       if(base==="polin" && po && po.paso==="colmena" && po.col){ c.colmena = String(po.col.codigo); c.colmena_id = po.col.id; }
+       if(base==="polin" && po && po.actual && po.paso==="punto"){ if(po.actual.id!=null) c.punto_id = String(po.actual.id); if(po.actual.sector) c.sector = String(po.actual.sector); }
        if(base==="lectura"){ const sn = document.querySelector('#le-sensores .chip[aria-pressed="true"][data-les]'); if(sn) c.sensor_id = sn.dataset.les; } }catch(e){}
   return c; }
 let cuentaMsg = null, cuentaTic = null;
@@ -2939,7 +2983,7 @@ window.addEventListener("popstate", ()=>{
   const h = (location.hash||"").replace("#","").split("/")[0]; if(SCREENS.includes(h)) go(h);
 });
 function resetFlows(){
-  plGeoParar(); pl = null; po = null;
+  plGeoParar(); coParar(); pl = null; po = null;
   $("#etq-preview").hidden = true; $("#etq-preview").innerHTML=""; $("#vi-preview").hidden = true; $("#vi-preview").innerHTML=""; $("#ap-prod").value=""; $("#ap-dosis").value="";
   libReset(); vozReset(); vidReset();
 }
@@ -3322,7 +3366,8 @@ function plMedTxt(k){ return ((PLAGAS.medidas||{})[k]||{}).txt || ({hojas_o_plan
 function plCultivoClave(l){ const c = String(l && l.cultivo || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); return (PLAGAS.cultivos || {})[c] ? c : null; }
 function plLista(l){ const c = plCultivoClave(l); return c ? Object.entries(PLAGAS.cultivos[c].plagas).map(([k,v])=>({clave:k, ...v})) : []; }
 function plCfg(l, clave){ const c = plCultivoClave(l); return c ? PLAGAS.cultivos[c].plagas[clave] : null; }
-function plNombre(l, clave){ const c = plCfg(l, clave); return c ? c.nombre : clave; }
+function plNombre(l, clave){ const c = plCfg(l, clave); if(c) return c.nombre; for(const k of Object.keys(PLAGAS.cultivos || {})){ const x = PLAGAS.cultivos[k].plagas[clave]; if(x) return x.nombre; } return clave; }   // v58: si no es del cultivo del lote, el nombre del catálogo general
+function plOtras(l){ const mias = new Set(plLista(l).map(x=>x.clave)); const vistas = new Set(); const out = []; Object.keys(PLAGAS.cultivos || {}).forEach(k=>{ Object.entries(PLAGAS.cultivos[k].plagas).forEach(([clave, v])=>{ if(mias.has(clave) || vistas.has(clave)) return; vistas.add(clave); out.push({clave, nombre: v.nombre}); }); }); return out.sort((a,b)=>a.nombre.localeCompare(b.nombre, "es")); }
 // --- geometría local (metros)
 function plMetros(poly){ const lat0 = poly.reduce((a,p)=>a+p[0],0)/poly.length, lon0 = poly.reduce((a,p)=>a+p[1],0)/poly.length; const my = 111320, mx = 111320*Math.cos(lat0*Math.PI/180); return {pts: poly.map(p=>[(p[1]-lon0)*mx, (p[0]-lat0)*my]), lat0, lon0, mx, my}; }
 function plDentro(pts, x, y){ let d = false; for(let i=0, j=pts.length-1; i<pts.length; j=i++){ const [xi,yi] = pts[i], [xj,yj] = pts[j]; if((yi>y)!==(yj>y) && x < (xj-xi)*(y-yi)/((yj-yi)||1e-12)+xi) d = !d; } return d; }
@@ -3698,8 +3743,114 @@ function poIniciar(){ const l = LOTES[lotIdx]; const poly = plPoly(l); const g =
   if(parc.length){ parc.forEach((pc,i)=>{ const c = pc.poly.reduce((a,p)=>[a[0]+p[0]/pc.poly.length, a[1]+p[1]/pc.poly.length],[0,0]); puntos.push({id:`S${i+1}`, orden:i+1, lat:+c[0].toFixed(6), lon:+c[1].toFixed(6), motivo:`sector ${pc.nombre||i+1}`, sector:pc.nombre||`sector ${i+1}`}); }); }
   else if(poly){ const {pts} = plMetros(poly); const ha = plArea(pts)/1e4; puntos = plPuntos(poly, {n: Math.max(4, Math.min(12, Math.round(ha*2))), plaga:{orillas:false}}).map(p=>({...p, sector:p.id})); }
   po = {puntos, hechos:[], actual:null, paso:"ruta"}; poFoto = null; poPaso("ruta"); plGeoIniciar(); }
+// ---------------------------------------------------------------- v58: colmenas (polinización con abejorros bajo cubierta). PRELIMINAR.
+// Cada colmena es una fila (tabla colmenas; el id lo pone el teléfono, así se carga sin señal). Lo que le pasa se anota como evento (colmena_eventos) y la base pone
+// al día su estado; los conteos de actividad van a colmena_conteos. Aquí todo se guarda primero en el teléfono y sube por la cola de siempre.
+const COL_KEY = "engram-campo-colmenas-v1", RUMBO_TXT = ["norte","noreste","este","sureste","sur","suroeste","oeste","noroeste"];
+let COLMENAS = [], COL_CONTEOS = [], colEvPend = [], coTic = null, coConf = null;
+function colLeer(){ try{ const c = JSON.parse(localStorage.getItem(COL_KEY)) || {}; COLMENAS = c.colmenas || []; COL_CONTEOS = c.conteos || []; colEvPend = c.eventos || []; }catch(e){} }
+function colEscribir(){ try{ localStorage.setItem(COL_KEY, JSON.stringify({colmenas: COLMENAS, conteos: COL_CONTEOS.slice(0, 500), eventos: colEvPend.slice(-200)})); }catch(e){} }
+function colDe(l){ const lid = l && (l.uuid || l.id); return COLMENAS.filter(c=>c.lote_id===lid && c.estado!=="retirada"); }
+function colSube(l){ return MODO==="nube" && !!l && !!l.nube; }
+function colQuien(){ return sesion && sesion.user ? sesion.user.id : null; }
+function colAplicar(c, ev){ const dt = ev.datos || {};                   // lo mismo que hace la base con cada evento
+  if(c.estado==="retirada" || (c.ultimo_evento && Date.parse(ev.fecha) < Date.parse(c.ultimo_evento))) return;
+  if(ev.tipo==="cerrada") c.estado = "cerrada"; else if(ev.tipo==="abierta") c.estado = "activa";
+  else if(ev.tipo==="retirada"){ c.estado = "retirada"; c.retirada_el = localISO(new Date(ev.fecha)); c.motivo_retiro = dt.motivo || null; }
+  else if(ev.tipo==="movida"){ if(dt.lat!=null && dt.lon!=null){ c.lat = dt.lat; c.lon = dt.lon; c.precision_m = dt.precision_m ?? null; if(dt.sector) c.sector = dt.sector; } }
+  else if(ev.tipo==="ajuste"){ ["codigo","rumbo_piquera","altura_cm","sombra","sector","notas"].forEach(k=>{ if(k in dt) c[k] = dt[k]; }); }
+  c.ultimo_evento = ev.fecha; }
+async function cargarColmenas(){ if(MODO!=="nube" || !sesion) return; let cs, ns;
+  try{ [cs, ns] = await Promise.all([db("GET","colmenas",{select:"*", order:"colocada_el.asc,creado_en.asc", limit:"2000"}), db("GET","colmena_conteos",{select:"*", hora:"gte."+new Date(Date.now()-60*86400000).toISOString(), order:"hora.desc", limit:"2000"})]); }
+  catch(e){ return; }                                                    // sin señal, o la nube todavía no tiene las tablas (falta el esquema v25): vale lo del teléfono y lo pendiente sigue en la cola
+  const enCola = new Set(colaCargar().map(q=>q.cliente_id)); const ids = new Set((cs||[]).map(c=>c.id)); const nids = new Set((ns||[]).map(n=>n.cliente_id));
+  COLMENAS = (cs||[]).concat(COLMENAS.filter(c=>c._local && !ids.has(c.id) && enCola.has(c.cliente_id)));
+  COL_CONTEOS = COL_CONTEOS.filter(n=>n._local && !nids.has(n.cliente_id) && enCola.has(n.cliente_id)).concat(ns||[]);
+  colEvPend = colEvPend.filter(e=>enCola.has(e.cliente_id)); colEvPend.forEach(e=>{ const c = COLMENAS.find(x=>x.id===e.colmena_id); if(c) colAplicar(c, e); });   // lo anotado sin subir todavía manda sobre lo que trae la nube
+  colEscribir();
+  if(po && sheetOpen==="polin"){ if(po.paso==="ruta") poRutaRender(); else if(po.paso==="colmena" && po.col && po.colModo==="ficha"){ po.col = COLMENAS.find(c=>c.id===po.col.id) || po.col; coRender(); } } }
+function colTrasSubir(){ const enCola = new Set(colaCargar().map(q=>q.cliente_id)); let cambio = false;             // lo que ya subió deja de ser «del teléfono»
+  COLMENAS.concat(COL_CONTEOS).forEach(x=>{ if(x._local && !enCola.has(x.cliente_id)){ delete x._local; cambio = true; } }); const k = colEvPend.length; colEvPend = colEvPend.filter(e=>enCola.has(e.cliente_id));
+  if(cambio || k!==colEvPend.length){ colEscribir(); if(po && sheetOpen==="polin" && po.paso==="colmena" && po.colModo==="ficha") coRender(); } }
+function coPos(){ return plPos && plPos.lat!=null ? {lat: +(+plPos.lat).toFixed(6), lon: +(+plPos.lon).toFixed(6), precision_m: plPos.acc!=null ? Math.round(plPos.acc) : null} : null; }
+function coSector(pos){ if(!pos || !po || !po.puntos || !po.puntos.length) return null; const cerca = po.puntos.slice().sort((a,b)=>plDist(pos,a)-plDist(pos,b))[0]; return cerca && cerca.sector && cerca.sector!==cerca.id ? String(cerca.sector) : null; }
+function colAlta(l, dt, reemplaza){ const id = uuid(); const pos = coPos();
+  const fila = {id, cliente_id: id, lote_id: l.uuid || l.id, usuario: colQuien(), codigo: dt.codigo, tipo: "abejorro", colocada_el: dt.colocada_el, lat: pos ? pos.lat : (reemplaza && reemplaza.lat!=null ? reemplaza.lat : null), lon: pos ? pos.lon : (reemplaza && reemplaza.lon!=null ? reemplaza.lon : null),
+    precision_m: pos ? pos.precision_m : null, rumbo_piquera: dt.rumbo_piquera ?? null, altura_cm: dt.altura_cm ?? null, sombra: dt.sombra || null, sector: coSector(pos) || (reemplaza && reemplaza.sector) || null, reemplaza_a: reemplaza ? reemplaza.id : null};
+  const c = {...fila, estado: "activa", _local: true}; COLMENAS.push(c); colEscribir(); if(colSube(l)) encolarRegistro({_tabla: "colmenas", ...fila}, null); return c; }
+function colEvento(c, tipo, datos){ const l = LOTES[lotIdx]; const ev = {cliente_id: uuid(), colmena_id: c.id, lote_id: c.lote_id, usuario: colQuien(), tipo, fecha: new Date().toISOString(), datos: datos || {}};
+  colAplicar(c, ev); colEvPend.push(ev); colEscribir(); if(colSube(l)) encolarRegistro({_tabla: "colmena_eventos", ...ev}, null); }
+function colConteo(c, segundos, salen, vuelven){ const l = LOTES[lotIdx]; const pos = coPos();
+  const fila = {cliente_id: uuid(), colmena_id: c.id, lote_id: c.lote_id, usuario: colQuien(), hora: new Date().toISOString(), segundos, salen, vuelven, lat: pos ? pos.lat : null, lon: pos ? pos.lon : null, precision_m: pos ? pos.precision_m : null};
+  COL_CONTEOS.unshift({...fila, _local: true}); colEscribir(); if(colSube(l)) encolarRegistro({_tabla: "colmena_conteos", ...fila}, null); }
+// dónde está el sol (elevación y azimut en grados; azimut desde el norte hacia el este). Fórmulas de baja precisión del Almanaque Astronómico: error de centésimas de grado, sobra.
+function solPos(t, lat, lon){ const rad = Math.PI / 180, dj = t.getTime() / 86400000 + 2440587.5 - 2451545.0;
+  const g = (357.529 + 0.98560028 * dj) % 360, q = (280.459 + 0.98564736 * dj) % 360, L = q + 1.915 * Math.sin(g * rad) + 0.020 * Math.sin(2 * g * rad), e = 23.439 - 0.00000036 * dj;
+  const ra = Math.atan2(Math.cos(e * rad) * Math.sin(L * rad), Math.cos(L * rad)) / rad, dec = Math.asin(Math.sin(e * rad) * Math.sin(L * rad)) / rad;
+  const tsl = ((18.697374558 + 24.06570982441908 * dj) % 24) * 15 + lon, ha = (((tsl - ra) % 360) + 540) % 360 - 180;
+  const el = Math.asin(Math.sin(lat * rad) * Math.sin(dec * rad) + Math.cos(lat * rad) * Math.cos(dec * rad) * Math.cos(ha * rad)) / rad;
+  const az = (Math.atan2(-Math.sin(ha * rad), Math.tan(dec * rad) * Math.cos(lat * rad) - Math.sin(lat * rad) * Math.cos(ha * rad)) / rad + 360) % 360;
+  return {el, az}; }
+function coSolDeFrente(c, l, dia){ const lat = c.lat ?? l.lat, lon = c.lon ?? l.lon; if(c.rumbo_piquera==null || lat==null || lon==null) return null;      // tramos del día en que el sol (a 5° o más sobre el horizonte) queda a 60° o menos del rumbo de la piquera
+  const d0 = dia ? new Date(dia) : new Date(); d0.setHours(0,0,0,0); const tramos = []; let ini = null, ult = null;
+  for(let m = 0; m <= 1440; m += 10){ const t = new Date(d0.getTime() + m * 60000); const sp = solPos(t, +lat, +lon); const dif = Math.abs((((sp.az - c.rumbo_piquera) % 360) + 540) % 360 - 180); const de = m < 1440 && sp.el >= 5 && dif <= 60;
+    if(de && ini==null) ini = t; if(!de && ini!=null){ tramos.push([ini, ult]); ini = null; } if(de) ult = t; }
+  const hm = t=>`${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}`; return tramos.map(([a,b])=>`${hm(a)}–${hm(b)}`); }
+function coDias(c){ return Math.max(0, Math.round((Date.parse(hoyISO) - Date.parse(c.colocada_el)) / 86400000)); }
+function coChips(){ const box = $("#po-colmenas"); if(!box) return; const cs = colDe(LOTES[lotIdx]); $("#po-col-n").textContent = cs.length ? String(cs.length) : "";
+  box.innerHTML = cs.map(c=>`<button class="chip${c.estado==="cerrada" ? " co-cerrada" : ""}" data-col="${esc(c.id)}">${esc(c.codigo)} · ${coDias(c)} d${c.estado==="cerrada" ? " · cerrada" : ""}</button>`).join("") + `<button class="chip" data-col-nueva style="border-style:dashed">+ colmena</button>`; }
+function coMarcas(){ if(!poMap) return; colDe(LOTES[lotIdx]).forEach(c=>{ if(c.lat==null || c.lon==null) return; const m = L.marker([c.lat, c.lon], {icon: L.divIcon({className:"", html:`<div class="copt${c.estado==="cerrada" ? " cerrada" : ""}">${esc(c.codigo)}</div>`, iconSize:[30,20], iconAnchor:[15,10]})}).addTo(poMap); m.on("click", ()=>coAbrir(c.id)); poCapas.push(m); }); }
+function coParar(){ clearInterval(coTic); coTic = null; if(coConf){ clearTimeout(coConf.t); coConf = null; } }
+function coAbrir(id){ if(!po) return; po.col = id ? (COLMENAS.find(c=>c.id===id) || null) : null; po.colModo = po.col ? "ficha" : "alta"; po.colN = null; po.colDe = null; poPaso("colmena"); }
+function coUno(sel, v){ $$(sel + " .chip").forEach(b=>b.setAttribute("aria-pressed", String(v!=null && String(b.dataset.r ?? b.dataset.v ?? b.dataset.s)===String(v)))); }
+function coElegido(sel){ const b = $(sel + ' .chip[aria-pressed="true"]'); return b ? (b.dataset.r ?? b.dataset.v ?? b.dataset.s) : null; }
+function coRender(){ const l = LOTES[lotIdx]; const c = po.col, modo = po.colModo, b = $("#po-save"); coParar();
+  $("#co-alta").hidden = modo!=="alta"; $("#co-ficha").hidden = modo!=="ficha"; $("#co-contar").hidden = modo!=="contar"; b.hidden = false; b.disabled = false;
+  if(modo==="alta"){ const base = po.colDe; $("#co-h").textContent = base ? `Recambio de ${base.codigo}` : "Colmena nueva"; const n = COLMENAS.filter(x=>x.lote_id===(l.uuid||l.id)).length;
+    $("#co-codigo").value = "C" + (n + 1); $("#co-fecha").value = hoyISO; $("#co-altura").value = base && base.altura_cm!=null ? base.altura_cm : ""; coUno("#co-rumbo", base ? base.rumbo_piquera : null); coUno("#co-sombra", base ? base.sombra : null);
+    const lugar = ()=>{ const pos = coPos(); $("#co-lugar").textContent = pos ? `GPS ±${pos.precision_m ?? "?"} m` : (base && base.lat!=null ? "el de la colmena anterior" : "sin GPS todavía"); }; lugar(); coTic = setInterval(lugar, 1500);
+    b.textContent = "Guardar la colmena"; }
+  if(modo==="ficha" && c){ const dias = coDias(c); $("#co-h").textContent = `${c.codigo}${c.estado==="cerrada" ? " · cerrada" : ""}`; const sol = coSolDeFrente(c, l); const u = COL_CONTEOS.filter(n=>n.colmena_id===c.id)[0];
+    const mira = [c.rumbo_piquera!=null ? "al " + RUMBO_TXT[Math.round(c.rumbo_piquera / 45) % 8] : null, c.altura_cm!=null ? c.altura_cm + " cm" : null, c.sombra ? (c.sombra==="sin" ? "sin sombra" : "sombra " + c.sombra) : null].filter(Boolean).join(" · ");
+    const porMin = n=>({s: (60 * n.salen / n.segundos).toFixed(1).replace(".", ","), v: (60 * n.vuelven / n.segundos).toFixed(1).replace(".", ",")}); const cuando = n=>{ const t = new Date(n.hora); return (localISO(t)===hoyISO ? "hoy" : fmtD(localISO(t))) + ` ${t.getHours()}:${String(t.getMinutes()).padStart(2,"0")}`; };
+    $("#co-datos").innerHTML = `<span>Colocada</span><b>${esc(fmtD(c.colocada_el))} · ${dias} día${dias===1?"":"s"}</b>` + (mira ? `<span>Piquera</span><b>${esc(mira)}</b>` : "") + (sol ? `<span>Sol de frente</span><b>${sol.length ? esc(sol.join(" y ")) : "no le da"}</b>` : "") + `<span>Lugar</span><b>${c.lat!=null ? (c.sector ? esc(c.sector) + " · " : "") + `±${c.precision_m ?? "?"} m` : "sin ubicar"}</b>` + (u ? `<span>Último conteo</span><b>${esc(cuando(u))} · salen ${porMin(u).s} · vuelven ${porMin(u).v} por min</b>` : "");
+    $('#co-acciones [data-coa="cerrar"]').textContent = c.estado==="cerrada" ? "Abrir" : "Cerrar"; $('#co-acciones [data-coa="recambio"]').textContent = "Recambio"; $('#co-acciones [data-coa="retirar"]').textContent = "Retirar";
+    const ns = COL_CONTEOS.filter(n=>n.colmena_id===c.id).slice(1, 4); $("#co-conteos").innerHTML = ns.map(n=>`<div class="log-item"><span class="d">${esc(cuando(n))}</span><span>salen ${porMin(n).s} · vuelven ${porMin(n).v} por min${n._local ? `<em class="tag">por subir</em>` : ""}</span></div>`).join("");
+    b.textContent = "Contar entradas y salidas"; b.disabled = c.estado==="cerrada"; }
+  if(modo==="contar" && c){ const n = po.colN; $("#co-h").textContent = `${c.codigo} · conteo`; coUno("#co-dur", n.dur); $$("#co-dur .chip").forEach(x=>{ x.disabled = !!n.t0; });
+    const pinta = ()=>{ const pasados = n.seg!=null ? n.seg : n.t0 ? Math.floor((Date.now() - n.t0) / 1000) : 0; if(n.t0 && n.seg==null && pasados >= n.dur){ coFin(n.dur); return; }
+      $("#co-reloj").textContent = fmtT(Math.max(0, n.dur - pasados)); const sa = n.toques.filter(k=>k==="s").length, vu = n.toques.length - sa; $("#co-n-sale").textContent = sa; $("#co-n-vuelve").textContent = vu;
+      $("#co-sale").disabled = $("#co-vuelve").disabled = n.seg!=null; $("#co-deshacer").hidden = !n.toques.length || n.seg!=null; $("#co-res").textContent = n.seg!=null ? `${n.seg} s contados` : "";
+      b.textContent = n.seg!=null ? "Guardar el conteo" : n.t0 ? "Terminar" : "Empezar"; b.disabled = n.seg!=null && n.seg < 10; };
+    po.colPinta = pinta; pinta(); if(n.t0 && n.seg==null) coTic = setInterval(pinta, 250); }
+  $("#sheet-body").scrollTop = 0; }
+function coFin(seg){ const n = po.colN; if(!n || n.seg!=null) return; n.seg = Math.max(0, Math.min(n.dur, Math.round(seg))); try{ if(navigator.vibrate) navigator.vibrate([120, 60, 120]); }catch(e){} coRender(); }
+function coToque(k){ const n = po && po.colN; if(!n || n.seg!=null) return; if(!n.t0){ n.dur = +(coElegido("#co-dur") || 120); n.t0 = Date.now(); n.toques.push(k); coRender(); return; } n.toques.push(k); if(po.colPinta) po.colPinta(); }
+function coConfirmar(btn, pregunta, hacer){ if(coConf && coConf.btn===btn){ clearTimeout(coConf.t); coConf = null; hacer(); return; } if(coConf){ clearTimeout(coConf.t); coConf.btn.textContent = coConf.txt; }
+  const txt = btn.textContent; btn.textContent = pregunta; coConf = {btn, txt, t: setTimeout(()=>{ btn.textContent = txt; coConf = null; }, 4000)}; }
+function coBoton(){ const l = LOTES[lotIdx], modo = po.colModo;
+  if(modo==="alta"){ if(MODO==="nube" && !l.nube){ toast("Este lote todavía no subió a la nube: con señal, espere a que suba y vuelva a intentar"); return; }
+    const codigo = $("#co-codigo").value.trim(); if(!codigo){ toast("Póngale un código a la colmena"); $("#co-codigo").focus(); return; } const fecha = $("#co-fecha").value || hoyISO; if(fecha > hoyISO){ toast("La fecha de colocación no puede ser futura"); return; }
+    const alt = parseInt($("#co-altura").value, 10); if($("#co-altura").value.trim() && !(alt >= 0 && alt <= 500)){ toast("La altura va en centímetros (0 a 500)"); return; } const r = coElegido("#co-rumbo");
+    const base = po.colDe; if(base) colEvento(base, "retirada", {motivo: "recambio"});
+    po.col = colAlta(l, {codigo, colocada_el: fecha, rumbo_piquera: r!=null ? +r : null, altura_cm: isNaN(alt) ? null : alt, sombra: coElegido("#co-sombra")}, base || null); po.colDe = null; po.colModo = "ficha"; coRender(); cuentaDecir(`Colmena ${codigo} guardada`); return; }
+  if(modo==="ficha"){ po.colModo = "contar"; po.colN = {dur: 120, t0: null, seg: null, toques: []}; coRender(); return; }
+  if(modo==="contar"){ const n = po.colN; if(!n.t0){ n.dur = +(coElegido("#co-dur") || 120); n.t0 = Date.now(); coRender(); } else if(n.seg==null){ coFin((Date.now() - n.t0) / 1000); }
+    else { const sa = n.toques.filter(k=>k==="s").length; colConteo(po.col, n.seg, sa, n.toques.length - sa); po.colModo = "ficha"; po.colN = null; coRender(); cuentaDecir("Conteo guardado"); } } }
+document.addEventListener("change", e=>{ const sl = e.target && e.target.matches && e.target.matches("[data-rcorr-pl]") ? e.target : null; if(!sl) return; const tx = sl.parentElement.querySelector("[data-rcorr-txt]"); if(tx){ tx.hidden = sl.value!=="__otra"; if(!tx.hidden) tx.focus(); } });
+$("#po-colmenas").addEventListener("click", e=>{ const b = e.target.closest("[data-col],[data-col-nueva]"); if(!b || !po) return; coAbrir(b.dataset.col || null); });
+$("#co-volver").addEventListener("click", ()=>{ if(!po) return; if(po.colModo==="contar"){ po.colModo = "ficha"; po.colN = null; coRender(); return; } if(po.colModo==="alta" && po.colDe){ po.col = po.colDe; po.colDe = null; po.colModo = "ficha"; coRender(); return; } coParar(); poPaso("ruta"); });
+$("#co-sale").addEventListener("click", ()=>coToque("s")); $("#co-vuelve").addEventListener("click", ()=>coToque("v"));
+$("#co-deshacer").addEventListener("click", ()=>{ const n = po && po.colN; if(n && n.seg==null && n.toques.length){ n.toques.pop(); if(po.colPinta) po.colPinta(); } });
+$("#co-acciones").addEventListener("click", e=>{ const b = e.target.closest("[data-coa]"); if(!b || !po || !po.col) return; const c = po.col, a = b.dataset.coa;
+  if(a==="cerrar"){ colEvento(c, c.estado==="cerrada" ? "abierta" : "cerrada", {}); coRender(); cuentaDecir(c.estado==="cerrada" ? `${c.codigo} cerrada` : `${c.codigo} abierta`); }
+  if(a==="mover"){ const pos = coPos(); if(!pos){ toast("Todavía no hay GPS: espere unos segundos junto a la colmena"); return; } colEvento(c, "movida", {...pos, ...(coSector(pos) ? {sector: coSector(pos)} : {})}); coRender(); cuentaDecir(`${c.codigo}: lugar actualizado (±${pos.precision_m ?? "?"} m)`); }
+  if(a==="recambio") coConfirmar(b, "¿Recambio? Toque otra vez", ()=>{ po.colDe = c; po.col = null; po.colModo = "alta"; coRender(); });
+  if(a==="retirar") coConfirmar(b, "¿Retirar? Toque otra vez", ()=>{ colEvento(c, "retirada", {motivo: "retiro"}); coParar(); poPaso("ruta"); cuentaDecir(`${c.codigo} retirada`); }); });
+colLeer();
 function poPendientes(){ const h = new Set(po.hechos.map(x=>x.punto_id)); let pend = po.puntos.filter(p=>!h.has(p.id)); if(plPos) pend = pend.slice().sort((a,b)=>plDist(plPos,a)-plDist(plPos,b)); return pend; }
-function poPaso(paso){ po.paso = paso; ["ruta","punto","fin"].forEach(s=>{ $("#po-"+s).hidden = s!==paso; }); const b = $("#po-save");
+function poPaso(paso){ po.paso = paso; ["ruta","punto","fin","colmena"].forEach(s=>{ $("#po-"+s).hidden = s!==paso; }); const b = $("#po-save"); if(paso!=="colmena") coParar();
+  if(paso==="colmena"){ coRender(); cuentaRender(); return; }
   if(paso==="ruta"){ poRutaRender(); const pend = poPendientes(); b.textContent = pend.length ? `Revisar ${pend[0].id}` : (po.hechos.length ? "Terminar el recorrido" : "Marque el lote primero"); b.disabled = !pend.length && !po.hechos.length; }
   if(paso==="punto"){ poPuntoRender(); b.textContent = "Guardar el punto"; b.disabled = false; }
   if(paso==="fin"){ poFinRender(); b.textContent = `Guardar el recorrido (${po.hechos.length} punto${po.hechos.length===1?"":"s"})`; b.disabled = !po.hechos.length; }
@@ -3708,12 +3859,12 @@ function poRutaRender(){ const l = LOTES[lotIdx]; const poly = plPoly(l); const 
   $("#po-ruta-txt").textContent = !poly ? "Marque el lote en el mapa (Lote) para proponer los puntos." : `${po.puntos.length} punto${po.puntos.length===1?"":"s"} (${po.puntos[0] && po.puntos[0].id.startsWith("S") ? "uno por parcela" : "repartidos por el lote"}). ${po.hechos.length} revisado${po.hechos.length===1?"":"s"}.` + (plPos && pend.length ? ` El más cercano: ${pend[0].id}, a ${Math.round(plDist(plPos, pend[0]))} m al ${plRumbo(plPos, pend[0])}.` : "");
   const cercaQ = gpsCercano(pend); gpsLinea("#po-gps", cercaQ, "sector", pend[0]);
   $("#po-puntos").innerHTML = po.puntos.map(p=>`<button class="chip${cercaQ && cercaQ.id===p.id ? " gps" : ""}" data-popt="${p.id}" style="${hechos.has(p.id) ? "background:var(--ok-bg);color:var(--ok);border-color:transparent" : ""}">${p.id}${hechos.has(p.id) ? " ✓" : ""}${p.sector && p.sector!==p.id ? " · " + esc(p.sector) : ""}</button>`).join("");
-  if(poly){ $("#po-map").hidden = false; try{ poDibujar(poly); }catch(e){} } else $("#po-map").hidden = true; }
+  if(poly){ $("#po-map").hidden = false; try{ poDibujar(poly); }catch(e){} } else $("#po-map").hidden = true; coChips(); }
 function poDibujar(poly){ if(!poMap){ poMap = L.map("po-map", {zoomControl:true, attributionControl:false}); L.tileLayer(TILE.sat, {maxZoom:20, maxNativeZoom:19}).addTo(poMap); } poCapas.forEach(c=>poMap.removeLayer(c)); poCapas = []; const hechos = {}; po.hechos.forEach(h=>{ hechos[h.punto_id] = h; });
   const pg = L.polygon(poly, {color:"#F0B848", weight:2, fill:false}).addTo(poMap); poCapas.push(pg); const g = (typeof G==="function") ? G() : null; (g && g.parcelas || []).forEach(pc=>{ if(pc.poly && pc.poly.length >= 3){ const q = L.polygon(pc.poly, {color:"#fff", weight:1, dashArray:"4 3", fill:false}).addTo(poMap); poCapas.push(q); } });
   const cercaN = gpsCercano(poPendientes());
   po.puntos.forEach(p=>{ const h = hechos[p.id]; const col = h ? {bueno:"#17955A", regular:"#F2B04E", bajo:"#D63B2F"}[h.nivel] : null; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt${cercaN && cercaN.id===p.id ? " plpt-gps" : ""}" style="${col ? `background:${col};color:#fff;border-color:#fff` : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(poMap); m.on("click", ()=>{ po.actual = p; poPaso("punto"); }); poCapas.push(m); });
-  if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
+  coMarcas(); if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
   poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ poMap.invalidateSize(); poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380); }
 function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; poTel = null; npReset("po"); { const b = $("#po-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
 function poCalc(){ const fl = +$("#po-flores").value || 0, cm = +$("#po-marca").value; const cfg = poCfg(LOTES[lotIdx]); const box = $("#po-calc"); if(!fl || isNaN(cm) || $("#po-marca").value===""){ box.innerHTML = `<p class="note ay">Revise ${fl || 20} flores abiertas de 2 a 3 días y cuente las que tienen la marca (moretón café en el cono de anteras). Si prefiere, tome la foto y el motor cuenta con señal.</p>`; return; } const pct = Math.round(1000*Math.min(cm, fl)/fl)/10; const n = poNivel(pct, cfg); box.innerHTML = `<div class="row between"><span class="big" style="font-size:32px">${pct} %<small> con marca · preliminar</small></span><span class="lvl ${PO_CLS[n]}">${n}</span></div><p class="note ay">${esc(cfg ? cfg.txt : "")}</p>`; }
@@ -3734,7 +3885,7 @@ function poGuardarRecorrido(){ const l = LOTES[lotIdx]; if(!po.hechos.length) re
   po.hechos.forEach(h=>npRegistrar(h, "polinizacion", h.sector && h.sector!==h.punto_id ? `${h.sector} · polinización` : "polinización", {tabla:"polinizacion", recorrido: grupo, punto_id: h.punto_id, sector: h.sector, lat: h.lat, lon: h.lon, fecha: hoyISO}));
   addLog("polinizacion", `Polinización · ${po.hechos.length} punto${po.hechos.length===1?"":"s"}${pct!=null ? ` · ${pct} % con marca · ${n}` : " · fotos para el motor"}`, hoyISO, undefined, {puntos:po.hechos.length, pct, nivel:n, recorrido:grupo, telefono: po.hechos.filter(h=>h.telefono).map(h=>({punto_id:h.punto_id, ...h.telefono}))});
   cacheGuardar(); renderPolinHoy(); plGeoParar(); afterSave(pct!=null ? `Recorrido guardado: ${pct} % de flores con marca (${n})` : "Recorrido guardado: el motor cuenta las flores con señal"); }
-$("#po-save").addEventListener("click", ()=>{ if(!po) return; if(po.paso==="ruta"){ const pend = poPendientes(); if(pend.length){ po.actual = pend[0]; poPaso("punto"); } else if(po.hechos.length) poPaso("fin"); } else if(po.paso==="punto") poGuardarPunto(); else poGuardarRecorrido(); });
+$("#po-save").addEventListener("click", ()=>{ if(!po) return; if(po.paso==="colmena"){ coBoton(); return; } if(po.paso==="ruta"){ const pend = poPendientes(); if(pend.length){ po.actual = pend[0]; poPaso("punto"); } else if(po.hechos.length) poPaso("fin"); } else if(po.paso==="punto") poGuardarPunto(); else poGuardarRecorrido(); });
 function renderPolinMas(){ const card = $("#mas-polin"); if(!card || card.hidden) return; const l = LOTES[lotIdx]; const cfg = poCfg(l); if(!cfg){ $("#po-mas-txt").textContent = `La polinización con abejorros está configurada para tomate; este lote es de ${nombreCultivo(l.cultivo)}.`; $("#po-mas-kv").innerHTML = ""; $("#po-mas-lista").innerHTML = ""; $("#po-mas-map").hidden = true; return; }
   const u = poUltimo(l); $("#po-mas-txt").textContent = u && u.pct!=null ? `Último recorrido ${fmtD(u.fecha)}: ${u.pct} % de flores con marca en ${u.puntos} punto${u.puntos===1?"":"s"} → ${u.nivel}. ${cfg.txt}` : `Sin recorridos todavía. ${cfg.txt}`;
   const ps = poDe(l); const porF = {}; ps.forEach(p=>{ (porF[p.fecha] = porF[p.fecha] || []).push(p); }); const fechas = Object.keys(porF).sort().reverse();
