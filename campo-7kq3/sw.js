@@ -1,5 +1,5 @@
 // Engram Campo — service worker: red primero (la versión más nueva), con tope de espera; si la red no contesta a tiempo o no hay señal, se abre la copia guardada.
-const CACHE = "engram-campo-v37";
+const CACHE = "engram-campo-v38";
 const LIB = "engram-lib-v1";   // v52.5: bibliotecas (./lib/ de ORT y transformers.js, y las del CDN como WebLLM) en una caché que sobrevive a las actualizaciones:
                                // antes vivían en la caché de la app y cada versión nueva las borraba; sin señal fallaban voz, fotos, libreta y razonador ("Importing a module script failed") hasta volver a bajarlas
 const SHELL = ["./", "./index.html", "./manifest.json", "./leaflet.js", "./leaflet.css", "./icon.svg", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png", "./worker_modelos.js"];

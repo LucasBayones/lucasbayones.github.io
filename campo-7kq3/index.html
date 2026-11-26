@@ -247,6 +247,9 @@ body.noscroll{overflow:hidden}
 .cobtn b{font-size:42px;line-height:1;font-variant-numeric:tabular-nums} .cobtn span{font-size:14px;color:var(--muted)} .cobtn:active{transform:scale(.98);border-color:var(--accent)} .cobtn:disabled{opacity:.55}
 .copt{min-width:30px;height:20px;padding:0 5px;border-radius:6px;background:#F0B848;color:#0F1E2E;border:2px solid #0F1E2E;display:grid;place-items:center;font-size:10.5px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.4);white-space:nowrap} .copt.cerrada{background:#AEB7BD}
 .chip.co-cerrada{opacity:.65}
+.cosug{position:relative;width:22px;height:22px;border-radius:50%;border:2px dashed #F0B848;background:rgba(15,30,46,.78);color:#F0B848;display:grid;place-items:center;font-size:11px;font-weight:800}
+.cosug::after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);border:4px solid transparent;border-top-color:#F0B848}
+.cosug.ok{border-style:solid}
 #po-clima{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .pc-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0 6px}
 .pc-dia{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 1px;border-radius:10px;background:var(--surface-2);border:1px solid transparent;min-width:0}
@@ -1283,6 +1286,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
                 <div class="field"><label>Lugar</label><p class="small" id="co-lugar" style="margin:10px 0 0"></p></div>
               </div>
               <p class="small muted" id="co-sugerida" hidden style="margin:10px 0 0"></p>
+              <p class="small muted" id="co-sug-lugar" hidden style="margin:6px 0 0"></p>
               <p class="note ay">La piquera es la entrada de la colmena: marque hacia dónde mira. El lugar se toma del GPS del teléfono, parado junto a la colmena.</p>
             </div>
             <div class="flow" id="co-ficha" hidden>
@@ -2629,7 +2633,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "59 · 25 nov 2026";
+const APP_VERSION = "60 · 25 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -3825,7 +3829,7 @@ function coRender(){ const l = LOTES[lotIdx]; const c = po.col, modo = po.colMod
   $("#co-alta").hidden = modo!=="alta"; $("#co-ficha").hidden = modo!=="ficha"; $("#co-contar").hidden = modo!=="contar"; b.hidden = false; b.disabled = false;
   if(modo==="alta"){ const base = po.colDe; $("#co-h").textContent = base ? `Recambio de ${base.codigo}` : "Colmena nueva"; const n = COLMENAS.filter(x=>x.lote_id===(l.uuid||l.id)).length;
     $("#co-codigo").value = "C" + (n + 1); $("#co-fecha").value = hoyISO; $("#co-altura").value = base && base.altura_cm!=null ? base.altura_cm : ""; coUno("#co-rumbo", base ? base.rumbo_piquera : null); coUno("#co-sombra", base ? base.sombra : null);
-    const lugar = ()=>{ const pos = coPos(); $("#co-lugar").textContent = pos ? `GPS ±${pos.precision_m ?? "?"} m` : (base && base.lat!=null ? "el de la colmena anterior" : "sin GPS todavía"); }; lugar(); coTic = setInterval(lugar, 1500);
+    const lugar = ()=>{ const pos = coPos(); pcLugarCerca(pos); $("#co-lugar").textContent = pos ? `GPS ±${pos.precision_m ?? "?"} m` : (base && base.lat!=null ? "el de la colmena anterior" : "sin GPS todavía"); }; lugar(); coTic = setInterval(lugar, 1500);
     const sug = pcDe(l), co = sug && sug.resumen && sug.resumen.colocacion; $("#co-sugerida").hidden = !co;
     if(co) $("#co-sugerida").textContent = "Sugerido esta semana (preliminar): " + [co.rumbo!=null && isFinite(+co.rumbo) ? "piquera al " + RUMBO_TXT[Math.round(+co.rumbo / 45) % 8] : null, co.altura ? String(co.altura) : null, co.sombra==="total" ? "con sombra propia" : null, co.mejor_dia && co.mejor_dia.fecha ? "mejor día: " + fmtD(String(co.mejor_dia.fecha)) : null].filter(Boolean).join(" · ") + ".";
     b.textContent = "Guardar la colmena"; }
@@ -3880,7 +3884,7 @@ async function cargarPolClima(){ if(MODO!=="nube" || !sesion) return; let fs;
   try{ fs = await db("GET","polinizacion_clima",{select:"*", emitida:"gte."+localISO(new Date(Date.now()-3*86400000)), order:"emitida.desc", limit:"300"}); }
   catch(e){ return; }                                                    // sin señal, o la nube todavía no tiene la tabla (falta el esquema v26): vale lo último que quedó en el teléfono
   const m = {}; (Array.isArray(fs) ? fs : []).forEach(f=>{ if(f && f.lote_id && !m[f.lote_id]) m[f.lote_id] = f; }); POLCLIMA = m; try{ localStorage.setItem(PC_KEY, JSON.stringify(m)); }catch(e){}
-  if(po && sheetOpen==="polin"){ if(po.paso==="ruta") pcRender(); else if(po.paso==="colmena" && po.colModo==="ficha") coRender(); } }
+  if(po && sheetOpen==="polin"){ if(po.paso==="ruta") poRutaRender(); else if(po.paso==="colmena" && po.colModo==="ficha") coRender(); } }
 function pcDe(l){ const f = l && POLCLIMA[l.uuid || l.id]; if(!f || !f.emitida || !Array.isArray(f.dias)) return null; const hace = Math.round((Date.parse(hoyISO) - Date.parse(f.emitida)) / 86400000); return hace >= 0 && hace <= 3 ? f : null; }   // lo de hace más de tres días ya no se muestra
 function pcProp(p){ const u = [1,2,3].includes(+p.urgencia) ? +p.urgencia : 3; const pq = (Array.isArray(p.por_que) ? p.por_que : []).map(x=>`<li>${esc(x)}</li>`).join("");
   const k = String(p.tipo||"") + "|" + (Array.isArray(p.colmena_ids) ? p.colmena_ids.join(",") : "") + "|" + String(p.texto||"").length, ab = pcAbiertas.has(k);      // se recuerda cuál quedó abierta: el GPS vuelve a pintar la ruta cada tanto
@@ -3894,12 +3898,27 @@ function pcRender(){ const box = $("#po-clima"); if(!box) return; const f = pcDe
   const h = dias.find(d=>d.fecha===hoyISO && d.h_vuelo!=null);
   const linea = h ? `Hoy: ${esc(h.h_vuelo)} h de vuelo${h.buenas ? " (" + esc(h.buenas) + ")" : ""}${h.h_calor ? " · " + esc(h.h_calor) + " h de calor" : ""}${h.h_frio >= 2 ? " · " + esc(h.h_frio) + " h de frío" : ""}.` : "";
   const calib = String(est.origen||"").startsWith("ajustado") ? "con termómetro" : "sin calibrar";
+  const ub = pcUb(LOTES[lotIdx]), sel = ub && pcSel!=null ? ub.puntos.find(x=>x && x.n===pcSel) : null, avisos = f.resumen && Array.isArray(f.resumen.avisos) ? f.resumen.avisos : [];
   const lista = (pcTodas ? ps : ps.slice(0, 3)).map(pcProp).join("");
   const html = `<div class="row between"><span class="eyebrow">Horas de vuelo</span><em class="tag">preliminar · ${calib}</em></div><div class="pc-dias">${celdas}</div>`
     + (linea ? `<p class="small" style="margin:0 0 4px">${linea}</p>` : "")
+    + (ub ? `<p class="small" style="margin:0 0 4px">Lugares sugeridos: ${ub.puntos.length} · círculos punteados en el mapa.${sel ? " " + esc(pcLugarTxt(sel)) + "." : ""}</p>` : "")
+    + avisos.slice(0, 3).map(a=>`<p class="small muted pc-aviso" style="margin:0 0 4px">${esc(a)}</p>`).join("")
     + (ps.length ? `<div style="margin-top:10px"><span class="eyebrow">Propuestas${f.emitida===hoyISO ? "" : " del " + esc(fmtD(String(f.emitida)))} · para decidir con el técnico</span></div>${lista}${ps.length > 3 ? `<button class="inline-link" type="button" data-pc-todas>${pcTodas ? "ver menos" : "ver las " + ps.length}</button>` : ""}` : "")
-    + `<p class="note ay">«Horas de vuelo»: horas con luz y entre 10 y 28 °C adentro de la estructura, estimadas con el pronóstico de la zona (${esc(f.emitida===hoyISO ? "de hoy" : "del " + fmtD(f.emitida))}). Sin termómetro adentro es un estimado sin calibrar. Entre 28 y 32 °C vuelan menos; desde 32 °C se detienen. Toque una propuesta para ver por qué. PRELIMINAR.</p>`;
+    + `<p class="note ay">«Horas de vuelo»: horas con luz y entre 10 y 28 °C adentro de la estructura, estimadas con el pronóstico de la zona (${esc(f.emitida===hoyISO ? "de hoy" : "del " + fmtD(f.emitida))}). Sin termómetro adentro es un estimado sin calibrar. Entre 28 y 32 °C vuelan menos; desde 32 °C se detienen. Toque una propuesta para ver por qué.${ub && Array.isArray(ub.supuestos) ? " Lugares sugeridos: " + esc(ub.supuestos.join(" ")) : ""} PRELIMINAR.</p>`;
   box.hidden = false; if(box.__html !== html){ box.__html = html; box.innerHTML = html; } }
+// v60: lugares sugeridos dentro del lote (resumen.ubicaciones de la misma fila). El RIG los reparte por superficie y marcas, sobre el eje largo de cada parcela.
+let pcSel = null;
+function pcUb(l){ const f = pcDe(l), ub = f && f.resumen && f.resumen.ubicaciones; return ub && Array.isArray(ub.puntos) && ub.puntos.length ? ub : null; }
+function pcLugarTxt(pt){ return `Lugar ${pt.n}: ${pt.unidad}, ${pt.tramo}` + (pt.colmena ? ` · ${pt.colmena} a ${pt.dist_m} m${pt.lejos ? " (lejos)" : ""}` : " · libre"); }
+function pcLugares(){ if(!poMap) return; const ub = pcUb(LOTES[lotIdx]); if(!ub) return;
+  ub.puntos.forEach(pt=>{ if(pt==null || !isFinite(+pt.lat) || !isFinite(+pt.lon)) return;
+    const m = L.marker([+pt.lat, +pt.lon], {icon: L.divIcon({className:"", html:`<div class="cosug${pt.colmena && !pt.lejos ? " ok" : ""}">${esc(pt.n)}</div>`, iconSize:[22,22], iconAnchor:[11,32]}), zIndexOffset:300}).addTo(poMap);          // un globito con la punta en el lugar: los puntos del recorrido caen en el centro de cada parcela y lo taparían
+    m.on("click", ()=>{ pcSel = pt.n; pcRender(); toast(pcLugarTxt(pt) + " · preliminar"); }); poCapas.push(m); }); }
+function pcLugarCerca(pos){ const el = $("#co-sug-lugar"); if(!el) return; const ub = pcUb(LOTES[lotIdx]); if(!ub || !pos){ el.hidden = true; return; }
+  const ps = ub.puntos.filter(x=>x && isFinite(+x.lat) && isFinite(+x.lon)), libres = ps.filter(x=>!x.colmena), c = (libres.length ? libres : ps).slice().sort((a,b)=>plDist(pos,{lat:+a.lat,lon:+a.lon})-plDist(pos,{lat:+b.lat,lon:+b.lon}))[0];
+  if(!c){ el.hidden = true; return; } const q = {lat:+c.lat, lon:+c.lon};
+  el.hidden = false; el.textContent = `Lugar sugerido${libres.length ? " libre" : ""} más cercano: n.º ${c.n}, a ${Math.round(plDist(pos, q))} m al ${plRumbo(pos, q)} (${c.unidad}, ${c.tramo}).`; }
 function pcToque(e){ const t = e.target.closest("[data-pc-todas]"); if(t){ pcTodas = !pcTodas; pcRender(); return; } const pr = e.target.closest(".pc-prop"); if(!pr) return; const ul = pr.querySelector(".pc-mas"); if(!ul) return; const k = pr.dataset.k; if(pcAbiertas.has(k)) pcAbiertas.delete(k); else pcAbiertas.add(k); ul.hidden = !pcAbiertas.has(k); pr.setAttribute("aria-expanded", String(pcAbiertas.has(k))); }
 ["#po-clima", "#co-propuestas"].forEach(q=>{ $(q).addEventListener("click", pcToque); $(q).addEventListener("keydown", e=>{ if((e.key==="Enter" || e.key===" ") && e.target.classList && e.target.classList.contains("pc-prop")){ e.preventDefault(); pcToque(e); } }); });
 pcLeer();
@@ -3919,7 +3938,7 @@ function poDibujar(poly){ if(!poMap){ poMap = L.map("po-map", {zoomControl:true,
   const pg = L.polygon(poly, {color:"#F0B848", weight:2, fill:false}).addTo(poMap); poCapas.push(pg); const g = (typeof G==="function") ? G() : null; (g && g.parcelas || []).forEach(pc=>{ if(pc.poly && pc.poly.length >= 3){ const q = L.polygon(pc.poly, {color:"#fff", weight:1, dashArray:"4 3", fill:false}).addTo(poMap); poCapas.push(q); } });
   const cercaN = gpsCercano(poPendientes());
   po.puntos.forEach(p=>{ const h = hechos[p.id]; const col = h ? {bueno:"#17955A", regular:"#F2B04E", bajo:"#D63B2F"}[h.nivel] : null; const m = L.marker([p.lat, p.lon], {icon: L.divIcon({className:"", html:`<div class="plpt${cercaN && cercaN.id===p.id ? " plpt-gps" : ""}" style="${col ? `background:${col};color:#fff;border-color:#fff` : ""}">${p.orden}</div>`, iconSize:[22,22], iconAnchor:[11,11]})}).addTo(poMap); m.on("click", ()=>{ po.actual = p; poPaso("punto"); }); poCapas.push(m); });
-  coMarcas(); if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
+  pcLugares(); coMarcas(); if(plPos){ const me = L.circleMarker([plPos.lat, plPos.lon], {radius:7, color:"#fff", weight:2, fillColor:"#2563EB", fillOpacity:1}).addTo(poMap); poCapas.push(me); }
   poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); setTimeout(()=>{ poMap.invalidateSize(); poMap.fitBounds(pg.getBounds(), {padding:[14,14]}); }, 380); }
 function poPuntoRender(){ const p = po.actual; $("#po-punto-h").textContent = `${p.id} · ${p.sector}`; $("#po-flores").value = "20"; $("#po-marca").value = ""; poFoto = null; poTel = null; npReset("po"); { const b = $("#po-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#po-foto-prev").hidden = true; $("#po-foto-prev").innerHTML = ""; $("#po-foto-input").value = ""; poCalc(); }
 function poCalc(){ const fl = +$("#po-flores").value || 0, cm = +$("#po-marca").value; const cfg = poCfg(LOTES[lotIdx]); const box = $("#po-calc"); if(!fl || isNaN(cm) || $("#po-marca").value===""){ box.innerHTML = `<p class="note ay">Revise ${fl || 20} flores abiertas de 2 a 3 días y cuente las que tienen la marca (moretón café en el cono de anteras). Si prefiere, tome la foto y el motor cuenta con señal.</p>`; return; } const pct = Math.round(1000*Math.min(cm, fl)/fl)/10; const n = poNivel(pct, cfg); box.innerHTML = `<div class="row between"><span class="big" style="font-size:32px">${pct} %<small> con marca · preliminar</small></span><span class="lvl ${PO_CLS[n]}">${n}</span></div><p class="note ay">${esc(cfg ? cfg.txt : "")}</p>`; }
