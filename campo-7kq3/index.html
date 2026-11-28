@@ -250,6 +250,21 @@ body.noscroll{overflow:hidden}
 .cosug{position:relative;width:22px;height:22px;border-radius:50%;border:2px dashed #F0B848;background:rgba(15,30,46,.78);color:#F0B848;display:grid;place-items:center;font-size:11px;font-weight:800}
 .cosug::after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);border:4px solid transparent;border-top-color:#F0B848}
 .cosug.ok{border-style:solid}
+body.op-visitador nav.bottom,body.op-visitador #lotsel,body.op-visitador #campana{display:none!important}
+.opv-cab{padding:6px 2px 10px}.opv-cab h1{font-size:27px;line-height:1.12;margin:2px 0}
+.opv{border-left:6px solid var(--line)}.opv.en{border-left-color:var(--accent)}.opv.ok{border-left-color:var(--ok)}.opv.mal{border-left-color:var(--warn)}
+.opv-n{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.opv-lote{font-size:28px;font-weight:800;line-height:1.1;margin:4px 0 6px;color:var(--ink);overflow-wrap:anywhere}
+.opv-que{font-size:17px;margin:0 0 10px}.opv-dist{font-size:15px;color:var(--muted);margin:0 0 10px}
+.opv-btn{display:block;width:100%;min-height:60px;font-size:19px;font-weight:800;margin:8px 0 0;text-align:center;text-decoration:none;box-sizing:border-box}
+a.opv-btn{line-height:34px}
+.opv-tarea{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:64px;margin:8px 0 0;padding:10px 14px;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);text-align:left}
+.opv-tarea b{font-size:19px}.opv-tarea span{font-size:14px;color:var(--muted);font-weight:700;text-align:right}.opv-tarea.hecha{border-color:var(--ok);background:var(--ok-bg)}.opv-tarea.sigue{border-color:var(--accent)}.opv-tarea.sigue span{color:var(--accent)}
+.opv-ok{font-size:17px;font-weight:700;color:var(--ok);margin:0}.opv-mal{font-size:16px;font-weight:700;color:var(--warn);margin:0}
+.opv-motivos{display:grid;gap:2px;margin-top:12px}.emp-tareas{display:flex;gap:8px;flex-wrap:wrap}
+.emp-fila{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.emp-ojo{font-size:12px;font-weight:700;color:var(--warn)}.mat-dia{display:block;margin:16px 0 2px}.mat-it{padding:10px 0;border-bottom:1px solid var(--line)}.mat-it:last-child{border-bottom:0}.mat-et{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}.mat-tx{display:block;font-size:15px;line-height:1.35;margin-top:2px;overflow-wrap:anywhere}.mat-box img,.mat-box video{display:block;max-width:100%;border-radius:10px;margin-top:8px}.mat-box audio{display:block;width:100%;margin-top:8px}
+body.op-visitador [data-col-nueva],body.op-visitador #co-acciones,body.op-visitador #se-agregar,body.op-visitador [data-flow="sensor"]{display:none!important}.emp-est{font-size:12px;font-weight:700;text-align:right}.emp-est.hecha{color:var(--ok)}.emp-est.en_curso{color:var(--accent)}.emp-est.incompleta{color:var(--warn)}.emp-est.pendiente{color:var(--muted)}
 #po-clima{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .pc-dias{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:8px 0 6px}
 .pc-dia{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 1px;border-radius:10px;background:var(--surface-2);border:1px solid transparent;min-width:0}
@@ -560,6 +575,14 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
 </section>
 
 <!-- ============================ LOTE ============================ -->
+<section class="screen" id="s-opvisita" hidden aria-labelledby="h-opv">
+  <div class="opv-cab"><span class="eyebrow" id="opv-fecha"></span><h1 id="h-opv">Sus visitas de hoy</h1><p class="small muted" id="opv-quien" style="margin:0"></p></div>
+  <div id="opv-lista"></div>
+  <div class="syncline" id="opv-sync" style="margin:12px 2px"></div>
+  <p class="note" style="text-align:center"><button class="inline-link" id="opv-actualizar">Actualizar</button> · <button class="inline-link" id="opv-salir">Cerrar sesión</button></p>
+  <p class="note" style="text-align:center">EG Agro · PRELIMINAR</p>
+</section>
+
 <section class="screen" id="s-lote" hidden aria-labelledby="h-lote">
   <div class="card">
     <span class="eyebrow">El lote</span>
@@ -670,10 +693,21 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
       <button data-go="mas-memoria"><span class="li">📚</span>Memoria del campo <span>temporadas y resultados</span></button>
       <button data-go="mas-temporada"><span class="li">🌾</span>Cómo termina la temporada <span>lo que la zona rinde y pierde; tendencia</span></button>
       <button data-go="mas-planillas"><span class="li">📊</span>Planillas y archivos <span>la plantilla Excel del cultivo, las que subió, el historial de 20 años</span></button>
+      <button data-go="mas-empresa" id="btn-empresa" hidden><span class="li">🏢</span>Empresa <span id="btn-empresa-sub">personas, lotes y visitas asignadas</span></button>
       <button data-go="mas-panel" id="btn-panel" hidden><span class="li">📋</span>Panel del agrónomo <span id="btn-panel-sub">la red: qué revisar, qué confirmar</span></button>
       <button data-go="mas-como"><span class="li">🔬</span>Cómo lo sabemos <span>métodos y acierto medido</span></button>
     </div></details>
     <p class="note" style="text-align:center;margin-top:12px">EG Agro · Engram Technologies · PRELIMINAR</p>
+  </div>
+
+  <div class="card" id="mas-empresa" hidden>
+    <div class="row between"><span class="eyebrow">Empresa</span><button class="inline-link" data-back>Volver</button></div>
+    <div id="emp-body"></div>
+  </div>
+
+  <div class="card" id="mas-material" hidden>
+    <div class="row between"><span class="eyebrow">Material</span><button class="inline-link" id="mat-volver" type="button">‹ Empresa</button></div>
+    <div id="mat-body"></div>
   </div>
 
   <div class="card" id="mas-alertas" hidden>
@@ -1480,7 +1514,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 
 // ---------------------------------------------------------------- render: selector y pantallas
 function renderLotSel(){
-  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}${alertasDe(l).some(alertaNueva) ? `<i class="ndot" title="alerta sin ver"></i>` : ""}<small>${esc(nombreCultivo(l.cultivo))} · ${esc(l.region || "zona por definir")}</small></button>`).join("")
+  $("#lotsel").innerHTML = LOTES.map((l,i)=>`<button class="lot-chip" role="tab" aria-pressed="${i===lotIdx}" data-lot="${i}">${esc(l.nombre)}${alertasDe(l).some(alertaNueva) ? `<i class="ndot" title="alerta sin ver"></i>` : ""}<small>${esc(nombreCultivo(l.cultivo))} · ${esc(opDueno(l) ? "de " + opDueno(l) : (l.region || "zona por definir"))}</small></button>`).join("")
     + (MODO==="nube" ? `<button class="lot-chip add" data-flow="nuevolote">+ Nuevo lote<small>crear otro</small></button>` : "");
 }
 function renderHoy(){
@@ -1938,7 +1972,228 @@ async function pedirCodigo(email){ await authPost("otp", {email, create_user:fal
 async function verificarCodigo(email, token){ const j = await authPost("verify", {type:"email", email, token}); if(!j || !j.access_token) throw new Error("respuesta sin sesión"); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user:{id:j.user.id, email:j.user.email}}); }
 async function refrescar(){ if(!sesion) return false; try{ const j = await authPost("token?grant_type=refresh_token", {refresh_token: sesion.refresh_token}); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user: j.user ? {id:j.user.id, email:j.user.email} : sesion.user}); return true; }catch(e){ return false; } }
 async function token(){ if(!sesion) throw new Error("sin sesión"); if(Date.now() > sesion.expires_at - 60000){ if(!(await refrescar())){ if(navigator.onLine){ cerrarSesion(true); throw new Error("sesión vencida"); } } } return sesion.access_token; }
-function cerrarSesion(silencio){ sesGuardar(null); perfil = null; MODO = "demo"; LOTES = DEMO_LOTES; ALERTAS = []; TRANSCRIPCIONES = []; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
+// ============================ v61 · OPERACIONES 1: jerarquías y visitas asignadas (esquema v27) ============================
+// Directivo: ve los lotes de su empresa (no los cambia) y asigna visitas. Productor: lo suyo, las visitas a sus lotes y sus propios visitadores.
+// Visitador: una sola pantalla con lo que le toca hoy. Sin el esquema v27, o sin empresa, la app queda como antes.
+const OP_KEY = "engram-campo-oper-v1", OP_VACIO = ()=>({miembros:[], empresas:[], personas:[], visitas:[], local:{}});
+let OP = OP_VACIO(), opPos = null, opPosT = 0, opFalta = null, opOcupado = false;
+const OP_TAREAS = {plagas:{t:"Plagas", flow:"plagas"}, polinizacion:{t:"Polinización", flow:"polin"}, riego:{t:"Riego", flow:"regue"}, sensores:{t:"Sensores", flow:"lectura"}, cultivo:{t:"Cultivo", flow:"vi"}};
+const OP_MOTIVOS = ["No pude entrar al lote", "Mal tiempo", "Se acabó el tiempo", "Otro motivo"];
+const OP_ORDEN = {pendiente:0, en_curso:1, incompleta:2, hecha:3, cancelada:4}, OP_JER = {directivo:"Directivo", productor:"Productor", visitador:"Visitador", administrador:"Administrador"};
+function opLeer(){ OP = OP_VACIO(); try{ const c = JSON.parse(localStorage.getItem(OP_KEY)); if(c && sesion && sesion.user && c.uid===sesion.user.id && c.op) OP = Object.assign(OP_VACIO(), c.op); }catch(e){} }
+function opGuardar(){ try{ localStorage.setItem(OP_KEY, JSON.stringify({uid: sesion && sesion.user ? sesion.user.id : null, op: OP})); }catch(e){} }
+function opJerarquia(){ const r = (OP.miembros||[]).filter(m=>m.activo!==false).map(m=>m.rol); return r.includes("directivo") ? "directivo" : r.includes("productor") ? "productor" : r.includes("visitador") ? "visitador" : null; }
+function opEsVisitador(){ return MODO==="nube" && !!sesion && !esEquipo() && opJerarquia()==="visitador"; }
+function opSoloVe(l){ return !!(MODO==="nube" && l && l.ajeno && !esEquipo() && !opEsVisitador()); }          // lote de otro productor de la empresa, visto por un directivo
+function opNombre(uid){ const q = (OP.personas||[]).find(x=>x.usuario===uid); return q && q.nombre ? q.nombre : "(sin nombre)"; }
+function opDueno(l){ const q = l && l.ajeno ? (OP.personas||[]).find(x=>x.usuario===l.propietario) : null; return q && q.nombre ? q.nombre : ""; }
+function opLocal(id){ if(!OP.local) OP.local = {}; const lo = OP.local[id] || (OP.local[id] = {cuenta:{}}); if(!lo.cuenta) lo.cuenta = {}; return lo; }
+function opEstado(v){ const lo = (OP.local||{})[v.id]; return (lo && lo.estado) || v.estado; }
+function opHora(iso){ if(!iso) return ""; const dd = new Date(iso); return isNaN(dd) ? "" : `${String(dd.getHours()).padStart(2,"0")}:${String(dd.getMinutes()).padStart(2,"0")}`; }
+function opDias(iso){ return Math.round((new Date(iso+"T12:00:00") - new Date(hoyISO+"T12:00:00"))/86400000); }
+function opDia(iso){ const n = opDias(iso); return n===0 ? "hoy" : n===1 ? "mañana" : n===-1 ? "ayer" : fmtD(iso); }
+async function cargarOperaciones(){
+  if(MODO!=="nube" || !sesion) return;
+  let mm;
+  try{ mm = await db("GET","empresa_miembros",{select:"*", usuario:"eq."+sesion.user.id, activo:"eq.true"}); }
+  catch(e){ if(e.status===404){ OP.miembros = []; OP.empresas = []; OP.personas = []; OP.visitas = []; opGuardar(); } return; }     // 404: la nube todavía no tiene el esquema v27 → como antes. Sin señal: queda lo guardado
+  OP.miembros = mm || [];
+  if(!OP.miembros.length && !esEquipo()){ OP.empresas = []; OP.personas = []; OP.visitas = []; opGuardar(); return; }
+  try{ OP.empresas = (await db("GET","empresas",{select:"id,nombre,activa", order:"nombre.asc"})) || []; }catch(e){}
+  try{ OP.personas = (await db("GET","empresa_miembros",{select:"empresa_id,usuario,rol,nombre,responsable,activo", order:"nombre.asc"})) || []; }catch(e){}
+  try{ OP.visitas = (await db("GET","visitas",{select:"*", fecha:"gte."+localISO(new Date(Date.now()-2*86400000)), order:"fecha.asc,creado_en.asc", limit:"300"})) || []; }catch(e){}
+  const cola = colaCargar();
+  Object.keys(OP.local||{}).forEach(id=>{ const v = OP.visitas.find(x=>x.id===id), lo = OP.local[id], enCola = cola.some(q=>q.visita_id===id);
+    if(!v){ if(!enCola) delete OP.local[id]; return; }
+    if(lo.estado && !enCola && OP_ORDEN[v.estado] >= OP_ORDEN[lo.estado]) delete lo.estado; });                     // lo que la nube ya confirmó deja de ser «de este teléfono»
+  opGuardar();
+}
+function opAplicar(){
+  const vis = opEsVisitador(), j = opJerarquia(); document.body.classList.toggle("op-visitador", vis);
+  const b = $("#btn-empresa"); if(b) b.hidden = !(MODO==="nube" && (j==="directivo" || j==="productor" || (esEquipo() && (OP.empresas||[]).length > 0)));
+  if(vis){ go("opvisita"); opVisRender(); } else if(!$("#s-opvisita").hidden) go("hoy");
+  if(!vis && !$("#s-mas").hidden && !$("#mas-empresa").hidden) renderEmpresa();
+}
+// ---- visitador
+function opTareaDe(item){ const t = item._tabla || "registros";
+  if(t==="monitoreos") return "plagas"; if(t==="polinizacion" || t==="colmena_conteos") return "polinizacion"; if(t==="lecturas_sensor") return "sensores";
+  if(t==="registros") return item.tipo==="regue" ? "riego" : ["vi","voz","video","visita"].includes(item.tipo) ? "cultivo" : null;
+  return null; }
+function opContar(item){ if(!item || !item.lote_id || !opEsVisitador()) return; const ta = opTareaDe(item); if(!ta) return;
+  const v = (OP.visitas||[]).find(x=>x.lote_id===item.lote_id && x.visitador===sesion.user.id && opEstado(x)==="en_curso"); if(!v) return;
+  const lo = opLocal(v.id); lo.cuenta[ta] = (lo.cuenta[ta]||0) + 1; opGuardar(); }
+function opMisVisitas(){ const uid = sesion && sesion.user ? sesion.user.id : null;
+  return (OP.visitas||[]).filter(v=>v.visitador===uid && opEstado(v)!=="cancelada" && Math.abs(opDias(v.fecha))<=1 && (opDias(v.fecha)>=0 || ["pendiente","en_curso"].includes(opEstado(v))))
+    .sort((a,b)=>((opEstado(a)==="en_curso" ? 0 : 1) - (opEstado(b)==="en_curso" ? 0 : 1)) || a.fecha.localeCompare(b.fecha) || String(a.creado_en).localeCompare(String(b.creado_en))); }
+function opLote(v){ return LOTES.find(l=>l.uuid===v.lote_id) || null; }
+function opCentro(l){ const g = l ? geo[l.id] : null; if(g && g.pin && g.pin.lat!=null) return {lat:+g.pin.lat, lon:+g.pin.lon}; if(g && g.poly && g.poly.length>=3){ const c = centroid(g.poly); return {lat:c[0], lon:c[1]}; } if(l && l.lat!=null && l.lon!=null) return {lat:+l.lat, lon:+l.lon}; return null; }
+function opAdentro(poly, q){ let c = false; for(let i = 0, k = poly.length-1; i < poly.length; k = i++){ const a = poly[i], b = poly[k]; if((a[0] > q.lat) !== (b[0] > q.lat) && q.lon < (b[1]-a[1])*(q.lat-a[0])/(b[0]-a[0]) + a[1]) c = !c; } return c; }
+function opDistTxt(l){ const c = opCentro(l); if(!c) return "El lote todavía no está marcado en el mapa: pregunte dónde queda."; if(!opPos) return "Buscando su ubicación…";
+  const g = geo[l.id], m = plDist(opPos, c); if(m <= 150 || (g && g.poly && g.poly.length>=3 && opAdentro(g.poly, opPos))) return "Ya está en el lote.";
+  return `Está a ${m < 1000 ? Math.round(m/10)*10 + " m" : (m/1000).toFixed(m < 10000 ? 1 : 0).replace(".", ",") + " km"} del lote, hacia el ${plRumbo(opPos, c)}.`; }
+function opDistPintar(){ $$("[data-opv-dist]").forEach(el=>{ const v = (OP.visitas||[]).find(x=>x.id===el.dataset.opvDist); if(v) el.textContent = opPos ? opDistTxt(opLote(v)) : "No se pudo leer su ubicación: revise que el GPS esté prendido."; }); }
+function opUbicar(){ if(!navigator.geolocation || Date.now() - opPosT < 20000) return; opPosT = Date.now();
+  navigator.geolocation.getCurrentPosition(q=>{ opPos = {lat:q.coords.latitude, lon:q.coords.longitude, acc:q.coords.accuracy}; opDistPintar(); }, ()=>{ opDistPintar(); }, {enableHighAccuracy:true, timeout:10000, maximumAge:30000}); }
+function opPosAhora(){ return new Promise(res=>{ let hecho = false; const fin = ()=>{ if(!hecho){ hecho = true; res(opPos ? {...opPos} : null); } }; if(!navigator.geolocation){ fin(); return; } setTimeout(fin, 5000);
+  navigator.geolocation.getCurrentPosition(q=>{ opPos = {lat:q.coords.latitude, lon:q.coords.longitude, acc:q.coords.accuracy}; fin(); }, fin, {enableHighAccuracy:true, timeout:4500, maximumAge:15000}); }); }
+function opSyncPintar(){ const el = $("#opv-sync"); if(!el || !opEsVisitador()) return; const n = colaCargar().length;
+  el.innerHTML = !navigator.onLine ? `<i class="off"></i>Sin señal: ${n ? `${n} guardado${n===1?"":"s"} en el teléfono; sube${n===1?"":"n"} solo${n===1?"":"s"} al volver la señal.` : "lo que registre se guarda en el teléfono."}` : n ? `<i class="pend"></i>${n} por subir…` : `<i></i>Todo subido.`; }
+function opVisRender(){
+  const cont = $("#opv-lista"); if(!cont || !opEsVisitador()) return;
+  const yo = (OP.miembros||[])[0], emp = yo ? (OP.empresas||[]).find(e=>e.id===yo.empresa_id) : null;
+  $("#opv-fecha").textContent = fechaLarga(hoyISO); $("#opv-quien").textContent = [(yo && yo.nombre) || (perfil && perfil.nombre) || "", emp ? emp.nombre : ""].filter(Boolean).join(" · ");
+  const vs = opMisVisitas(), hoyN = vs.filter(v=>opDias(v.fecha)<=0).length;
+  $("#h-opv").textContent = !vs.length ? "Hoy no tiene visitas" : hoyN===1 ? "Su visita de hoy" : hoyN > 1 ? `Sus ${hoyN} visitas de hoy` : "Hoy no tiene visitas";
+  if(!vs.length){ cont.innerHTML = `<div class="card"><p class="opv-que" style="margin:0">No hay visitas asignadas para hoy. Si esperaba una, toque «Actualizar» o avise a su responsable.</p></div>`; opSyncPintar(); return; }
+  let n = 0;
+  cont.innerHTML = vs.map(v=>{ const l = opLote(v), est = opEstado(v), lo = opLocal(v.id), dia = opDia(v.fecha), tareas = (v.tareas||[]).filter(t=>OP_TAREAS[t]), id = esc(v.id); if(dia!=="mañana") n++;
+    const cab = `<div class="opv-n">${esc(dia==="mañana" ? "Mañana" : dia==="ayer" ? "De ayer, sin terminar" : hoyN > 1 ? `Visita ${n} de ${hoyN}` : "Hoy")}</div><div class="opv-lote">${esc(l ? l.nombre : "Lote")}</div><p class="opv-que">Qué hacer: ${tareas.map(t=>`<b>${esc(OP_TAREAS[t].t)}</b>`).join(" · ")}</p>`;
+    if(est==="hecha" || est==="incompleta"){ const reg = lo.registros!=null ? lo.registros : v.registros, fin = lo.terminada_el || v.terminada_el, mot = lo.motivo || v.motivo;
+      return `<div class="card opv ${est==="hecha" ? "ok" : "mal"}" data-opv="${id}">${cab}<p class="${est==="hecha" ? "opv-ok" : "opv-mal"}">${est==="hecha" ? "✓ Terminada" : "Quedó incompleta"}${fin ? " a las " + esc(opHora(fin)) : ""}${reg!=null ? ` · ${esc(reg)} registro${reg===1?"":"s"}` : ""}${est==="incompleta" && mot ? ": " + esc(mot) : ""}</p></div>`; }
+    if(dia==="mañana") return `<div class="card opv" data-opv="${id}">${cab}<p class="opv-dist" style="margin:0">Es para mañana.</p></div>`;
+    if(!l) return `<div class="card opv" data-opv="${id}">${cab}<p class="opv-dist" style="margin:0">El lote todavía no llegó a este teléfono. Toque «Actualizar» cuando tenga señal.</p></div>`;
+    const c = opCentro(l), mapa = c ? `<a class="btn sec opv-btn" data-opv-mapa="${id}" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.lat.toFixed(6) + "," + c.lon.toFixed(6))}" target="_blank" rel="noopener">CÓMO LLEGAR</a>` : "";
+    if(est==="pendiente") return `<div class="card opv" data-opv="${id}">${cab}<p class="opv-dist" data-opv-dist="${id}">${esc(opDistTxt(l))}</p>${mapa}<button class="btn acc opv-btn" data-opv-empezar="${id}">EMPEZAR</button></div>`;
+    let sigue = true; const filas = tareas.map((t,i)=>{ const k = lo.cuenta[t] || 0, cls = k ? "hecha" : sigue ? "sigue" : "", txt = k ? `✓ ${k} registro${k===1?"":"s"} · agregar` : sigue ? "EMPIECE AQUÍ ▸" : "después"; if(!k) sigue = false;
+      return `<button class="opv-tarea ${cls}" data-opv-tarea="${esc(t)}" data-id="${id}"><b>${i+1} · ${esc(OP_TAREAS[t].t)}</b><span>${txt}</span></button>`; }).join("");
+    const pie = opFalta===v.id ? `<div class="opv-motivos"><p class="opv-mal">Faltó: ${esc(tareas.filter(t=>!(lo.cuenta[t] > 0)).map(t=>OP_TAREAS[t].t).join(", "))}. ¿Por qué?</p>${OP_MOTIVOS.map((m,i)=>`<button class="btn sec opv-btn" data-opv-motivo="${i}" data-id="${id}">${esc(m)}</button>`).join("")}<button class="inline-link" data-opv-volver="1" style="margin-top:12px;justify-self:center">Volver: todavía lo voy a hacer</button></div>` : `<button class="btn acc opv-btn" data-opv-terminar="${id}">TERMINAR LA VISITA</button>`;
+    return `<div class="card opv en" data-opv="${id}">${cab}<p class="opv-dist">En curso desde las ${esc(opHora(lo.empezada_el || v.empezada_el))}.</p>${filas}${pie}</div>`;
+  }).join("");
+  opSyncPintar(); opUbicar();
+}
+function opDatos(v){ const lo = opLocal(v.id), por = {}; (v.tareas||[]).forEach(t=>{ por[t] = lo.cuenta[t] || 0; }); return {registros: Object.values(por).reduce((a,b)=>a+b, 0), por_tarea: por}; }
+async function opEvento(v, tipo, datos){
+  const pos = await opPosAhora(), ahora = new Date().toISOString(), lo = opLocal(v.id);
+  if(tipo==="empezada"){ lo.estado = "en_curso"; lo.empezada_el = ahora; } else { lo.estado = tipo==="terminada" ? "hecha" : "incompleta"; lo.terminada_el = ahora; lo.registros = datos.registros; lo.motivo = datos.motivo || null; }
+  opGuardar(); opFalta = null;
+  await encolarRegistro({_tabla:"visita_eventos", cliente_id: uuid(), visita_id: v.id, lote_id: v.lote_id, usuario: sesion.user.id, tipo, hora: ahora, lat: pos ? +pos.lat.toFixed(6) : null, lon: pos ? +pos.lon.toFixed(6) : null, precision_m: pos && pos.acc!=null ? Math.round(pos.acc) : null, datos: datos || {}}, null);
+  opVisRender();
+}
+$("#s-opvisita").addEventListener("click", ev=>{
+  const b = ev.target.closest("button"); if(!b) return; const vDe = id=>(OP.visitas||[]).find(x=>x.id===id);
+  if(b.dataset.opvEmpezar){ const v = vDe(b.dataset.opvEmpezar); if(!v || opOcupado) return; opOcupado = true; b.disabled = true; b.textContent = "Empezando…"; opEvento(v, "empezada", {}).finally(()=>{ opOcupado = false; }); return; }
+  if(b.dataset.opvTarea){ const v = vDe(b.dataset.id), t = OP_TAREAS[b.dataset.opvTarea]; if(!v || !t) return; const i = LOTES.findIndex(l=>l.uuid===v.lote_id); if(i < 0){ toast("El lote todavía no llegó a este teléfono"); return; } lotIdx = i; renderAll(); openFlow(t.flow); return; }
+  if(b.dataset.opvTerminar){ const v = vDe(b.dataset.opvTerminar); if(!v || opOcupado) return; const lo = opLocal(v.id);
+    if((v.tareas||[]).filter(t=>OP_TAREAS[t]).some(t=>!(lo.cuenta[t] > 0))){ opFalta = v.id; opVisRender(); return; }
+    opOcupado = true; b.disabled = true; b.textContent = "Guardando…"; opEvento(v, "terminada", opDatos(v)).finally(()=>{ opOcupado = false; }); return; }
+  if(b.dataset.opvMotivo!=null && b.dataset.id){ const v = vDe(b.dataset.id); if(!v || opOcupado) return; opOcupado = true; opEvento(v, "incompleta", Object.assign(opDatos(v), {motivo: OP_MOTIVOS[+b.dataset.opvMotivo] || OP_MOTIVOS[3]})).finally(()=>{ opOcupado = false; }); return; }
+  if(b.dataset.opvVolver){ opFalta = null; opVisRender(); return; }
+  if(b.id==="opv-actualizar"){ b.disabled = true; cargarLotes().then(()=>{ renderAll(); opAplicar(); toast("Actualizado"); }).catch(()=>toast(navigator.onLine ? "No se pudo actualizar" : "Sin señal: se muestra lo guardado")).finally(()=>{ b.disabled = false; }); return; }
+  if(b.id==="opv-salir"){ cerrarSesion(false); return; }
+});
+// ---- directivo y productor: la tarjeta «Empresa»
+function opEmpresaActual(){ const es = (OP.empresas||[]).filter(e=>e.activa!==false), mia = (OP.miembros||[]).find(m=>m.rol!=="visitador"); return (mia && es.find(e=>e.id===mia.empresa_id)) || es[0] || null; }
+function renderEmpresa(){
+  const el = $("#emp-body"); if(!el) return; const e = opEmpresaActual(), j = esEquipo() ? "administrador" : opJerarquia();
+  if(!e || !sesion){ el.innerHTML = `<p class="note">Todavía no pertenece a ninguna empresa.</p>`; return; }
+  const uid = sesion.user.id, pers = (OP.personas||[]).filter(q=>q.empresa_id===e.id && q.activo!==false), vis = pers.filter(q=>q.rol==="visitador" && (j!=="productor" || q.responsable===uid));
+  const lotes = LOTES.filter(l=>l.real && l.empresa_id===e.id && (j!=="productor" || !l.ajeno)), mios = LOTES.filter(l=>l.real && !l.ajeno);
+  const visitas = (OP.visitas||[]).filter(v=>v.empresa_id===e.id && v.estado!=="cancelada").sort((a,b)=>b.fecha.localeCompare(a.fecha) || String(a.creado_en).localeCompare(String(b.creado_en)));
+  const nomLote = id=>{ const l = LOTES.find(x=>x.uuid===id); return l ? l.nombre : "lote"; };
+  const fila = v=>{ const est = v.estado, l = LOTES.find(x=>x.uuid===v.lote_id), c = opCentro(l), g = l ? geo[l.id] : null;
+    const dur = v.empezada_el && v.terminada_el ? Math.max(0, Math.round((new Date(v.terminada_el) - new Date(v.empezada_el))/60000)) : null;
+    const det = est==="hecha" ? `hecha${v.terminada_el ? " " + opHora(v.terminada_el) : ""}${dur!=null ? " · " + dur + " min" : ""}${v.registros!=null ? " · " + v.registros + " reg." : ""}` : est==="incompleta" ? `incompleta${v.motivo ? ": " + v.motivo : ""}` : est==="en_curso" ? `en curso${v.empezada_el ? " desde " + opHora(v.empezada_el) : ""}` : "pendiente";
+    let ojo = "";                                                    // lo que no cuaja, a la vista de quien asigna: dónde estaba el teléfono al empezar (en una app web el GPS se puede falsear: es un dato, no una prueba)
+    if(est!=="pendiente"){ if(v.inicio_lat==null) ojo = "sin ubicación al empezar"; else if(c){ const q = {lat:+v.inicio_lat, lon:+v.inicio_lon}, m = plDist(q, c);
+      if(m > Math.max(500, Math.sqrt(((l && l.ha) || 0)*10000)) && !(g && g.poly && g.poly.length>=3 && opAdentro(g.poly, q))) ojo = `empezó a ${m < 10000 ? (m/1000).toFixed(1).replace(".", ",") : Math.round(m/1000)} km del lote`; } }
+    return `<div class="emp-fila" data-emp-visita="${esc(v.id)}"><span><b>${esc(opDia(v.fecha))}</b> · ${esc(nomLote(v.lote_id))} · ${esc(opNombre(v.visitador))}<br><span class="small muted">${esc((v.tareas||[]).map(t=>(OP_TAREAS[t]||{t}).t).join(", "))}</span>${ojo ? `<br><span class="emp-ojo">⚠ ${esc(ojo)}</span>` : ""}${est!=="pendiente" ? `<br><button class="inline-link" type="button" data-emp-material="${esc(v.id)}">ver lo que cargó ▸</button>` : ""}</span><span class="emp-est ${esc(est)}">${esc(det)}${est==="pendiente" ? `<br><button class="inline-link" data-emp-cancelar="${esc(v.id)}">cancelar</button>` : ""}</span></div>`; };
+  el.innerHTML = `<h2 style="font-size:21px;margin:4px 0 2px">${esc(e.nombre)}</h2><p class="small muted" style="margin:0 0 10px" id="emp-quien">Usted entra como ${esc(OP_JER[j]||"")} · PRELIMINAR</p>`
+    + `<span class="eyebrow">Visitas</span><div id="emp-visitas">` + (visitas.length ? visitas.slice(0, 30).map(fila).join("") : `<p class="note">Todavía no hay visitas asignadas.</p>`) + `</div>`
+    + (vis.length && lotes.length ? `<div class="card compacta" style="margin-top:12px" id="emp-form"><span class="eyebrow">Asignar una visita</span>
+        <div class="field"><label for="emp-lote">Lote</label><select id="emp-lote">${lotes.map(l=>`<option value="${esc(l.uuid)}">${esc(l.nombre)}</option>`).join("")}</select></div>
+        <div class="field"><label for="emp-quien-va">Quién va</label><select id="emp-quien-va">${vis.map(q=>`<option value="${esc(q.usuario)}">${esc(q.nombre||"(sin nombre)")}</option>`).join("")}</select></div>
+        <div class="field"><label for="emp-dia">Día</label><input type="date" id="emp-dia" value="${esc(hoyISO)}" min="${esc(hoyISO)}"></div>
+        <div class="field"><label>Qué hacer</label><div class="emp-tareas" id="emp-tareas">${Object.keys(OP_TAREAS).map((t,i)=>`<button class="chip" aria-pressed="${i===0}" data-emp-tarea="${esc(t)}">${esc(OP_TAREAS[t].t)}</button>`).join("")}</div></div>
+        <button class="btn acc" id="emp-asignar" style="margin-top:10px">Asignar</button></div>`
+      : `<p class="note" id="emp-sin-form">${!lotes.length ? "Para asignar visitas hace falta al menos un lote dentro de la empresa." : j==="productor" ? "No tiene visitadores a su cargo: las visitas las asigna la empresa." : "La empresa todavía no tiene visitadores."}</p>`)
+    + (j!=="productor" ? `<span class="eyebrow" style="display:block;margin-top:14px">Personas</span><div id="emp-personas">` + ["directivo","productor","visitador"].map(r=>{ const ps = pers.filter(q=>q.rol===r); return ps.length ? `<div class="emp-fila"><span><b>${r==="directivo" ? "Directivos" : r==="productor" ? "Productores" : "Visitadores"}</b></span><span style="text-align:right">${ps.map(q=>esc(q.nombre||"(sin nombre)") + (q.responsable ? ` <span class="small muted">(de ${esc(opNombre(q.responsable))})</span>` : "")).join("<br>")}</span></div>` : ""; }).join("") + `</div>` : "")
+    + `<span class="eyebrow" style="display:block;margin-top:14px">Lotes</span><div id="emp-lotes">`
+    + mios.map(l=>`<div class="emp-fila"><span><b>${esc(l.nombre)}</b> <span class="small muted">suyo</span><br><button class="inline-link" type="button" data-emp-lote-material="${esc(l.uuid)}">ver material ▸</button></span><span><button class="chip" aria-pressed="${l.empresa_id===e.id}" data-emp-lote="${esc(l.uuid)}">${l.empresa_id===e.id ? "la empresa lo ve" : "la empresa no lo ve"}</button></span></div>`).join("")
+    + (j!=="productor" ? lotes.filter(l=>l.ajeno).map(l=>`<div class="emp-fila"><span><b>${esc(l.nombre)}</b> <span class="small muted">${esc(opDueno(l))}</span><br><button class="inline-link" type="button" data-emp-lote-material="${esc(l.uuid)}">ver material ▸</button></span><span class="small muted">${esEquipo() ? "" : "solo lo ve"}</span></div>`).join("") : "") + `</div>`
+    + `<p class="note" style="margin-top:12px">${j==="productor" ? "La empresa ve (no cambia) los lotes que usted marque, con sus registros, fotos, audios y videos." : "Usted ve todo lo de los lotes de la empresa y no lo cambia: están en la barra de lotes, arriba. Las fotos, audios y videos se abren desde cada visita o cada lote."} Las altas de personas las hace EG Agro.</p>`;
+}
+$("#mas-empresa").addEventListener("click", async ev=>{
+  const b = ev.target.closest("button"); if(!b) return; const e = opEmpresaActual(); if(!e) return;
+  if(b.dataset.empMaterial){ matAbrir("visita", b.dataset.empMaterial); return; }
+  if(b.dataset.empLoteMaterial){ matAbrir("lote", b.dataset.empLoteMaterial); return; }
+  if(b.dataset.empTarea){ b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed")!=="true")); return; }
+  if(b.dataset.empLote){ const l = LOTES.find(x=>x.uuid===b.dataset.empLote); if(!l || l.ajeno) return; const on = l.empresa_id!==e.id; l.empresa_id = on ? e.id : null; patchLote(l, {empresa_id: l.empresa_id}); renderEmpresa(); toast(on ? "La empresa ya ve este lote" : "La empresa dejó de ver este lote"); return; }
+  if(b.dataset.empCancelar){ if(!navigator.onLine){ toast("Sin señal: cancélela cuando vuelva la señal"); return; } b.disabled = true;
+    try{ await db("PATCH","visitas",{id:"eq."+b.dataset.empCancelar}, {estado:"cancelada"}, "return=minimal"); await cargarOperaciones(); renderEmpresa(); toast("Visita cancelada"); }
+    catch(x){ toast("No se pudo cancelar: " + String(x.message||x).slice(0,70)); b.disabled = false; } return; }
+  if(b.id==="emp-asignar"){ const tareas = $$("#emp-tareas .chip").filter(c=>c.getAttribute("aria-pressed")==="true").map(c=>c.dataset.empTarea), lote = $("#emp-lote").value, quien = $("#emp-quien-va").value, dia = $("#emp-dia").value || hoyISO;
+    if(!tareas.length){ toast("Elija al menos una cosa para hacer"); return; } if(dia < hoyISO){ toast("Ese día ya pasó"); return; } if(!navigator.onLine){ toast("Sin señal: asígnela cuando vuelva la señal"); return; }
+    b.disabled = true; const id = uuid();
+    try{ await db("POST","visitas",null,{id, empresa_id:e.id, lote_id:lote, visitador:quien, fecha:dia, tareas, cliente_id:id}, "return=minimal"); await cargarOperaciones(); renderEmpresa(); toast(`Visita asignada a ${opNombre(quien)}`); }
+    catch(x){ toast(x.status===409 ? "Esa persona ya tiene una visita a ese lote ese día" : x.status===403 ? "No tiene permiso para asignar esa visita" : "No se pudo asignar: " + String(x.message||x).slice(0,70)); b.disabled = false; } return; }
+});
+
+// ===== v62 · MATERIAL (solo lectura): lo cargado en una visita o en un lote, con sus fotos, audios y videos. Lo abren el directivo, el productor y el administrador.
+const MAT_DIAS = 14, MAT_TIPO = {regue:"Riego", vi:"Observación", voz:"Nota de voz", video:"Video", visita:"Visita técnica", aplique:"Aplicación", nada:"Sin novedad", cosecha:"Cosecha", monitoreo:"Plagas", sensor:"Instrumento", polinizacion:"Polinización"};
+const OP_TABLAS_VIS = ["registros", "monitoreos", "polinizacion", "colmena_conteos", "lecturas_sensor", "visita_eventos"];          // lo único que la nube le acepta a un visitador
+let matActual = null;
+function opPropias(filasDe, lotes){ if(esEquipo() || !sesion || !sesion.user) return filasDe;                // notas de voz y planillas de lotes ajenos no entran a las listas «para revisar» (eso es del dueño): se leen en Material
+  const ajenos = new Set((lotes||[]).filter(f=>f.propietario && f.propietario!==sesion.user.id).map(f=>f.id)); return ajenos.size ? filasDe.filter(r=>!r.lote_id || !ajenos.has(r.lote_id)) : filasDe; }
+function matRutaOk(r){ return typeof r==="string" && r.length < 300 && /^(fotos|audios|videos|planillas)\/[A-Za-z0-9][A-Za-z0-9_.\/-]*$/.test(r) && !r.includes("..") && !r.includes("//"); }     // la ruta la escribió quien registró: se valida antes de pedirle nada a la nube con ella
+function matBoton(r){ if(!matRutaOk(r) || r.startsWith("planillas/")) return ""; const t = r.startsWith("fotos/") ? "ver foto" : r.startsWith("audios/") ? "escuchar" : "ver video"; return `<br><button class="inline-link" type="button" data-mat-archivo="${esc(r)}">${t}</button><div class="mat-box"></div>`; }
+function matQuien(uid){ if(!uid) return ""; if(sesion && sesion.user && uid===sesion.user.id) return "usted"; const q = (OP.personas||[]).find(x=>x.usuario===uid); return q && q.nombre ? q.nombre : ""; }
+function matDiaDe(iso){ const dd = new Date(iso); return isNaN(dd) ? "" : localISO(dd); }
+async function matAbrir(modo, id){
+  const v = modo==="visita" ? (OP.visitas||[]).find(x=>x.id===id) : null; if(modo==="visita" && !v) return;
+  const L = v ? v.lote_id : id, l = LOTES.find(x=>x.uuid===L), marca = matActual = {};
+  showMas("mas-material"); const el = $("#mat-body");
+  const dur = v && v.empezada_el && v.terminada_el ? Math.max(0, Math.round((new Date(v.terminada_el) - new Date(v.empezada_el))/60000)) : null;
+  const sub = v ? [`${opNombre(v.visitador)} · ${opDia(v.fecha)}`, v.empezada_el ? `empezó ${opHora(v.empezada_el)}` : "", v.terminada_el ? `terminó ${opHora(v.terminada_el)}` : "", dur!=null ? `${dur} min` : "", v.estado==="incompleta" && v.motivo ? `incompleta: ${v.motivo}` : ""].filter(Boolean).join(" · ")
+                : `Lo cargado en los últimos ${MAT_DIAS} días, por quien sea`;
+  el.innerHTML = `<h2 style="font-size:21px;margin:4px 0 2px" id="mat-lote">${esc(l ? l.nombre : "Lote")}</h2><p class="small muted" style="margin:0 0 10px" id="mat-sub">${esc(sub)} · solo lectura · PRELIMINAR</p><p class="note" id="mat-estado">Buscando en la nube…</p><div id="mat-lista"></div>`;
+  if(!navigator.onLine){ $("#mat-estado").textContent = "Sin señal: el material se ve cuando vuelva la señal."; return; }
+  const D = v ? (v.empezada_el ? (matDiaDe(v.empezada_el) || v.fecha) : v.fecha) : localISO(new Date(Date.now() - MAT_DIAS*86400000));
+  const t0 = new Date(D + "T00:00:00"), t1 = v ? new Date(t0.getTime() + 86400000) : null, iso0 = t0.toISOString(), op = v ? "eq." : "gte.";
+  const base = Object.assign({select:"*", lote_id:"eq."+L, limit:"300"}, v ? {usuario:"eq."+v.visitador} : {});
+  const pide = (tabla, extra)=>db("GET", tabla, Object.assign({}, base, extra)).catch(()=>null);
+  const [regs, mons, pols, cons, lecs, libs, pls] = await Promise.all([
+    pide("registros", {fecha:op+D, order:"creado_en.asc"}), pide("monitoreos", {fecha:op+D, order:"creado_en.asc"}), pide("polinizacion", {fecha:op+D, order:"creado_en.asc"}),
+    pide("colmena_conteos", {hora:"gte."+iso0, order:"hora.asc"}), pide("lecturas_sensor", {fecha:"gte."+iso0, order:"fecha.asc"}),
+    v ? Promise.resolve([]) : pide("lecturas_libreta", {creado_en:"gte."+iso0, order:"creado_en.asc"}), v ? Promise.resolve([]) : pide("planillas", {order:"creado_en.desc", limit:"30"})]);
+  if(matActual!==marca) return;                                                    // abrió otro mientras tanto
+  if([regs, mons, pols, cons, lecs].every(x=>x===null)){ $("#mat-estado").textContent = "No se pudo leer la nube. Pruebe de nuevo en un momento."; return; }
+  const conVoz = (regs||[]).filter(r=>r.tipo==="voz" || r.tipo==="video").map(r=>r.id).filter(x=>/^[0-9a-f-]{36}$/i.test(String(x))); let trans = [];
+  if(conVoz.length){ trans = await db("GET","transcripciones",{select:"registro_id,texto,estado", registro_id:`in.(${conVoz.join(",")})`}).catch(()=>null) || []; if(matActual!==marca) return; }
+  const antes = x=>!t1 || new Date(x) < t1, items = [], pon = (dia, etiqueta, txt, uid, ruta)=>items.push({dia: dia || "", etiqueta, txt, quien: v ? "" : matQuien(uid), ruta});
+  (regs||[]).forEach(r=>{ const tr = trans.find(t=>t.registro_id===r.id && t.texto); pon(r.fecha, MAT_TIPO[r.tipo] || String(r.tipo||"registro"), [r.texto, tr ? `«${String(tr.texto).slice(0,600)}»` : ""].filter(Boolean).join(" "), r.usuario, r.archivo); });
+  (mons||[]).forEach(m=>{ const n = m.nivel_final ?? m.nivel_productor ?? m.nivel_motor, c = Object.entries(m.conteos||{}).filter(([k,x])=>x!=null && x!=="" && k!=="recorrido").map(([k,x])=>`${plMedTxt(k)}: ${x}`).join(" · ");
+    pon(m.fecha, "Plagas", [l ? plNombre(l, m.plaga) : m.plaga, m.punto_id, c, n!=null ? "nivel " + (NIVEL_TXT[n] || n) : ""].filter(Boolean).join(" · "), m.usuario, m.foto); });
+  (pols||[]).forEach(q=>pon(q.fecha, "Polinización", [q.sector, q.flores_revisadas!=null ? `${q.flores_con_marca ?? 0} de ${q.flores_revisadas} flores con marca` : "", q.nivel].filter(Boolean).join(" · "), q.usuario, q.foto));
+  (cons||[]).filter(c=>antes(c.hora)).forEach(c=>{ const col = COLMENAS.find(x=>x.id===c.colmena_id); pon(matDiaDe(c.hora), "Colmena", [col ? col.codigo : "", `salen ${c.salen} · vuelven ${c.vuelven}`, c.con_polen!=null ? `con polen ${c.con_polen}` : "", c.segundos ? `en ${Math.round(c.segundos/6)/10} min` : "", c.nota].filter(Boolean).join(" · "), c.usuario, null); });
+  (lecs||[]).filter(x=>antes(x.fecha)).forEach(x=>{ const se = SENSORES.find(z=>z.id===x.sensor_id); pon(matDiaDe(x.fecha), "Instrumento", [se ? se.nombre : "", x.valor!=null ? `${x.valor}${x.unidad ? " " + x.unidad : ""}` : "sin valor"].filter(Boolean).join(" · "), x.usuario, x.foto); });
+  (libs||[]).forEach(b=>{ const n = (b.lineas_corregidas || b.lineas || []).length; pon(matDiaDe(b.creado_en), "Libreta", `foto de cuaderno · ${n} ${n===1 ? "renglón leído" : "renglones leídos"}`, b.usuario, b.foto); });
+  const linea = it=>`<div class="mat-it"><span class="mat-et">${esc(it.etiqueta)}</span>${it.quien ? `<span class="small muted"> · ${esc(it.quien)}</span>` : ""}<span class="mat-tx">${esc(it.txt || "(sin texto)")}</span>${matBoton(it.ruta)}</div>`;
+  const docs = pls || [], conArch = items.filter(it=>matBoton(it.ruta)).length; let html = "";
+  if(v) html = items.map(linea).join("");
+  else { html = [...new Set(items.map(it=>it.dia))].sort().reverse().map(dia=>`<span class="eyebrow mat-dia">${esc(dia ? opDia(dia) : "sin fecha")}</span>` + items.filter(it=>it.dia===dia).map(linea).join("")).join("");
+    if(docs.length) html += `<span class="eyebrow mat-dia">Planillas y documentos</span>` + docs.map(q=>{ const ruta = String(q.archivo||""), abre = matRutaOk(ruta) && ruta.startsWith(`planillas/${L}/`);
+      return `<div class="mat-it"><span class="mat-et">${esc(q.tipo || "planilla")}</span><span class="mat-tx">${esc(q.nombre || "archivo")}${q.estado ? " · " + esc(q.estado) : ""}</span>${abre ? `<br><button class="inline-link" type="button" data-mat-doc="${esc(ruta)}">abrir el archivo</button>` : ""}</div>`; }).join(""); }
+  $("#mat-lista").innerHTML = html;
+  $("#mat-estado").textContent = items.length || docs.length ? `${items.length} registro${items.length===1 ? "" : "s"} · ${conArch} con foto, audio o video${docs.length ? ` · ${docs.length} planilla${docs.length===1 ? "" : "s"} o documento${docs.length===1 ? "" : "s"}` : ""}`
+    : v ? "Todavía no hay registros de esta visita en la nube. Si el teléfono del visitador no tenía señal, aparecen cuando suba lo pendiente." : `Nada cargado en este lote en los últimos ${MAT_DIAS} días.`;
+}
+$("#mas-material").addEventListener("click", async ev=>{
+  const b = ev.target.closest("button"); if(!b) return;
+  if(b.id==="mat-volver"){ matActual = null; showMas("mas-empresa"); return; }
+  const r = b.dataset.matArchivo || b.dataset.matDoc; if(!r || !matRutaOk(r)) return;
+  if(!navigator.onLine){ toast("Sin señal: se abre cuando vuelva la señal"); return; }
+  b.disabled = true;
+  try{ const u = await urlFirmada(r);
+    if(b.dataset.matDoc){ const a = document.createElement("a"); a.href = u; a.target = "_blank"; a.rel = "noopener"; a.className = "inline-link"; a.textContent = "descargar ▸"; b.replaceWith(a); return; }
+    const box = b.nextElementSibling; let m;
+    if(r.startsWith("fotos/")){ m = document.createElement("img"); m.alt = "foto del registro"; }
+    else if(r.startsWith("audios/")){ m = document.createElement("audio"); m.controls = true; }
+    else { m = document.createElement("video"); m.controls = true; m.playsInline = true; m.setAttribute("playsinline", ""); }
+    m.src = u; box.replaceChildren(m); b.hidden = true;
+  }catch(e){ b.disabled = false; toast("No se pudo abrir: puede que el archivo todavía no haya subido"); }
+});
+
+function cerrarSesion(silencio){ matActual = null; sesGuardar(null); perfil = null; MODO = "demo"; OP = OP_VACIO(); opFalta = null; document.body.classList.remove("op-visitador"); if(!$("#s-opvisita").hidden) go("hoy"); LOTES = DEMO_LOTES; ALERTAS = []; TRANSCRIPCIONES = []; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
 
 // --- tablas (PostgREST) y archivos (Storage)
 async function db(method, tabla, params, body, prefer){
@@ -1960,7 +2215,7 @@ function temporadaLabel(fs){ if(!fs) return String(new Date().getFullYear()); co
 function loteVacio(){ return {id:"__sin__", sin:true, nube:true, nombre:"Sin lotes todavía", cultivo:"—", region:"", nivel:"sin", etapaTxt:"Cree su primer lote con \"+ Nuevo lote\", arriba.", sem:[], semVacio:"Cuando exista un lote, aquí va su semáforo.", nota:"", acciones:[{a:"Crear el primer lote", p:"Toque \"+ Nuevo lote\" en la barra de arriba. Después, en Lote, marque el punto y el borde.", c:"alta"}], memoria:[], memTxt:"La memoria empieza con el primer lote.", termina:{titulo:"Sin lotes", cuerpo:"Cuando haya un lote y seis semanas observadas, aquí aparece la tendencia de cosecha."}, dias:null, agg:null, fechaTxt: fechaLarga(hoyISO)}; }
 function lotDesdeNube(f, rep){
   const c = rep && rep.contenido, hoy = c && c.hoy, sem = c && c.semana;
-  const l = { id:f.id, uuid:f.id, codigo:f.codigo, nombre:f.nombre, cultivo:f.cultivo, variedad:f.variedad||"", region:f.region||"", lat:f.lat, lon:f.lon, ha:f.superficie_ha ? Number(f.superficie_ha) : null, riego:f.riego||"", condicion:f.condicion||"campo abierto", siembra:f.fecha_siembra||"", nube:true, real:true, fila:f, fechaTxt: fechaLarga(hoyISO), memoria:[], dias:null, agg:null, sem:[], acciones:[], miembros: sem ? sem.n_miembros : null };
+  const l = { id:f.id, uuid:f.id, codigo:f.codigo, nombre:f.nombre, cultivo:f.cultivo, variedad:f.variedad||"", region:f.region||"", lat:f.lat, lon:f.lon, ha:f.superficie_ha ? Number(f.superficie_ha) : null, riego:f.riego||"", condicion:f.condicion||"campo abierto", siembra:f.fecha_siembra||"", nube:true, real:true, fila:f, propietario:f.propietario||null, empresa_id:f.empresa_id||null, ajeno:!!(sesion && sesion.user && f.propietario && f.propietario!==sesion.user.id), fechaTxt: fechaLarga(hoyISO), memoria:[], dias:null, agg:null, sem:[], acciones:[], miembros: sem ? sem.n_miembros : null };
   if(c && hoy){
     l.nivel = hoy.nivel || "bajo";
     l.etapaTxt = (f.fecha_siembra ? `Siembra del ${fmtD(f.fecha_siembra)}${hoy.dia!=null ? ` · día ${hoy.dia}` : ""} · ` : "") + (hoy.etapa || "");
@@ -2030,15 +2285,16 @@ async function cargarLotes(){
   perfil = (perf && perf[0]) || null; estadoRig = (est && est[0]) || null;
   const pend = pendAlertas || {};
   ALERTAS = (als || []).map(a=>({...a, ...(pend[a.id] || {})}));                 // lo respondido sin señal manda sobre lo que trae la nube
-  TRANSCRIPCIONES = (trs || []).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
+  TRANSCRIPCIONES = opPropias(trs || [], filas).filter(t=>!pendTrans[t.id]);                       // las ya revisadas sin señal no vuelven a aparecer
   PERFILES_CULTIVO = pcs || [];
-  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = pls || []; REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || []; MONITOREOS = (mons || []).filter(m=>!monsLocal.some(x=>x.cliente_id===m.cliente_id)).concat(monsLocal); PLAGAS_ESTADO = pest || []; RECONOCIMIENTOS = recos || []; SENSORES = (sens || []).filter(x=>!sensLocal.some(y=>y.cliente_id===x.cliente_id)).concat(sensLocal); LECTURAS = lects || []; POLINIZACION = polin || []; VENTANAS = vents || []; RECETAS = recs || []; PRODUCTOS = prods || [];
+  FORMULARIOS = {}; (fms || []).forEach(f=>{ FORMULARIOS[f.cultivo] = f.definicion; }); PLANILLAS = opPropias(pls || [], filas); REVISIONES = revs || []; AVISOS = avs || []; REPORTES_PDF = rpdf || []; WA_MENSAJES = wam || []; TEMPORADAS = tems || []; MONITOREOS = (mons || []).filter(m=>!monsLocal.some(x=>x.cliente_id===m.cliente_id)).concat(monsLocal); PLAGAS_ESTADO = pest || []; RECONOCIMIENTOS = recos || []; SENSORES = (sens || []).filter(x=>!sensLocal.some(y=>y.cliente_id===x.cliente_id)).concat(sensLocal); LECTURAS = lects || []; POLINIZACION = polin || []; VENTANAS = vents || []; RECETAS = recs || []; PRODUCTOS = prods || [];
   try{ AVISOS_VOZ = (await db("GET","transcripciones",{select:"registro_id,acuerdo,aviso,modelo_telefono,texto", aviso:"not.is.null", order:"creado_en.desc", limit:"60"})) || []; }catch(e){}   // v31: cuando el motor oyó distinto que el teléfono
   try{ const cb = await db("GET","cerebro",{select:"version,contenido,generado", id:"eq.1"}); if(cb && cb[0] && cb[0].contenido){ CEREBRO = cb[0].contenido; CEREBRO._bajado = new Date().toISOString(); } }catch(e){}   // v34: lo que el RIG aprendió, para usar sin señal
   if(esEquipo()){ try{ PERFILES_RED = (await db("GET","perfiles",{select:"id,nombre,rol"})) || []; }catch(e){ PERFILES_RED = []; } }
   $("#btn-panel").hidden = !esEquipo();
   ultimoCache = {filas, reps, parcs}; cacheGuardar(); cargarTrabajos(); cargarAlias(); problemasEnviar(); cargarColmenas(); cargarPolClima();
   armarLotes(filas||[], reps||[], parcs||[]);
+  await cargarOperaciones();                                               // v61: empresa, jerarquía y visitas (esquema v27); sin él, no cambia nada
 }
 function cargarLotesCache(){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY)); if(!c) return false; perfil = c.perfil || null; estadoRig = c.estadoRig || null; ALERTAS = c.alertas || []; TRANSCRIPCIONES = (c.trans || []).filter(t=>!pendTrans[t.id]); PERFILES_CULTIVO = c.pcs || []; FORMULARIOS = c.fms || {}; PLANILLAS = c.pls || []; REVISIONES = c.revs || []; PERFILES_RED = c.pred || []; REPORTES_PDF = c.rpdf || []; WA_MENSAJES = c.wam || []; TEMPORADAS = c.tems || []; MONITOREOS = c.mons || []; PLAGAS_ESTADO = c.pest || []; RECONOCIMIENTOS = c.recos || []; SENSORES = c.sens || []; LECTURAS = c.lects || []; POLINIZACION = c.polin || []; VENTANAS = c.vents || []; RECETAS = c.recs || []; PRODUCTOS = c.prods || []; AVISOS_VOZ = c.avz || []; CEREBRO = c.cerebro || null; $("#btn-panel").hidden = !esEquipo(); ultimoCache = {filas:c.filas, reps:c.reps, parcs:c.parcs}; armarLotes(c.filas||[], c.reps||[], c.parcs||[]); return true; }catch(e){ return false; } }
 function latidoTxt(){ if(!estadoRig || !estadoRig.ultima_corrida) return "sin corrida registrada todavía"; const d = new Date(estadoRig.ultima_corrida); const hace = (Date.now()-d.getTime())/3600000; const det = estadoRig.detalle || {}; return `${d.toLocaleDateString("es-MX",{day:"numeric",month:"short"})} ${d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}${hace > 30 ? " · ¡hace más de un día!" : ""}${det.regiones ? ` · ${det.regiones} regiones` : ""}${det.lotes!=null ? ` · ${det.lotes} lote${det.lotes===1?"":"s"}` : ""}${det.alertas_vigentes!=null ? ` · ${det.alertas_vigentes} alerta${det.alertas_vigentes===1?"":"s"}` : ""}`; }
@@ -2058,6 +2314,7 @@ function pendGuardar(){ try{ localStorage.setItem(PEND_KEY, JSON.stringify(pendL
 let patchTimers = {};
 function patchLote(l, campos){                     // cambios del lote (datos, punto, polígono): se suben con retardo corto; sin señal quedan pendientes
   if(MODO!=="nube" || !l || !l.nube || l.sin) return;
+  if(l.ajeno && !esEquipo()){ toast("Este lote no es suyo: usted lo ve, no lo cambia."); return; }     // v61
   if(l.fila) Object.assign(l.fila, campos);
   pendLotes[l.uuid] = {...(pendLotes[l.uuid]||{}), ...campos}; pendGuardar();
   clearTimeout(patchTimers[l.uuid]); patchTimers[l.uuid] = setTimeout(vaciarPendLotes, 700);
@@ -2088,6 +2345,9 @@ const idb = {
   async del(cid){ const d = await this.open(); return new Promise((res, rej)=>{ const t = d.transaction("archivos","readwrite"); t.objectStore("archivos").delete(cid); t.oncomplete = res; t.onerror = ()=>rej(t.error); }); },
 };
 async function encolarRegistro(item, archivo){
+  if(item && item.lote_id && opSoloVe(LOTES.find(l=>l.uuid===item.lote_id))){ toast("Este lote es de otro productor de su empresa: usted lo ve, no lo cambia."); return; }     // v61: nada queda en la cola sin poder subir
+  if(item && opEsVisitador() && !OP_TABLAS_VIS.includes(item._tabla || "registros")){ toast("Eso lo da de alta el productor o la empresa."); return; }     // v62: el visitador no deja en la cola lo que la nube le rechaza
+  opContar(item);
   // el archivo se guarda ANTES de encolar: si no, una subida en curso podía tomar el registro sin su archivo (nota de voz sin audio)
   if(archivo && archivo.blob){ item.archivo_pendiente = true; try{ await idb.put({cid:item.cliente_id, bucket:archivo.bucket, ext:archivo.ext, blob:archivo.blob}); }catch(e){ delete item.archivo_pendiente; toast("El archivo no se pudo guardar para subir después"); } }
   const cola = colaCargar(); cola.push(item); colaGuardar(cola);
@@ -2115,6 +2375,7 @@ async function vaciarCola(){
   } finally { vaciando = false; save(); renderLog(); renderSync(); colTrasSubir(); }
 }
 function renderSync(){
+  opSyncPintar();
   { const chip = $("#net-chip"); if(chip){ const n = MODO==="nube" ? colaCargar().length + Object.keys(pendLotes).length + Object.keys(pendAlertas).length + Object.keys(pendTrans).length : 0; chip.className = "pill-private" + (!navigator.onLine ? " off" : n ? " pend" : ""); chip.textContent = !navigator.onLine ? `Sin señal${n ? " · " + n : ""}` : n ? `${n} por subir` : "Preliminar · socios"; } if(!$("#mas-sinsenal").hidden) renderSinSenal(); }
   const el = $("#sync-estado"), nota = $("#sync-nota"); if(!el) return;
   if(MODO!=="nube"){ el.hidden = true; if(nota) nota.hidden = false; return; }
@@ -2167,12 +2428,12 @@ $("#login-otra").addEventListener("click", ()=>{ $("#login-paso2").hidden = true
 $("#login-demo").addEventListener("click", ()=>{ mostrarLogin(false); toast("Modo demostración: datos de ejemplo"); });
 
 async function entrarModoNube(){
-  MODO = "nube"; hoyISO = localISO(); pendCargar(); pendACargar(); pendTCargar();
+  MODO = "nube"; hoyISO = localISO(); pendCargar(); pendACargar(); pendTCargar(); opLeer();
   try{ log = JSON.parse(localStorage.getItem(LOGN_KEY)) || []; }catch(e){ log = []; }
   let ok = true;
   try{ await cargarLotes(); await cargarRegistros(); }
   catch(e){ ok = false; if(!sesion) return; if(!cargarLotesCache()){ LOTES = [loteVacio()]; } }
-  lotIdx = Math.min(lotIdx, LOTES.length-1); mostrarLogin(false); renderSesion(); renderAll(); renderSync();
+  lotIdx = Math.min(lotIdx, LOTES.length-1); mostrarLogin(false); renderSesion(); renderAll(); renderSync(); opAplicar();
   if(!ok) toast(navigator.onLine ? "No se pudo leer la nube: se muestra lo guardado en el teléfono" : "Sin señal: se muestra lo guardado en el teléfono");
   else { avisarAlertasNuevas(); const nv = TRANSCRIPCIONES.filter(t=>t.estado==="lista").length; if(nv && !ALERTAS.some(alertaNueva)) toast(`${nv} nota${nv===1?"":"s"} de voz transcrita${nv===1?"":"s"} para revisar en Recorrer`); }
   vaciarCola();
@@ -2633,7 +2894,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "60 · 25 nov 2026";
+const APP_VERSION = "62 · 26 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
@@ -2670,6 +2931,7 @@ function renderAlertas(){
 }
 async function responderAlerta(id, r){
   const a = listaAlertas().find(x=>x.id===id); if(!a) return;
+  if(opSoloVe(LOTES.find(l=>l.uuid===a.lote_id))){ toast("La alerta es de un lote de otro productor: la responde él."); return; }     // v61
   const ahora = new Date().toISOString();
   if(r){ a.respuesta = r; a.respondida_en = ahora; a.vista_en = a.vista_en || ahora; } else { a.respuesta = null; a.respondida_en = null; }
   renderAlertas(); renderLotSel();
@@ -2748,9 +3010,10 @@ async function vaciarPendTrans(){
 }
 
 // ---------------------------------------------------------------- navegación
-const SCREENS = ["hoy","semana","registrar","lote","mas"];
+const SCREENS = ["hoy","semana","registrar","lote","mas","opvisita"];
 function go(name){
-  if(!SCREENS.includes(name)) name = "hoy";
+  if(document.body.classList.contains("op-visitador")) name = "opvisita";          // v61: el visitador tiene una sola pantalla
+  if(!SCREENS.includes(name) || (name==="opvisita" && !document.body.classList.contains("op-visitador"))) name = "hoy";
   SCREENS.forEach(s=>{ $("#s-"+s).hidden = s!==name; });
   $$("nav.bottom button").forEach(b=>{ if(b.dataset.nav===name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   try{ history.replaceState(null,"","#"+name); }catch(e){}
@@ -2758,7 +3021,7 @@ function go(name){
   if(name==="lote") openLote();
 }
 $$("nav.bottom button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.nav)));
-function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-problema") probPintar(); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); if(id==="mas-avisos") renderAvisos(); if(id==="mas-pdf") renderPdf(); if(id==="mas-whatsapp") renderWhatsapp(); if(id==="mas-sinsenal") renderSinSenal(); if(id==="mas-plagas") renderPlagasMas(); if(id==="mas-sensores") renderSensoresMas(); if(id==="mas-polin") renderPolinMas(); }
+function showMas(id){ go("mas"); $$("#s-mas > .card").forEach(c=>{ c.hidden = c.id!==id; }); if(id==="mas-empresa") renderEmpresa(); if(id==="mas-problema") probPintar(); if(id==="mas-acerca") lectorProbar(); if(id==="mas-planillas") renderPlanillas(); if(id==="mas-panel") renderPanel(); if(id==="mas-avisos") renderAvisos(); if(id==="mas-pdf") renderPdf(); if(id==="mas-whatsapp") renderWhatsapp(); if(id==="mas-sinsenal") renderSinSenal(); if(id==="mas-plagas") renderPlagasMas(); if(id==="mas-sensores") renderSensoresMas(); if(id==="mas-polin") renderPolinMas(); }
 document.addEventListener("click", ev => {
   const g = ev.target.closest("[data-go]"); if(g){ showMas(g.dataset.go); return; }
   const pdfb = ev.target.closest("[data-pdf]"); if(pdfb){ abrirPdf(pdfb.dataset.pdf); return; }
@@ -2970,6 +3233,8 @@ function volverDeSub(msg){ const dd = subDe; if(!dd) return; subDe = null;      
 function openFlow(name, btn){
   if(typeof cerrarHojas==="function") cerrarHojas();
   if(!FLOWS.includes(name)) return;
+  if(name!=="nuevolote" && opSoloVe(LOTES[lotIdx])){ toast("Este lote es de otro productor de su empresa: usted lo ve, no lo cambia."); return; }     // v61
+  if(["sensor", "nuevolote", "libreta"].includes(name) && opEsVisitador()){ toast("Eso lo da de alta el productor o la empresa."); return; }     // v62
   // v57: voz, libreta o video abiertos desde dentro de uno de los seis registros: subpantalla. El registro de base queda como estaba y se vuelve a él.
   if(SUBS57.includes(name) && sheetOpen && (subDe || TEMA_TXT[sheetOpen])){
     if(!subDe){ const sb = $("#"+SAVE_IDS[sheetOpen]); subDe = {flow: sheetOpen, titulo: $("#sheet-title").textContent, scroll: $("#sheet-body").scrollTop, save: {hidden: sb.hidden, disabled: sb.disabled}, ctx: contextoDe(sheetOpen)}; }
@@ -2993,6 +3258,7 @@ function openFlow(name, btn){
 }
 function closeSheet(fromPop){
   const sh = $("#sheet"); if(sh.hidden) return;
+  if(document.body.classList.contains("op-visitador")) setTimeout(opVisRender, 80);          // v61: al volver de una tarea, la pantalla del visitador muestra lo que ya registró
   sh.classList.remove("open"); document.body.classList.remove("noscroll"); sheetOpen = null; subDe = null; cuentaDecir(null);
   clearTimeout(sheetTimer); sheetTimer = setTimeout(()=>{ sh.hidden = true; resetFlows(); }, 320);
   if(!fromPop){ try{ if(history.state && history.state.sheet){ ignorePop = true; history.back(); } else { history.replaceState(null,"","#registrar"); } }catch(e){} }
@@ -3701,7 +3967,7 @@ function seGuardar(){
 let leFoto = null, lePre = null;
 function leIniciar(){ const l = LOTES[lotIdx]; const ss = sensoresDe(l); leFoto = null; leTel = null; { const b = $("#le-foto-reco"); if(b){ b.hidden = true; b.innerHTML = ""; } } $("#le-foto-prev").hidden = true; $("#le-foto-prev").innerHTML = ""; $("#le-foto-input").value = ""; $("#le-valor").value = "";
   const ahora = new Date(); $("#le-fecha").value = localISO(ahora); $("#le-hora").value = `${String(ahora.getHours()).padStart(2,"0")}:${String(ahora.getMinutes()).padStart(2,"0")}`;
-  $("#le-sensores").innerHTML = (ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note" style="margin:0 0 8px">Todavía no hay instrumentos en este lote. Agregue el primero aquí mismo: nombre, tipo y dónde está (con su ubicación).</p>`) + `<button class="chip" data-flow="sensor" style="border-style:dashed">${ss.length ? "+ otro instrumento" : "+ Agregar el primer instrumento"}</button>`; lePre = null; leUnidad(); leGeo(ss);
+  $("#le-sensores").innerHTML = (ss.length ? ss.map((s,i)=>`<button class="chip" aria-pressed="${lePre ? s.id===lePre : i===0}" data-les="${esc(s.id)}">${esc(s.nombre)}</button>`).join("") : `<p class="note" style="margin:0 0 8px">${opEsVisitador() ? "Este lote todavía no tiene instrumentos dados de alta. Avise a quien le asignó la visita." : "Todavía no hay instrumentos en este lote. Agregue el primero aquí mismo: nombre, tipo y dónde está (con su ubicación)."}</p>`) + (opEsVisitador() ? "" : `<button class="chip" data-flow="sensor" style="border-style:dashed">${ss.length ? "+ otro instrumento" : "+ Agregar el primer instrumento"}</button>`); lePre = null; leUnidad(); leGeo(ss);
   const sv = $("#le-save"); if(sv) sv.disabled = !ss.length; }
 let leGeoToken = 0, leManual = false;
 function leGeo(ss){                                               // v51: el instrumento más cercano (a menos de GPS_CERCA_M) se marca solo
@@ -3822,7 +4088,7 @@ function coChips(){ const box = $("#po-colmenas"); if(!box) return; const cs = c
   box.innerHTML = cs.map(c=>`<button class="chip${c.estado==="cerrada" ? " co-cerrada" : ""}" data-col="${esc(c.id)}">${esc(c.codigo)} · ${coDias(c)} d${c.estado==="cerrada" ? " · cerrada" : ""}</button>`).join("") + `<button class="chip" data-col-nueva style="border-style:dashed">+ colmena</button>`; pcRender(); }
 function coMarcas(){ if(!poMap) return; colDe(LOTES[lotIdx]).forEach(c=>{ if(c.lat==null || c.lon==null) return; const m = L.marker([c.lat, c.lon], {icon: L.divIcon({className:"", html:`<div class="copt${c.estado==="cerrada" ? " cerrada" : ""}">${esc(c.codigo)}</div>`, iconSize:[30,20], iconAnchor:[15,10]})}).addTo(poMap); m.on("click", ()=>coAbrir(c.id)); poCapas.push(m); }); }
 function coParar(){ clearInterval(coTic); coTic = null; if(coConf){ clearTimeout(coConf.t); coConf = null; } }
-function coAbrir(id){ if(!po) return; po.col = id ? (COLMENAS.find(c=>c.id===id) || null) : null; po.colModo = po.col ? "ficha" : "alta"; po.colN = null; po.colDe = null; poPaso("colmena"); }
+function coAbrir(id){ if(!po) return; if(!id && opEsVisitador()){ toast("Las colmenas nuevas las da de alta el productor o la empresa."); return; } po.col = id ? (COLMENAS.find(c=>c.id===id) || null) : null; po.colModo = po.col ? "ficha" : "alta"; po.colN = null; po.colDe = null; poPaso("colmena"); }
 function coUno(sel, v){ $$(sel + " .chip").forEach(b=>b.setAttribute("aria-pressed", String(v!=null && String(b.dataset.r ?? b.dataset.v ?? b.dataset.s)===String(v)))); }
 function coElegido(sel){ const b = $(sel + ' .chip[aria-pressed="true"]'); return b ? (b.dataset.r ?? b.dataset.v ?? b.dataset.s) : null; }
 function coRender(){ const l = LOTES[lotIdx]; const c = po.col, modo = po.colModo, b = $("#po-save"); coParar();
