@@ -1424,6 +1424,7 @@ details.grupo-det summary::-webkit-details-marker{display:none} details.grupo-de
       <div class="field"><label for="login-email">Correo con el que fue invitado</label><input id="login-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com" autocapitalize="off" autocorrect="off"></div>
       <button class="btn acc" id="login-enviar">Enviar código</button>
       <p class="note" id="login-msg">Le llega un código por correo. Esta versión es privada: solo entran las personas invitadas.</p>
+      <button class="inline-link" id="login-tengo" type="button">Ya tengo un código</button>
     </div>
     <div id="login-paso2" class="flow" hidden>
       <div class="field"><label for="login-code">Código del correo</label><input id="login-code" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="one-time-code" placeholder="código" style="letter-spacing:5px;font-size:24px;text-align:center"></div>
@@ -1453,7 +1454,7 @@ function probError(texto, extra){
 }
 window.addEventListener("error", e => { if(!e || !e.message) return; const f = String(e.filename || ""); if(f && f.indexOf(location.origin) !== 0) return;      // solo lo de la propia app
   probError(e.message, {archivo: f.split("/").pop().split("?")[0], linea: e.lineno || null, pila: e.error && e.error.stack ? String(e.error.stack).slice(0, 700) : null}); });
-window.addEventListener("unhandledrejection", e => { const r = e && e.reason; const m = r && (r.message || String(r)); if(!m || /sesión vencida|sin sesión|Failed to fetch|NetworkError|Load failed|AbortError|network/i.test(m)) return;      // quedarse sin señal no es un error de la app
+window.addEventListener("unhandledrejection", e => { const r = e && e.reason; const m = r && (r.message || String(r)); if(!m || /sesión vencida|sin sesión|servicio de ingreso|Failed to fetch|NetworkError|Load failed|AbortError|network/i.test(m)) return;      // quedarse sin señal no es un error de la app
   probError(m, {pila: r && r.stack ? String(r.stack).slice(0, 700) : null, promesa: true}); });
 // ---------------------------------------------------------------- datos
 // Zonas paperas de referencia (config/regions.csv del motor)
@@ -1961,17 +1962,44 @@ function extDe(f){ const n = (f && f.name || "").toLowerCase(); const m = n.matc
 // --- sesión (Auth de Supabase)
 function sesCargar(){ try{ sesion = JSON.parse(localStorage.getItem(SES_KEY)); }catch(e){ sesion = null; } }
 function sesGuardar(s){ sesion = s; try{ if(s) localStorage.setItem(SES_KEY, JSON.stringify(s)); else localStorage.removeItem(SES_KEY); }catch(e){} }
+const AUTH_ESPERA_MS = 25000;                                                    // v62.1: ninguna llamada al servicio de ingreso se queda esperando para siempre
 async function authPost(path, body, bearer){
   const h = {"apikey": NUBE.anon, "Content-Type": "application/json"}; if(bearer) h.Authorization = "Bearer " + bearer;
-  const r = await fetch(`${NUBE.url}/auth/v1/${path}`, {method:"POST", headers:h, body: JSON.stringify(body)});
+  const ctl = typeof AbortController==="function" ? new AbortController() : null, reloj = ctl ? setTimeout(()=>ctl.abort(), AUTH_ESPERA_MS) : null;
+  let r;
+  try{ r = await fetch(`${NUBE.url}/auth/v1/${path}`, {method:"POST", headers:h, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined}); }
+  catch(e){ const err = new Error(ctl && ctl.signal.aborted ? "el servicio de ingreso no respondió a tiempo" : "sin conexión con el servicio de ingreso"); err.sinRespuesta = true; throw err; }
+  finally{ if(reloj) clearTimeout(reloj); }
   let j = null; try{ j = await r.json(); }catch(e){}
-  if(!r.ok) throw new Error((j && (j.msg || j.message || j.error_description || j.error)) || `auth ${r.status}`);
+  if(!r.ok){ const err = new Error((j && (j.msg || j.message || j.error_description || j.error)) || `auth ${r.status}`); err.status = r.status; throw err; }
   return j;
 }
 async function pedirCodigo(email){ await authPost("otp", {email, create_user:false}); }
 async function verificarCodigo(email, token){ const j = await authPost("verify", {type:"email", email, token}); if(!j || !j.access_token) throw new Error("respuesta sin sesión"); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user:{id:j.user.id, email:j.user.email}}); }
-async function refrescar(){ if(!sesion) return false; try{ const j = await authPost("token?grant_type=refresh_token", {refresh_token: sesion.refresh_token}); sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user: j.user ? {id:j.user.id, email:j.user.email} : sesion.user}); return true; }catch(e){ return false; } }
-async function token(){ if(!sesion) throw new Error("sin sesión"); if(Date.now() > sesion.expires_at - 60000){ if(!(await refrescar())){ if(navigator.onLine){ cerrarSesion(true); throw new Error("sesión vencida"); } } } return sesion.access_token; }
+// v62.1: renovar contesta "ok", "invalida" (la nube dice que esa sesión ya no vale: hay que entrar de nuevo) o "falla" (no contestó, contestó con un error suyo o pidió
+// esperar: la sesión SE CONSERVA y se reintenta sola). Una sola renovación a la vez: las lecturas que arrancan juntas comparten la misma.
+let refrescando = null;
+function refrescar(){
+  if(!sesion) return Promise.resolve("invalida"); if(refrescando) return refrescando;
+  const ficha = sesion.refresh_token;
+  refrescando = (async ()=>{
+    try{ const j = await authPost("token?grant_type=refresh_token", {refresh_token: ficha}); if(!j || !j.access_token) return "falla";
+      if(sesion && sesion.refresh_token===ficha) sesGuardar({access_token:j.access_token, refresh_token:j.refresh_token, expires_at: Date.now() + ((j.expires_in||3600)*1000), user: j.user ? {id:j.user.id, email:j.user.email} : sesion.user});
+      return "ok"; }
+    catch(e){ return [400, 401, 403].includes(e && e.status) ? "invalida" : "falla"; }
+  })();
+  const suelta = ()=>{ refrescando = null; }; refrescando.then(suelta, suelta);
+  return refrescando;
+}
+function errSinIngreso(st){ const e = new Error("el servicio de ingreso no responde: se sigue con lo guardado"); e.sinIngreso = true; if(st) e.status = st; return e; }
+async function token(){
+  if(!sesion) throw new Error("sin sesión");
+  if(Date.now() > sesion.expires_at - 60000){ const r = await refrescar();
+    if(r==="invalida"){ if(sesion) cerrarSesion(true); throw new Error("sesión vencida"); }
+    if(!sesion) throw new Error("sin sesión");
+    if(r==="falla" && navigator.onLine && Date.now() > sesion.expires_at) throw errSinIngreso(); }          // sin señal queda como antes: la lectura falla sola y se reintenta
+  return sesion.access_token;
+}
 // ============================ v61 · OPERACIONES 1: jerarquías y visitas asignadas (esquema v27) ============================
 // Directivo: ve los lotes de su empresa (no los cambia) y asigna visitas. Productor: lo suyo, las visitas a sus lotes y sus propios visitadores.
 // Visitador: una sola pantalla con lo que le toca hoy. Sin el esquema v27, o sin empresa, la app queda como antes.
@@ -2196,11 +2224,15 @@ $("#mas-material").addEventListener("click", async ev=>{
 function cerrarSesion(silencio){ matActual = null; sesGuardar(null); perfil = null; MODO = "demo"; OP = OP_VACIO(); opFalta = null; document.body.classList.remove("op-visitador"); if(!$("#s-opvisita").hidden) go("hoy"); LOTES = DEMO_LOTES; ALERTAS = []; TRANSCRIPCIONES = []; hoyISO = "2026-10-16"; log = load(); lotIdx = 0; if(!silencio) toast("Sesión cerrada"); mostrarLogin(true); renderSesion(); renderAll(); }
 
 // --- tablas (PostgREST) y archivos (Storage)
-async function db(method, tabla, params, body, prefer){
+async function db(method, tabla, params, body, prefer, _otra){
   const t = await token(); const qs = params ? "?" + new URLSearchParams(params).toString() : "";
   const h = {"apikey": NUBE.anon, "Authorization": "Bearer " + t, "Content-Type": "application/json", "Accept": "application/json"}; if(prefer) h.Prefer = prefer;
   const r = await fetch(`${NUBE.url}/rest/v1/${tabla}${qs}`, {method, headers:h, body: body!==undefined && body!==null ? JSON.stringify(body) : undefined});
-  if(r.status === 401){ cerrarSesion(true); throw new Error("sesión vencida"); }
+  if(r.status === 401){                                                            // v62.1: la nube no aceptó la sesión. Antes de sacar a nadie: una renovación y un solo reintento
+    const x = _otra ? "invalida" : (sesion && sesion.access_token !== t ? "ok" : await refrescar());
+    if(x==="ok" && sesion) return db(method, tabla, params, body, prefer, true);
+    if(x==="falla") throw errSinIngreso(401);
+    if(sesion) cerrarSesion(true); throw new Error("sesión vencida"); }
   if(!r.ok){ let t2 = ""; try{ t2 = await r.text(); }catch(e){} const err = new Error(`${method} ${tabla} ${r.status}: ${t2.slice(0,200)}`); err.status = r.status; throw err; }
   const txt = await r.text(); return txt ? JSON.parse(txt) : null;
 }
@@ -2413,28 +2445,30 @@ $("#login-enviar").addEventListener("click", async ()=>{
   const email = $("#login-email").value.trim().toLowerCase(); if(!/.+@.+\..+/.test(email)){ $("#login-msg").textContent = "Escriba un correo válido."; return; }
   $("#login-enviar").disabled = true; $("#login-msg").textContent = "Enviando…";
   try{ await pedirCodigo(email); $("#login-paso1").hidden = true; $("#login-paso2").hidden = false; $("#login-msg2").textContent = `Código enviado a ${email}. Si no llega en un minuto, revise la carpeta de no deseados.`; $("#login-code").value = ""; $("#login-code").focus(); }
-  catch(e){ const det = ` (respuesta: ${String(e.message).slice(0,90)})`; $("#login-msg").textContent = (/signup|not allowed|not found|invalid/i.test(e.message) ? "Ese correo no está dado de alta. Pida la invitación a Engram Analítica." : /rate|limit|seconds/i.test(e.message) ? "Demasiados intentos seguidos: espere un minuto y vuelva a pedirlo." : /smtp|sending|mail/i.test(e.message) ? "El correo no se pudo enviar (remitente): avise a Engram Analítica." : "No se pudo enviar el código.") + det; }
+  catch(e){ const det = ` (respuesta: ${String(e.message).slice(0,90)})`; $("#login-msg").textContent = (e.sinRespuesta || (e.status >= 500 && !/smtp|sending|mail/i.test(e.message)) ? "El servicio de ingreso no está respondiendo. No es su correo ni su teléfono: pruebe de nuevo en unos minutos. Si igual le llega un código, toque «Ya tengo un código»." : e.status >= 500 ? "El correo no se pudo enviar (remitente): avise a Engram Analítica." : /signup|not allowed|not found|invalid/i.test(e.message) ? "Ese correo no está dado de alta. Pida la invitación a Engram Analítica." : /rate|limit|seconds/i.test(e.message) ? "Demasiados intentos seguidos: espere un minuto y vuelva a pedirlo." : /smtp|sending|mail/i.test(e.message) ? "El correo no se pudo enviar (remitente): avise a Engram Analítica." : "No se pudo enviar el código.") + det; }
   finally{ $("#login-enviar").disabled = false; }
 });
 $("#login-entrar").addEventListener("click", async ()=>{
   const email = $("#login-email").value.trim().toLowerCase(), code = $("#login-code").value.replace(/\D/g, ""); if(code.length < 6){ $("#login-msg2").textContent = "Escriba el código completo tal como viene en el correo (6 a 10 dígitos)."; return; }
   $("#login-entrar").disabled = true; $("#login-msg2").textContent = "Entrando…";
   try{ await verificarCodigo(email, code); await entrarModoNube(); toast(`Bienvenido${perfil && perfil.nombre ? ", " + perfil.nombre : ""}`); }
-  catch(e){ $("#login-msg2").textContent = /expired|invalid|token|otp/i.test(e.message) ? "Código incorrecto o vencido. Pida otro." : "No se pudo entrar: " + e.message; }
+  catch(e){ $("#login-msg2").textContent = e.sinRespuesta || e.status >= 500 ? "El servicio de ingreso no está respondiendo: pruebe de nuevo en unos minutos (el código sigue sirviendo un rato)." : /expired|invalid|token|otp/i.test(e.message) ? "Código incorrecto o vencido. Pida otro." : "No se pudo entrar: " + e.message; }
   finally{ $("#login-entrar").disabled = false; }
 });
 $("#login-code").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#login-entrar").click(); });
+$("#login-tengo").addEventListener("click", ()=>{ const email = $("#login-email").value.trim().toLowerCase(); if(!/.+@.+\..+/.test(email)){ $("#login-msg").textContent = "Escriba primero su correo."; return; }     // v62.1: el aviso se perdió pero el correo llegó
+  $("#login-paso1").hidden = true; $("#login-paso2").hidden = false; $("#login-msg2").textContent = `Escriba el código que le llegó a ${email}.`; $("#login-code").value = ""; $("#login-code").focus(); });
 $("#login-otra").addEventListener("click", ()=>{ $("#login-paso2").hidden = true; $("#login-paso1").hidden = false; $("#login-code").value = ""; $("#login-msg").textContent = "Le llega un código por correo. Esta versión es privada: solo entran las personas invitadas."; });
 $("#login-demo").addEventListener("click", ()=>{ mostrarLogin(false); toast("Modo demostración: datos de ejemplo"); });
 
 async function entrarModoNube(){
   MODO = "nube"; hoyISO = localISO(); pendCargar(); pendACargar(); pendTCargar(); opLeer();
   try{ log = JSON.parse(localStorage.getItem(LOGN_KEY)) || []; }catch(e){ log = []; }
-  let ok = true;
+  let ok = true, sinIng = false;
   try{ await cargarLotes(); await cargarRegistros(); }
-  catch(e){ ok = false; if(!sesion) return; if(!cargarLotesCache()){ LOTES = [loteVacio()]; } }
+  catch(e){ ok = false; sinIng = !!(e && e.sinIngreso); if(!sesion) return; if(!cargarLotesCache()){ LOTES = [loteVacio()]; } }
   lotIdx = Math.min(lotIdx, LOTES.length-1); mostrarLogin(false); renderSesion(); renderAll(); renderSync(); opAplicar();
-  if(!ok) toast(navigator.onLine ? "No se pudo leer la nube: se muestra lo guardado en el teléfono" : "Sin señal: se muestra lo guardado en el teléfono");
+  if(!ok) toast(sinIng ? "El servicio de ingreso no responde: se muestra lo guardado y se reconecta solo" : navigator.onLine ? "No se pudo leer la nube: se muestra lo guardado en el teléfono" : "Sin señal: se muestra lo guardado en el teléfono");
   else { avisarAlertasNuevas(); const nv = TRANSCRIPCIONES.filter(t=>t.estado==="lista").length; if(nv && !ALERTAS.some(alertaNueva)) toast(`${nv} nota${nv===1?"":"s"} de voz transcrita${nv===1?"":"s"} para revisar en Recorrer`); }
   vaciarCola();
 }
@@ -2894,7 +2928,7 @@ function perfilHTML(pf, l){
   out.push(`<p class="note">Memoria pública de la zona, no pronóstico del lote: ${ar ? "MAGyP, Estimaciones Agrícolas (campañas por departamento; año = el de cosecha; perdido = sembrado − cosechado)" : "SIAP (cierres municipales por estado o distrito)"} y NASA POWER (clima diario desde 2001).${notaCul} ${pf.generado ? `Perfil del ${fmtD(pf.generado)}.` : ""}</p>`);
   return out.join("");
 }
-const APP_VERSION = "62 · 26 nov 2026";
+const APP_VERSION = "62.1 · 27 nov 2026";
 const PENDA_KEY = "engram-campo-pend-alertas-v1", AVIS_KEY = "engram-campo-alertas-avisadas-v1";
 const RESP_TXT = {visto:"Visto", no_aplica:"Marcada: no aplica a este lote"};
 const PELIGRO_TXT = {helada:"Helada", calor_tuberizacion:"Calor en tuberización", noche_calida:"Noches cálidas", tizon_tardio:"Tizón tardío", exceso_lluvia:"Exceso de lluvia", deficit_hidrico:"Falta de agua", calor_floracion:"Calor en floración", viento_fuerte:"Viento fuerte", enfermedad_foliar:"Enfermedad foliar (preliminar)", roya_condiciones:"Condiciones de roya (preliminar)", humedad_enfermedad:"Humedad para enfermedad (preliminar)", helada_antesis:"Helada en antesis", helada_vegetativa:"Helada (vegetativo)", helada_flor:"Helada en floración", calor_llenado:"Calor en llenado", calor_seco:"Calor seco"};
